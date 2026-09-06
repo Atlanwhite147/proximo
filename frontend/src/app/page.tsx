@@ -6,7 +6,7 @@ import { LatestIncidents } from '@/components/LatestIncidents';
 import { useAuth } from '@/components/AuthProvider';
 
 /**
- * Accueil « vie de résidence » (style Citylity) :
+ * Accueil « vie de résidence » :
  * - bannière de la résidence de l'utilisateur (ou CTA rejoindre)
  * - accès rapides : annonces, signalements, inviter un voisin
  * - fil des dernières annonces de la résidence
@@ -50,12 +50,14 @@ export default function HomePage() {
           </>
         ) : (
           <>
-            <p className="text-sm font-medium text-brand-100">Espace résidence</p>
+            <p className="text-sm font-medium text-brand-100">Bienvenue sur Proximo</p>
             <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-              Bonjour, content de vous revoir
+              Votre résidence, connectée
             </h1>
             <p className="mt-2 max-w-xl text-sm text-brand-50">
-              Connectez-vous pour retrouver les annonces et signalements de votre résidence.
+              Proximo rassemble les habitants d&apos;une même résidence : annonces
+              entre voisins, signalements au syndic, discussions et invitations —
+              le tout au même endroit, sans publicité.
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
               <Link

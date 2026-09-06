@@ -138,8 +138,9 @@ export default function DiscoverPage() {
           Une initiative d’habitants, pas d’une entreprise
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          Proximo est né d’un constat simple : après l’arrêt de Citylity, il
-          manquait un outil aux résidences. Le projet est{' '}
+          Proximo est né d’un constat simple : les habitants d'une résidence
+          n'avaient plus d'outil simple pour échanger entre voisins et suivre
+          les sujets de l'immeuble. Le projet est{' '}
           <strong>open source</strong> — le code est public sur{' '}
           <a
             href="https://github.com/bounette14701-oss/proximo"

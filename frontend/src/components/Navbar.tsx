@@ -11,7 +11,7 @@ import { useAuth } from './AuthProvider';
  * Navigation « app de résidence » :
  * - Desktop : header compact avec le nom de la résidence
  * - Mobile : barre d'onglets en bas d'écran (Accueil, Annonces, Messages,
- *   Signalements, Profil) — navigation type application, comme Citylity.
+ *   Signalements, Profil) — navigation type application résidentielle.
  */
 
 const TABS = [
