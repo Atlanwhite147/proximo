@@ -138,9 +138,9 @@ export default function DiscoverPage() {
           Une initiative d’habitants, pas d’une entreprise
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          Proximo est né d’un constat simple : les habitants d'une résidence
-          n'avaient plus d'outil simple pour échanger entre voisins et suivre
-          les sujets de l'immeuble. Le projet est{' '}
+          Proximo est né d&apos;un constat simple : les habitants d&apos;une résidence
+          n&apos;avaient plus d&apos;outil simple pour échanger entre voisins et suivre
+          les sujets de l&apos;immeuble. Le projet est{' '}
           <strong>open source</strong> — le code est public sur{' '}
           <a
             href="https://github.com/bounette14701-oss/proximo"
@@ -150,7 +150,7 @@ export default function DiscoverPage() {
           >
             GitHub
           </a>{' '}
-          — et chacun peut l’héberger pour sa propre résidence, sans abonnement
+          — et chacun peut l&apos;héberger pour sa propre résidence, sans abonnement
           ni publicité. Il est encore jeune : les retours des premiers habitants
           le font grandir.
         </p>
