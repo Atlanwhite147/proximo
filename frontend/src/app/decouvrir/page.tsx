@@ -180,7 +180,7 @@ export default function DiscoverPage() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a
             href="mailto:proximo@147.ovh?subject=Équiper%20ma%20résidence%20avec%20Proximo"
-            className="rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700"
+            className="btn-primary-sm rounded-xl px-6"
           >
             ✉️ Proposer Proximo à ma résidence
           </a>

@@ -69,7 +69,7 @@ export function Comments({
   };
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="ds-card p-5">
       <h2 className="font-semibold text-slate-900">💬 Discussion</h2>
       <p className="mt-0.5 text-sm text-slate-500">
         Questions, précisions et retours, visibles par les habitants.
@@ -128,7 +128,7 @@ export function Comments({
             <button
               type="submit"
               disabled={sending || !content.trim()}
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+              className="btn-primary-sm"
             >
               {sending ? 'Envoi…' : 'Commenter'}
             </button>

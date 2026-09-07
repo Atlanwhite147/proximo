@@ -52,12 +52,12 @@ export default function InviterPage() {
           type="button"
           onClick={() => void create()}
           disabled={submitting}
-          className="mt-6 w-full rounded-xl bg-brand-600 px-4 py-3 font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+          className="btn-primary mt-6"
         >
           {submitting ? 'Génération…' : 'Générer l’invitation'}
         </button>
       ) : (
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+        <div className="mt-6 ds-card p-6 text-center">
           <img
             src={invitation.qrUrl}
             alt={`QR code d'invitation : ${invitation.neighborhood}`}

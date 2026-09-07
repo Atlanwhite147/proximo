@@ -36,13 +36,15 @@ const config: Config = {
           700: '#0043D6',
         },
 
-        // ── Alias historique (migration douce) ───────────────
+        // ── Alias historique → désormais mappé sur la signature Electric Blue.
+        // Tous les anciens composants (bg-brand-600, text-brand-700, bg-brand-50…)
+        // héritent automatiquement du nouveau style sans édition individuelle.
         brand: {
-          50: '#eef7f2',
-          100: '#d6ecdf',
-          500: '#2f8f5b',
-          600: '#237a49',
-          700: '#1c633c',
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          500: '#4D7CFF',
+          600: '#0052FF',
+          700: '#0043D6',
         },
 
         // ── Catégories sémantiques ───────────────────────────

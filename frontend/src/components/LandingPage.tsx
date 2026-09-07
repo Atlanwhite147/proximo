@@ -120,7 +120,7 @@ export function LandingPage() {
           {STEPS.map((step, index) => (
             <div
               key={step.title}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+              className="ds-card p-6"
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl" aria-hidden>
@@ -144,7 +144,7 @@ export function LandingPage() {
           {FEATURES.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:shadow"
+              className="ds-card ds-card-hover p-5"
             >
               <span className="text-2xl" aria-hidden>
                 {feature.icon}
@@ -165,7 +165,7 @@ export function LandingPage() {
           {FAQ.map((item) => (
             <details
               key={item.q}
-              className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="group ds-card p-5"
             >
               <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900 marker:hidden">
                 <span className="flex items-center justify-between gap-3">

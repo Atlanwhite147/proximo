@@ -60,7 +60,7 @@ export default function IncidentDetailPage() {
           ← Retour aux signalements
         </Link>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="ds-card p-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
               🛠️ {INCIDENT_CATEGORY_LABELS[incident.category] ?? incident.category}

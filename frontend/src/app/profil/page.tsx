@@ -177,7 +177,7 @@ export default function ProfilPage() {
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         {/* ─── Réglages ─────────────────────────────────────── */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="ds-card p-5">
           <h2 className="font-semibold text-slate-900">Réglages</h2>
           <form onSubmit={(event) => void handleSave(event)} className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -186,14 +186,14 @@ export default function ProfilPage() {
                 required
                 value={firstName}
                 onChange={(event) => setFirstName(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                className="input-field h-11 "
               />
               <input
                 type="text"
                 required
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                className="input-field h-11 "
               />
             </div>
             <input
@@ -201,7 +201,7 @@ export default function ProfilPage() {
               value={neighborhood}
               onChange={(event) => setNeighborhood(event.target.value)}
               placeholder="Résidence / immeuble"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+              className="input-field h-11 "
             />
             <div className="grid grid-cols-2 gap-3">
               <input
@@ -210,7 +210,7 @@ export default function ProfilPage() {
                 value={building}
                 onChange={(event) => setBuilding(event.target.value)}
                 placeholder="Bâtiment (ex. B, optionnel)"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                className="input-field h-11 "
               />
               <input
                 type="text"
@@ -218,7 +218,7 @@ export default function ProfilPage() {
                 value={floor}
                 onChange={(event) => setFloor(event.target.value)}
                 placeholder="Étage (ex. 3e, optionnel)"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                className="input-field h-11 "
               />
             </div>
             <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -243,7 +243,7 @@ export default function ProfilPage() {
             {success && <p className="text-sm font-medium text-brand-600">{success}</p>}
             <button
               type="submit"
-              className="rounded-lg bg-brand-600 px-5 py-2.5 font-semibold text-white hover:bg-brand-700"
+              className="btn-primary-sm px-5"
             >
               Enregistrer
             </button>
@@ -252,7 +252,7 @@ export default function ProfilPage() {
 
         {/* ─── Sécurité (2FA administrateur) ────────────────── */}
         {isAdmin && (
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="ds-card p-5">
             <h2 className="font-semibold text-slate-900">Sécurité du compte admin</h2>
             <p className="mt-1 text-sm text-slate-500">
               Double authentification (TOTP : Google Authenticator, Authy…)
@@ -301,12 +301,12 @@ export default function ProfilPage() {
                       value={totpCode}
                       onChange={(event) => setTotpCode(event.target.value)}
                       placeholder="123456"
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-center tracking-[0.4em] focus:border-brand-500 focus:outline-none"
+                      className="input-field h-11 flex-1 text-center tracking-[0.4em]"
                     />
                     <button
                       type="submit"
                       disabled={totpCode.length !== 6}
-                      className="rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+                      className="btn-primary-sm"
                     >
                       Activer
                     </button>
@@ -316,7 +316,7 @@ export default function ProfilPage() {
                 <button
                   type="button"
                   onClick={() => void startTwoFactor()}
-                  className="rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white hover:bg-brand-700"
+                  className="btn-primary-sm"
                 >
                   Activer la double authentification
                 </button>

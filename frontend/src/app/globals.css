@@ -46,6 +46,22 @@
     background-image: linear-gradient(135deg, #0052ff 0%, #4d7cff 100%);
   }
 
+  /* Bouton d'action principal — gradient signature Electric Blue.
+     Utilisé par les formulaires (connexion, inscription, publication…). */
+  .btn-primary {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-glow hover:brightness-105 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  /* Variante compacte (dans les cartes, listes, headers). */
+  .btn-primary-sm {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-gradient px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-glow hover:brightness-105 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  /* Champ de saisie — style cohérent du design system. */
+  .input-field {
+    @apply h-12 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground shadow-sm placeholder:text-muted-foreground/70 transition-all duration-150 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15;
+  }
+
   /* Glow doux derrière les héros */
   .glow-bg {
     background-image: radial-gradient(circle, rgba(0, 82, 255, 0.06) 0%, transparent 70%);

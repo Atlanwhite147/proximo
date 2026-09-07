@@ -135,7 +135,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/inscription"
-                  className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+                  className="btn-primary-sm px-3"
                 >
                   Rejoindre
                 </Link>

@@ -183,7 +183,7 @@ export default function HomePage() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center shadow-sm transition hover:border-brand-300 hover:shadow"
+              className="flex flex-col items-center gap-1.5 ds-card ds-card-hover px-3 py-4 text-center"
             >
               <span className="text-2xl">{item.icon}</span>
               <span className="text-xs font-semibold text-slate-700">{item.label}</span>

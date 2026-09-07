@@ -106,11 +106,14 @@ function ConnexionForm() {
   if (showTwoFactor) {
     return (
       <div className="mx-auto max-w-md px-4 py-12">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-900">
+        <div className="glow-bg rounded-3xl border border-border bg-card p-8 shadow-card">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gradient text-2xl text-white shadow-glow">
+            🔐
+          </div>
+          <h1 className="mt-5 font-display text-3xl font-normal text-foreground">
             Double authentification
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Saisissez le code à 6 chiffres de votre application
             d&apos;authentification (Google Authenticator, Authy…).
           </p>
@@ -125,13 +128,13 @@ function ConnexionForm() {
               value={twoFactorCode}
               onChange={(event) => setTwoFactorCode(event.target.value)}
               placeholder="123456"
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-center text-2xl tracking-[0.5em] focus:border-brand-500 focus:outline-none"
+              className="input-field text-center text-2xl tracking-[0.5em] "
             />
             <ErrorMessage message={error} />
             <button
               type="submit"
               disabled={submitting || twoFactorCode.length !== 6}
-              className="w-full rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+              className="btn-primary"
             >
               {submitting ? 'Vérification…' : 'Vérifier et me connecter'}
             </button>
@@ -143,16 +146,19 @@ function ConnexionForm() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-12">
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">Connexion</h1>
-        <p className="mt-1 text-sm text-slate-600">Heureux de vous revoir 👋</p>
+      <div className="glow-bg rounded-3xl border border-border bg-card p-8 shadow-card">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gradient text-2xl text-white shadow-glow">
+          🤝
+        </div>
+        <h1 className="mt-5 font-display text-3xl font-normal text-foreground">Connexion</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Heureux de vous revoir 👋</p>
 
         <GoogleButton />
 
-        <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" />
+        <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
           ou avec votre adresse email
-          <span className="h-px flex-1 bg-slate-200" />
+          <span className="h-px flex-1 bg-border" />
         </div>
 
         <form onSubmit={(event) => void handleLogin(event)} className="space-y-4">
@@ -163,7 +169,7 @@ function ConnexionForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="vous@exemple.fr"
-            className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-brand-500 focus:outline-none"
+            className="input-field "
           />
           <input
             type="password"
@@ -172,7 +178,7 @@ function ConnexionForm() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Mot de passe"
-            className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-brand-500 focus:outline-none"
+            className="input-field "
           />
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <input
@@ -187,7 +193,7 @@ function ConnexionForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+            className="btn-primary"
           >
             {submitting ? 'Connexion…' : 'Se connecter'}
           </button>

@@ -126,7 +126,7 @@ function NewListingForm() {
         </h1>
         <form
           onSubmit={(event) => void handleSubmit(event)}
-          className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="space-y-5 ds-card p-6"
         >
           {isIncident && (
             <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
@@ -286,7 +286,7 @@ function NewListingForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white shadow hover:bg-brand-700 disabled:opacity-50"
+            className="btn-primary"
           >
             {submitting
               ? 'Envoi…'

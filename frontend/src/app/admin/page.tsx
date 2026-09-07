@@ -345,7 +345,7 @@ export default function AdminPage() {
                     if (card.label === 'Signalements' || card.label === 'Ouverts') setTab('incidents');
                     if (card.label === 'Invitations actives') setTab('invitations');
                   }}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-brand-300"
+                  className="ds-card ds-card-hover p-4 text-left"
                 >
                   <span className="text-2xl">{card.icon}</span>
                   <p className="mt-2 text-2xl font-bold text-slate-900">{card.value}</p>
@@ -385,7 +385,7 @@ export default function AdminPage() {
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+              className="input-field h-11 "
             >
               <option value="">Tous les statuts</option>
               <option value="PENDING">En attente</option>
@@ -426,7 +426,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => void patchUser(member.id, { status: 'ACTIVE' })}
-                          className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
+                          className="btn-primary-sm px-3 py-1.5 text-xs"
                         >
                           Valider
                         </button>
@@ -444,7 +444,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => void patchUser(member.id, { status: 'ACTIVE' })}
-                          className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
+                          className="btn-primary-sm px-3 py-1.5 text-xs"
                         >
                           Réactiver
                         </button>
@@ -636,7 +636,7 @@ export default function AdminPage() {
         <section className="mt-6">
           <form
             onSubmit={(event) => void createInvitation(event)}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="ds-card p-5"
           >
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex-1">
@@ -648,7 +648,7 @@ export default function AdminPage() {
                   value={invNeighborhood}
                   onChange={(event) => setInvNeighborhood(event.target.value)}
                   placeholder="Ex. Lyon 7e"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
               </div>
               <div className="w-32">
@@ -661,12 +661,12 @@ export default function AdminPage() {
                   max={168}
                   value={invHours}
                   onChange={(event) => setInvHours(Number(event.target.value))}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
               </div>
               <button
                 type="submit"
-                className="rounded-lg bg-brand-600 px-5 py-2.5 font-semibold text-white hover:bg-brand-700"
+                className="btn-primary-sm px-5"
               >
                 Générer l&apos;invitation
               </button>
@@ -737,7 +737,7 @@ export default function AdminPage() {
         <section className="mt-6">
           <form
             onSubmit={(event) => void saveSettings(event)}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="ds-card p-5"
           >
             <h2 className="font-semibold text-slate-900">Agence / syndic de gestion</h2>
             <p className="mt-1 text-sm text-slate-500">
@@ -754,7 +754,7 @@ export default function AdminPage() {
                   value={residenceName}
                   onChange={(event) => setResidenceName(event.target.value)}
                   placeholder="Ex. Résidence Les Cèdres"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
                 <p className="mt-1 text-xs text-slate-400">
                   Affiché dans toute l&apos;interface et les emails (en-tête, annonces, invitations).
@@ -770,7 +770,7 @@ export default function AdminPage() {
                   value={agencyName}
                   onChange={(event) => setAgencyName(event.target.value)}
                   placeholder="Ex. Syndic Lyon 7e"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
               </div>
               <div>
@@ -782,13 +782,13 @@ export default function AdminPage() {
                   value={syndicEmail}
                   onChange={(event) => setSyndicEmail(event.target.value)}
                   placeholder="contact@syndic.fr"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
               </div>
             </div>
             <button
               type="submit"
-              className="mt-4 rounded-lg bg-brand-600 px-5 py-2.5 font-semibold text-white hover:bg-brand-700"
+              className="btn-primary-sm px-5 mt-4"
             >
               Enregistrer
             </button>
@@ -796,7 +796,7 @@ export default function AdminPage() {
 
           <form
             onSubmit={(event) => void saveEmailSettings(event)}
-            className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="mt-6 ds-card p-5"
           >
             <h2 className="font-semibold text-slate-900">Envoi d&apos;emails</h2>
             <p className="mt-1 text-sm text-slate-500">
@@ -810,7 +810,7 @@ export default function AdminPage() {
                 <select
                   value={emailMode}
                   onChange={(event) => setEmailMode(event.target.value as 'brevo' | 'smtp' | 'log')}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 >
                   <option value="brevo">Brevo (API, recommandé)</option>
                   <option value="smtp">SMTP générique</option>
@@ -835,7 +835,7 @@ export default function AdminPage() {
                   value={emailFromName}
                   onChange={(event) => setEmailFromName(event.target.value)}
                   placeholder="Ex. Résidence Les Cèdres"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
               </div>
               <div>
@@ -846,7 +846,7 @@ export default function AdminPage() {
                   value={emailFrom}
                   onChange={(event) => setEmailFrom(event.target.value)}
                   placeholder="no-reply@residence.fr"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
               </div>
             </div>
@@ -871,7 +871,7 @@ export default function AdminPage() {
                       ? '•••••••• (laisser vide pour conserver)'
                       : 'xkeysib-…'
                   }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                  className="input-field h-11 "
                 />
               </div>
             )}
@@ -885,7 +885,7 @@ export default function AdminPage() {
                     value={smtpHost}
                     onChange={(event) => setSmtpHost(event.target.value)}
                     placeholder="smtp.exemple.fr"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                    className="input-field h-11 "
                   />
                 </div>
                 <div>
@@ -896,7 +896,7 @@ export default function AdminPage() {
                     max={65535}
                     value={smtpPort}
                     onChange={(event) => setSmtpPort(Number(event.target.value))}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                    className="input-field h-11 "
                   />
                 </div>
                 <div>
@@ -907,7 +907,7 @@ export default function AdminPage() {
                     value={smtpUser}
                     onChange={(event) => setSmtpUser(event.target.value)}
                     placeholder="login@exemple.fr"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                    className="input-field h-11 "
                   />
                 </div>
                 <div>
@@ -922,7 +922,7 @@ export default function AdminPage() {
                         ? '•••••••• (laisser vide pour conserver)'
                         : 'mot de passe'
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
+                    className="input-field h-11 "
                   />
                 </div>
                 <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
@@ -987,7 +987,7 @@ export default function AdminPage() {
               <button
                 type="submit"
                 disabled={emailSaving}
-                className="rounded-lg bg-brand-600 px-5 py-2.5 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+                className="btn-primary-sm px-5"
               >
                 {emailSaving ? 'Enregistrement…' : 'Enregistrer'}
               </button>

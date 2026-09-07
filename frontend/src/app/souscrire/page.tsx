@@ -7,7 +7,7 @@ import Link from 'next/link';
 export default function SouscrirePage() {
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="ds-card p-8 text-center">
         <div className="text-4xl">🏢</div>
         <h1 className="mt-3 text-xl font-bold text-slate-900">Accès sur demande</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -16,7 +16,7 @@ export default function SouscrirePage() {
         </p>
         <a
           href="mailto:bounette14701@gmail.com"
-          className="mt-6 inline-block rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-700"
+          className="btn-primary mt-6 inline-flex w-auto px-6"
         >
           Nous contacter
         </a>

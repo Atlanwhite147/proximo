@@ -35,11 +35,11 @@ export default function MessagesPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="mx-auto max-w-md ds-card p-8 text-center">
         <p className="text-slate-600">Connectez-vous pour accéder à votre messagerie.</p>
         <Link
           href="/connexion?next=/messages"
-          className="mt-4 inline-block rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+          className="btn-primary-sm rounded-xl px-5 mt-4"
         >
           Se connecter
         </Link>
@@ -68,7 +68,7 @@ export default function MessagesPage() {
             <li key={conversation.id}>
               <Link
                 href={`/messages/${conversation.id}`}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-300 hover:shadow"
+                className="flex items-center justify-between gap-4 ds-card ds-card-hover p-4"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

@@ -113,7 +113,7 @@ export default function ConversationPage() {
 
       {error && <ErrorMessage message={error} />}
 
-      <div className="flex h-[60vh] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex h-[60vh] flex-col ds-card">
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
           {messages.length === 0 ? (
             <p className="py-10 text-center text-sm text-slate-400">
@@ -160,7 +160,7 @@ export default function ConversationPage() {
           <button
             type="submit"
             disabled={sending || !content.trim()}
-            className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-40"
+            className="btn-primary-sm rounded-xl px-5"
           >
             Envoyer
           </button>

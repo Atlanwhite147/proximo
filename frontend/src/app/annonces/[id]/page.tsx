@@ -90,7 +90,7 @@ export default function ListingDetailPage() {
         ← Retour aux annonces
       </Link>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="ds-card p-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
             <span aria-hidden>{CATEGORY_EMOJI[listing.category]}</span>
@@ -176,7 +176,7 @@ export default function ListingDetailPage() {
                   type="button"
                   onClick={() => void handleContact()}
                   disabled={sending}
-                  className="mt-3 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-700 disabled:opacity-50"
+                  className="btn-primary-sm rounded-xl px-5 mt-3"
                 >
                   {user ? (sending ? 'Envoi…' : 'Contacter le voisin') : 'Se connecter pour contacter'}
                 </button>

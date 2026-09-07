@@ -46,7 +46,7 @@ export default function InstallPage() {
 
   if (status === 'done') {
     return (
-      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="mx-auto max-w-md ds-card p-8 text-center">
         <p className="text-3xl">✅</p>
         <h1 className="mt-2 text-xl font-bold text-slate-900">Déjà installé</h1>
         <p className="mt-2 text-sm text-slate-500">
@@ -54,7 +54,7 @@ export default function InstallPage() {
         </p>
         <Link
           href="/"
-          className="mt-5 inline-block rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+          className="btn-primary-sm rounded-xl px-5 mt-5"
         >
           Retour à l’accueil
         </Link>
@@ -148,7 +148,7 @@ export default function InstallPage() {
       {step === 'account' && (
         <form
           onSubmit={handleAccountSubmit}
-          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="space-y-4 ds-card p-6"
         >
           <h2 className="font-semibold text-slate-900">👑 Compte administrateur</h2>
           <p className="text-sm text-slate-500">
@@ -226,7 +226,7 @@ export default function InstallPage() {
           <ErrorMessage message={error} />
           <button
             type="submit"
-            className="w-full rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white shadow hover:bg-brand-700"
+            className="btn-primary"
           >
             Continuer →
           </button>
@@ -236,7 +236,7 @@ export default function InstallPage() {
       {step === 'residence' && (
         <form
           onSubmit={(event) => void handleComplete(event)}
-          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="space-y-4 ds-card p-6"
         >
           <h2 className="font-semibold text-slate-900">🏢 Votre résidence</h2>
           <p className="text-sm text-slate-500">
@@ -302,7 +302,7 @@ export default function InstallPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white shadow hover:bg-brand-700 disabled:opacity-50"
+              className="btn-primary flex-1"
             >
               {submitting ? 'Installation en cours…' : 'Installer Proximo ✓'}
             </button>
@@ -313,7 +313,7 @@ export default function InstallPage() {
       )}
 
       {step === 'done' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="ds-card p-8 text-center">
           <p className="text-4xl">🎉</p>
           <h2 className="mt-3 text-xl font-bold text-slate-900">
             Proximo est installé !
@@ -324,7 +324,7 @@ export default function InstallPage() {
           </p>
           <Link
             href="/connexion"
-            className="mt-5 inline-block rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white shadow hover:bg-brand-700"
+            className="btn-primary-sm rounded-xl px-6 mt-5"
           >
             Se connecter
           </Link>

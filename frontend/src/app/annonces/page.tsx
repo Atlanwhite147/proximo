@@ -174,7 +174,7 @@ function ListingsContent() {
           </div>
           <Link
             href="/annonces/nouvelle"
-            className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+            className="btn-primary-sm rounded-xl"
           >
             + {showIncidents ? 'Signaler un incident' : 'Publier'}
           </Link>
@@ -195,7 +195,7 @@ function ListingsContent() {
               setCategory(event.target.value as FilterCategory);
               setPage(1);
             }}
-            className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            className="input-field h-11 text-sm "
           >
             <option value="">Toutes les catégories</option>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (

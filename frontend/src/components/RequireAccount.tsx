@@ -37,7 +37,7 @@ export function RequireAccount({ children, next }: { children: React.ReactNode; 
   if (user.status !== 'ACTIVE') {
     return (
       <div className="mx-auto max-w-md px-4 py-16">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="ds-card p-8 text-center">
           <div className="text-4xl">{user.status === 'SUSPENDED' ? '🚫' : '⏳'}</div>
           <h1 className="mt-3 text-xl font-bold text-slate-900">
             {user.status === 'SUSPENDED'
