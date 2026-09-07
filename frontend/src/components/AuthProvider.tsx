@@ -45,6 +45,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh().finally(() => setLoading(false));
   }, [refresh]);
 
+  // Rafraîchit le profil quand l'onglet redevient visible (l'admin peut avoir
+  // validé le compte ailleurs) et, tant que le compte est PENDING, toutes les
+  // 15 s : l'écran « en attente » se débloque dès la validation, sans F5.
+  useEffect(() => {
+    const sync = () => {
+      if (!loading) void refresh();
+    };
+    window.addEventListener('focus', sync);
+    // Polling uniquement pour les comptes PENDING (déblocage auto).
+    const poll =
+      user?.status === 'PENDING'
+        ? window.setInterval(() => void refresh(), 15_000)
+        : undefined;
+    return () => {
+      window.removeEventListener('focus', sync);
+      if (poll) window.clearInterval(poll);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user?.status]);
+
   // Assistant d'installation : redirection automatique au premier lancement.
   useEffect(() => {
     if (loading) return;
