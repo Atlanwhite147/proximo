@@ -87,6 +87,66 @@ export default function HomePage() {
         </p>
       )}
 
+      {/* ─── Fonctionnalités (visiteurs, pour donner envie) ── */}
+      {!user && (
+        <section className="space-y-4">
+          <h2 className="text-center text-lg font-bold text-slate-900">
+            Pourquoi rejoindre votre résidence sur Proximo ?
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                icon: '🔧',
+                title: 'Entraide entre voisins',
+                text: 'Prêt de matériel, services, dons — trouvez ce qu’il vous faut à deux pas.',
+              },
+              {
+                icon: '🛠️',
+                title: 'Signalements au syndic',
+                text: 'Fuite, ascenseur, dégradation… avec photos, suivis par toute la résidence.',
+              },
+              {
+                icon: '💬',
+                title: 'Discussions par sujet',
+                text: 'Chaque annonce et signalement a son fil : questions et retours entre voisins.',
+              },
+              {
+                icon: '🔒',
+                title: 'Réservé aux habitants',
+                text: 'Accès validé par la résidence — pas de publicité, pas de données revendues.',
+              },
+            ].map((feature) => (
+              <div
+                key={feature.title}
+                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <span className="text-2xl" aria-hidden>
+                  {feature.icon}
+                </span>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{feature.title}</h3>
+                  <p className="mt-0.5 text-sm text-slate-600">{feature.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Link
+              href="/inscription"
+              className="rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700"
+            >
+              Rejoindre ma résidence
+            </Link>
+            <Link
+              href="/connexion"
+              className="rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              J&apos;ai déjà un compte
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* ─── Accès rapides ─────────────────────────────────── */}
       {user && user.status === 'ACTIVE' && (
         <section className="grid grid-cols-3 gap-3">
