@@ -49,13 +49,18 @@ export class AdminController {
     @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('residenceId') requestedResidenceId?: string,
   ) {
-    // Un ADMIN local ne gère que SA résidence ; le SUPERADMIN voit tout.
+    // Un ADMIN local ne gère que SA résidence ; le SUPERADMIN voit tout,
+    // et peut filtrer par résidence (console multi-résidences).
     const isSuper = user.role === 'SUPERADMIN';
+    const scopeResidenceId = !isSuper
+      ? user.residenceId
+      : requestedResidenceId || undefined;
     const users = await this.prisma.user.findMany({
       where: {
         ...(status ? { status } : {}),
-        ...(!isSuper && user.residenceId ? { residenceId: user.residenceId } : {}),
+        ...(scopeResidenceId ? { residenceId: scopeResidenceId } : {}),
         ...(search
           ? {
               OR: [

@@ -33,12 +33,24 @@ export class CommentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Liste les commentaires d'une annonce (chronologique). */
-  async listForListing(listingId: string): Promise<CommentWithAuthor[]> {
+  async listForListing(listingId: string, residenceId?: string | null): Promise<CommentWithAuthor[]> {
+    if (residenceId) {
+      const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
+      if (!listing || listing.residenceId !== residenceId) {
+        throw new NotFoundException('Annonce introuvable');
+      }
+    }
     return this.list({ listingId });
   }
 
   /** Liste les commentaires d'un signalement (chronologique). */
-  async listForIncident(incidentId: string): Promise<CommentWithAuthor[]> {
+  async listForIncident(incidentId: string, residenceId?: string | null): Promise<CommentWithAuthor[]> {
+    if (residenceId) {
+      const incident = await this.prisma.incident.findUnique({ where: { id: incidentId } });
+      if (!incident || incident.residenceId !== residenceId) {
+        throw new NotFoundException('Signalement introuvable');
+      }
+    }
     return this.list({ incidentId });
   }
 
@@ -66,7 +78,11 @@ export class CommentsService {
   }
 
   /** Crée un commentaire sur l'annonce ou le signalement ciblé. */
-  async create(authorId: string, dto: CreateCommentDto): Promise<CommentWithAuthor> {
+  async create(
+    authorId: string,
+    authorResidenceId: string | null | undefined,
+    dto: CreateCommentDto,
+  ): Promise<CommentWithAuthor> {
     const { listingId, incidentId, content } = dto;
     if (!listingId && !incidentId) {
       throw new BadRequestException('Précisez une annonce ou un signalement');
@@ -75,14 +91,21 @@ export class CommentsService {
       throw new BadRequestException('Un seul type de cible à la fois');
     }
 
-    // La cible doit exister.
+    // La cible doit exister ET appartenir à la résidence de l'auteur
+    // (isolation multi-résidences : on ne commente que chez soi).
     if (listingId) {
       const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
       if (!listing) throw new NotFoundException('Annonce introuvable');
+      if (listing.residenceId !== authorResidenceId) {
+        throw new NotFoundException('Annonce introuvable');
+      }
     }
     if (incidentId) {
       const incident = await this.prisma.incident.findUnique({ where: { id: incidentId } });
       if (!incident) throw new NotFoundException('Signalement introuvable');
+      if (incident.residenceId !== authorResidenceId) {
+        throw new NotFoundException('Signalement introuvable');
+      }
     }
 
     const comment = await this.prisma.comment.create({

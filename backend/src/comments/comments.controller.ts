@@ -29,15 +29,21 @@ export class CommentsController {
 
   /** Commentaires d'une annonce. */
   @Get('listing/:listingId')
-  async listForListing(@Param('listingId', ParseUUIDPipe) listingId: string) {
-    const comments = await this.commentsService.listForListing(listingId);
+  async listForListing(
+    @Param('listingId', ParseUUIDPipe) listingId: string,
+    @CurrentUser() user: { residenceId?: string | null },
+  ) {
+    const comments = await this.commentsService.listForListing(listingId, user.residenceId);
     return { comments };
   }
 
   /** Commentaires d'un signalement. */
   @Get('incident/:incidentId')
-  async listForIncident(@Param('incidentId', ParseUUIDPipe) incidentId: string) {
-    const comments = await this.commentsService.listForIncident(incidentId);
+  async listForIncident(
+    @Param('incidentId', ParseUUIDPipe) incidentId: string,
+    @CurrentUser() user: { residenceId?: string | null },
+  ) {
+    const comments = await this.commentsService.listForIncident(incidentId, user.residenceId);
     return { comments };
   }
 
@@ -45,8 +51,11 @@ export class CommentsController {
   @Post()
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @HttpCode(HttpStatus.CREATED)
-  async create(@CurrentUser() user: { id: string }, @Body() dto: CreateCommentDto) {
-    const comment = await this.commentsService.create(user.id, dto);
+  async create(
+    @CurrentUser() user: { id: string; residenceId?: string | null },
+    @Body() dto: CreateCommentDto,
+  ) {
+    const comment = await this.commentsService.create(user.id, user.residenceId, dto);
     return { comment };
   }
 

@@ -15,15 +15,27 @@ const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 export class InvitationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createdById: string, dto: CreateInvitationDto) {
+  async create(
+    createdById: string,
+    dto: CreateInvitationDto,
+  ) {
     const token = randomUUID().replace(/-/g, '');
     const expiresInHours = dto.expiresInHours ?? DEFAULT_TTL_HOURS;
+
+    // La résidence de l'invitation = celle de l'habitant qui invite
+    // (multi-résidences : le jeton doit mener vers SA résidence).
+    const creator = await this.prisma.user.findUnique({
+      where: { id: createdById },
+      select: { residenceId: true },
+    });
+    const residenceId = creator?.residenceId ?? null;
 
     const invitation = await this.prisma.invitation.create({
       data: {
         token,
         neighborhood: dto.neighborhood.trim(),
         createdById,
+        residenceId,
         expiresAt: new Date(Date.now() + expiresInHours * 3_600_000),
       },
     });

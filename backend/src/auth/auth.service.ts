@@ -415,13 +415,14 @@ export class AuthService {
     if (invitation.expiresAt < new Date()) {
       throw new BadRequestException("Ce jeton d'invitation a expiré");
     }
+    if (!invitation.residenceId) {
+      throw new BadRequestException("Cette invitation n'est liée à aucune résidence");
+    }
+    // Tout est valide : on consomme le jeton (usage unique).
     await this.prisma.invitation.update({
       where: { id: invitation.id },
       data: { usedAt: new Date() },
     });
-    if (!invitation.residenceId) {
-      throw new BadRequestException("Cette invitation n'est liée à aucune résidence");
-    }
     return invitation.residenceId;
   }
 }

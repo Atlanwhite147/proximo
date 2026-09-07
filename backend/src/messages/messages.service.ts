@@ -41,9 +41,23 @@ export class MessagesService {
 
     const recipient = await this.prisma.user.findUnique({
       where: { id: dto.recipientId },
-      select: { id: true },
+      select: { id: true, residenceId: true },
     });
     if (!recipient) {
+      throw new NotFoundException('Destinataire introuvable');
+    }
+
+    // Isolation multi-résidences : on n'écrit qu'aux habitants de SA résidence
+    // (le SUPERADMIN reste libre pour la gestion de la plateforme).
+    const sender = await this.prisma.user.findUnique({
+      where: { id: senderId },
+      select: { residenceId: true, role: true },
+    });
+    const sameResidence =
+      !!sender?.residenceId &&
+      !!recipient.residenceId &&
+      sender.residenceId === recipient.residenceId;
+    if (!sameResidence && sender?.role !== 'SUPERADMIN') {
       throw new NotFoundException('Destinataire introuvable');
     }
 
