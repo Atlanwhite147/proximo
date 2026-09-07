@@ -40,12 +40,12 @@ jobs:
       - name: Restaurer le cache node_modules
         # Cache du dossier node_modules complet (clé = lock) : une fois chaud,
         # npm ci est quasi hors-ligne → insensible aux incidents npmjs.
+        # Salé 2026-09-08 : purge d'un cache soupçonné corrompu (tests OK en
+        # local, KO en CI) — le fallback restore-keys réinjectait l'ancien cache.
         uses: actions/cache@v4
         with:
           path: backend/node_modules
-          key: backend-node-modules-${{ hashFiles('backend/package-lock.json') }}
-          restore-keys: |
-            backend-node-modules-
+          key: backend-node-modules-${{ hashFiles('backend/package-lock.json') }}-v2
 
       - name: Pinner npm (bug "Exit handler never called!" de npm 10.9.x)
         run: npm install -g npm@10.8.2
