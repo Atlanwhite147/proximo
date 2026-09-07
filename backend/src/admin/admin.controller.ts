@@ -135,8 +135,11 @@ export class AdminController {
   // ─── Signalements ────────────────────────────────────────────
 
   @Get('incidents')
-  async listIncidents(@Query('status') status?: string) {
-    const incidents = await this.incidentsService.listAll(status);
+  async listIncidents(
+    @Query('status') status?: string,
+    @Query('residenceId') residenceId?: string,
+  ) {
+    const incidents = await this.incidentsService.listAll(status, residenceId ?? null);
     return { incidents };
   }
 
@@ -153,9 +156,15 @@ export class AdminController {
   // ─── Annonces (modération) ─────────────────────────────────
 
   @Get('listings')
-  async listListings(@Query('status') status?: string) {
+  async listListings(
+    @Query('status') status?: string,
+    @Query('residenceId') residenceId?: string,
+  ) {
     const listings = await this.prisma.listing.findMany({
-      where: status ? { status } : undefined,
+      where: {
+        ...(status ? { status } : {}),
+        ...(residenceId ? { residenceId } : {}),
+      },
       orderBy: { createdAt: 'desc' },
       take: 200,
       include: {
@@ -348,8 +357,8 @@ export class AdminController {
   // ─── Invitations ─────────────────────────────────────────────
 
   @Get('invitations')
-  async listInvitations() {
-    const invitations = await this.invitationsService.listAll();
+  async listInvitations(@Query('residenceId') residenceId?: string) {
+    const invitations = await this.invitationsService.listAll(residenceId ?? null);
     return { invitations };
   }
 
@@ -387,9 +396,38 @@ export class AdminController {
     }
     const residences = await this.prisma.residence.findMany({
       orderBy: { createdAt: 'asc' },
-      include: { _count: { select: { users: true, listings: true, incidents: true } } },
+      include: {
+        _count: {
+          select: {
+            users: true,
+            listings: true,
+            incidents: true,
+            invitations: { where: { usedAt: null, expiresAt: { gt: new Date() } } },
+          },
+        },
+      },
     });
-    return { residences };
+    // Comptage des membres ACTIVE et PENDING par résidence.
+    const users = await this.prisma.user.groupBy({
+      by: ['residenceId', 'status'],
+      _count: { _all: true },
+      where: { residenceId: { in: residences.map((r) => r.id) } },
+    });
+    const counts = new Map<string, { active: number; pending: number }>();
+    for (const row of users) {
+      const key = row.residenceId ?? '';
+      const current = counts.get(key) ?? { active: 0, pending: 0 };
+      if (row.status === 'ACTIVE') current.active += row._count._all;
+      if (row.status === 'PENDING') current.pending += row._count._all;
+      counts.set(key, current);
+    }
+    return {
+      residences: residences.map((residence) => ({
+        ...residence,
+        membersActive: counts.get(residence.id)?.active ?? 0,
+        membersPending: counts.get(residence.id)?.pending ?? 0,
+      })),
+    };
   }
 
   @Post('residences')
@@ -437,5 +475,36 @@ export class AdminController {
     if (dto.syndicEmail !== undefined) data.syndicEmail = dto.syndicEmail.trim() || '';
     const updated = await this.prisma.residence.update({ where: { id }, data });
     return { residence: updated };
+  }
+
+  @Delete('residences/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteResidence(
+    @CurrentUser() user: { role: string; residenceId?: string | null },
+    @Param('id') id: string,
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    const residence = await this.prisma.residence.findUnique({
+      where: { id },
+      include: { _count: { select: { users: true } } },
+    });
+    if (!residence) {
+      throw new NotFoundException('Résidence introuvable');
+    }
+    // Impossible de supprimer la dernière résidence (l'app a besoin d'au moins une).
+    const total = await this.prisma.residence.count();
+    if (total <= 1) {
+      throw new BadRequestException('Impossible de supprimer la dernière résidence');
+    }
+    // Une résidence avec des membres actifs ne se supprime pas par accident :
+    // il faut d'abord retirer/suspendre ses habitants.
+    if (residence._count.users > 0) {
+      throw new BadRequestException(
+        'Cette résidence a encore des membres. Retirez-les avant de la supprimer.',
+      );
+    }
+    await this.prisma.residence.delete({ where: { id } });
   }
 }

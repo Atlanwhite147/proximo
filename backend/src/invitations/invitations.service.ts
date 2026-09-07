@@ -67,8 +67,9 @@ export class InvitationsService {
   }
 
   /** Liste des invitations (administration). */
-  async listAll() {
+  async listAll(residenceId?: string | null) {
     return this.prisma.invitation.findMany({
+      where: residenceId ? { residenceId } : undefined,
       orderBy: { createdAt: 'desc' },
       take: 100,
       include: { createdBy: { select: { firstName: true, lastName: true } } },
