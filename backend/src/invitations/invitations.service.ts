@@ -15,10 +15,7 @@ const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 export class InvitationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    createdById: string,
-    dto: CreateInvitationDto,
-  ) {
+  async create(createdById: string, dto: CreateInvitationDto) {
     const token = randomUUID().replace(/-/g, '');
     const expiresInHours = dto.expiresInHours ?? DEFAULT_TTL_HOURS;
 

@@ -11,6 +11,8 @@ import {
   STATUS_LABELS,
   USER_STATUS_LABELS,
   type AdminUser,
+  type BrevoQuotaInfo,
+  type EmailOutboxInfo,
   type EmailSettings,
   type Incident,
   type IncidentStatus,
@@ -81,8 +83,17 @@ export default function AdminPage() {
   const [smtpPass, setSmtpPass] = useState('');
   const [incidentNotifEnabled, setIncidentNotifEnabled] = useState(true);
   const [listingNotifEnabled, setListingNotifEnabled] = useState(true);
+  const [agencyNotifEnabled, setAgencyNotifEnabled] = useState(true);
   const [emailSaving, setEmailSaving] = useState(false);
   const [emailTesting, setEmailTesting] = useState(false);
+  const [emailFlushing, setEmailFlushing] = useState(false);
+  // Quota Brevo + file d'attente (superadmin)
+  const [brevoInfo, setBrevoInfo] = useState<BrevoQuotaInfo>({ remaining: null, limit: null });
+  const [outboxInfo, setOutboxInfo] = useState<EmailOutboxInfo>({
+    pending: 0,
+    oldestCreatedAt: null,
+    lastError: null,
+  });
 
   const loadUsers = useCallback(() => {
     const params = new URLSearchParams();
@@ -124,12 +135,19 @@ export default function AdminPage() {
         setAgencyName(data.settings.agencyName ?? '');
         setSyndicEmail(data.settings.email ?? '');
         setResidenceName(data.settings.residenceName ?? '');
+        setAgencyNotifEnabled(data.settings.notifyAgencyOnIncident ?? true);
+        setIncidentNotifEnabled(data.settings.notifyResidentsOnIncident ?? true);
+        setListingNotifEnabled(data.settings.notifyResidentsOnListing ?? true);
       })
       .catch(() => setSettings(null));
   }, []);
 
   const loadEmailSettings = useCallback(() => {
-    api<{ settings: EmailSettings }>('/admin/email-settings')
+    api<{
+      settings: EmailSettings;
+      brevo?: BrevoQuotaInfo;
+      outbox?: EmailOutboxInfo;
+    }>('/admin/email-settings')
       .then((data) => {
         setEmailSettings(data.settings);
         setEmailMode(data.settings.mode);
@@ -141,8 +159,10 @@ export default function AdminPage() {
         setSmtpUser(data.settings.smtpUser ?? '');
         setBrevoApiKey('');
         setSmtpPass('');
-        setIncidentNotifEnabled(data.settings.incidentNotificationsEnabled ?? true);
-        setListingNotifEnabled(data.settings.listingNotificationsEnabled ?? true);
+        setBrevoInfo(data.brevo ?? { remaining: null, limit: null });
+        setOutboxInfo(
+          data.outbox ?? { pending: 0, oldestCreatedAt: null, lastError: null },
+        );
       })
       .catch(() => setEmailSettings(null));
   }, []);
@@ -229,9 +249,16 @@ export default function AdminPage() {
     try {
       await api('/admin/settings', {
         method: 'PATCH',
-        body: JSON.stringify({ agencyName, email: syndicEmail, residenceName }),
+        body: JSON.stringify({
+          agencyName,
+          email: syndicEmail,
+          residenceName,
+          notifyAgencyOnIncident: agencyNotifEnabled,
+          notifyResidentsOnIncident: incidentNotifEnabled,
+          notifyResidentsOnListing: listingNotifEnabled,
+        }),
       });
-      setSuccess('Réglages syndic enregistrés.');
+      setSuccess('Réglages enregistrés.');
       loadSettings();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Enregistrement impossible');
@@ -256,8 +283,6 @@ export default function AdminPage() {
           smtpSecure,
           smtpUser,
           ...(smtpPass ? { smtpPass } : {}),
-          incidentNotificationsEnabled: incidentNotifEnabled,
-          listingNotificationsEnabled: listingNotifEnabled,
         }),
       });
       setEmailSettings(data.settings);
@@ -286,6 +311,28 @@ export default function AdminPage() {
       setError(err instanceof Error ? err.message : 'Envoi impossible');
     } finally {
       setEmailTesting(false);
+    }
+  };
+
+  const flushEmailOutbox = async () => {
+    setError(null);
+    setSuccess(null);
+    setEmailFlushing(true);
+    try {
+      const data = await api<{ flushed: number; outbox: EmailOutboxInfo }>(
+        '/admin/email-settings/flush',
+        { method: 'POST' },
+      );
+      setOutboxInfo(data.outbox);
+      setSuccess(
+        data.flushed > 0
+          ? `${data.flushed} email(s) en attente renvoyé(s).`
+          : 'Aucun email en attente à renvoyer.',
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Renvoi impossible');
+    } finally {
+      setEmailFlushing(false);
     }
   };
 
@@ -795,6 +842,74 @@ export default function AdminPage() {
                 />
               </div>
             </div>
+
+            {/* ─── Notifications par email (cette résidence) ── */}
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Notifications par email
+              </h3>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Emails envoyés automatiquement pour cette résidence. Chaque habitant
+                peut aussi désactiver ses notifications dans son profil.
+              </p>
+              <div className="mt-3 space-y-3">
+                <label className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <span>
+                    <span className="block text-sm font-medium text-slate-800">
+                      Signalement envoyé à l&apos;agence
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      Description et photos du signalement, à l&apos;adresse de réception
+                      ci-dessus.
+                    </span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={agencyNotifEnabled}
+                    onChange={(event) => setAgencyNotifEnabled(event.target.checked)}
+                    className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
+                    aria-label="Activer les emails à l'agence"
+                  />
+                </label>
+                <label className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <span>
+                    <span className="block text-sm font-medium text-slate-800">
+                      Nouveau signalement aux habitants
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      Email à tous les habitants à la déclaration d&apos;un signalement.
+                    </span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={incidentNotifEnabled}
+                    onChange={(event) => setIncidentNotifEnabled(event.target.checked)}
+                    className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
+                    aria-label="Activer les emails de signalement aux habitants"
+                  />
+                </label>
+                <label className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <span>
+                    <span className="block text-sm font-medium text-slate-800">
+                      Nouvelle annonce aux habitants
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      Email aux habitants quand un voisin coche « notifier la résidence ».
+                    </span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={listingNotifEnabled}
+                    onChange={(event) => setListingNotifEnabled(event.target.checked)}
+                    className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
+                    aria-label="Activer les emails d'annonce aux habitants"
+                  />
+                </label>
+              </div>
+            </div>
             <button
               type="submit"
               className="btn-primary-sm px-5 mt-4"
@@ -948,51 +1063,69 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* ─── Mails automatiques à la résidence ─────────── */}
-            <div className="mt-6 border-t border-slate-100 pt-5">
-              <h3 className="text-sm font-semibold text-slate-900">Mails automatiques</h3>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Notifications envoyées aux habitants (comptes ACTIVE), désactivable à tout moment.
-              </p>
-              <div className="mt-3 space-y-3">
-                <label className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <span>
-                    <span className="block text-sm font-medium text-slate-800">
-                      🛠️ Nouveau signalement
-                    </span>
-                    <span className="block text-xs text-slate-500">
-                      Email à tous les habitants à la déclaration d&apos;un incident.
-                    </span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    checked={incidentNotifEnabled}
-                    onChange={(event) => setIncidentNotifEnabled(event.target.checked)}
-                    className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
-                    aria-label="Activer les mails de signalement"
-                  />
-                </label>
-                <label className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <span>
-                    <span className="block text-sm font-medium text-slate-800">
-                      📦 Nouvelle annonce
-                    </span>
-                    <span className="block text-xs text-slate-500">
-                      Email aux habitants quand un voisin coche « notifier la résidence ».
-                    </span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    checked={listingNotifEnabled}
-                    onChange={(event) => setListingNotifEnabled(event.target.checked)}
-                    className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
-                    aria-label="Activer les mails d'annonce"
-                  />
-                </label>
+            {/* ─── Quota Brevo & file d'attente ─────────────── */}
+            {emailMode === 'brevo' && (
+              <div className="mt-6 border-t border-slate-100 pt-5">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Quota Brevo (offre gratuite)
+                </h3>
+                {brevoInfo.remaining !== null ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Emails restants aujourd&apos;hui :{' '}
+                    <strong
+                      className={
+                        brevoInfo.remaining <= 0
+                          ? 'text-red-600'
+                          : brevoInfo.remaining < 30
+                            ? 'text-amber-600'
+                            : 'text-slate-700'
+                      }
+                    >
+                      {brevoInfo.remaining}
+                    </strong>{' '}
+                    / {brevoInfo.limit ?? 300}
+                    {brevoInfo.remaining <= 0
+                      ? ' : quota atteint, les prochains emails seront mis en attente.'
+                      : ''}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-slate-400">
+                    Compteur non disponible (API Brevo injoignable).
+                  </p>
+                )}
+                {outboxInfo.pending > 0 ? (
+                  <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <p className="text-sm font-medium text-amber-800">
+                      {outboxInfo.pending} email(s) en attente
+                    </p>
+                    <p className="mt-0.5 text-xs text-amber-700">
+                      Quota Brevo atteint au moment de l&apos;envoi. Renvoi automatique dès la
+                      réinitialisation du compteur (tentative toutes les 10 minutes).
+                      {outboxInfo.oldestCreatedAt
+                        ? ` · En attente depuis le ${new Date(
+                            outboxInfo.oldestCreatedAt,
+                          ).toLocaleString('fr-FR')}`
+                        : ''}
+                      {outboxInfo.lastError
+                        ? ` · Dernière erreur : ${outboxInfo.lastError}`
+                        : ''}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={emailFlushing}
+                      onClick={() => void flushEmailOutbox()}
+                      className="mt-2 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      {emailFlushing ? 'Renvoi…' : 'Renvoyer maintenant'}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-xs text-slate-400">
+                    Aucun email en attente.
+                  </p>
+                )}
               </div>
-            </div>
+            )}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button

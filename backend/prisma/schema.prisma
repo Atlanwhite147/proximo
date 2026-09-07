@@ -25,6 +25,11 @@ model Residence {
   code        String?  @unique // requis pour créer un compte (vide = inscription libre)
   agencyName  String?
   syndicEmail String? // email de l'agence / du syndic (alertes signalements)
+  // Notifications par email (gérées par l'admin de la résidence) :
+  // signalement → email à l'agence ; signalement / annonce → email aux habitants
+  notifyAgencyOnIncident    Boolean @default(true)
+  notifyResidentsOnIncident Boolean @default(true)
+  notifyResidentsOnListing  Boolean @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -181,8 +186,10 @@ model SyndicSettings {
 }
 
 // ─── Réglages d'envoi d'emails (singleton id=1) ───────────────
-// Configurés depuis l'admin (onglet Réglages) — priorité sur les variables
-// d'environnement. `mode` : 'brevo' | 'smtp' | 'log'.
+// Configurés depuis l'admin (onglet Réglages, superadmin) — priorité sur les
+// variables d'environnement. `mode` : 'brevo' | 'smtp' | 'log'.
+// Les notifications par email aux habitants / à l'agence sont, elles,
+// configurables PAR RÉSIDENCE (colonnes notify* de Residence).
 model EmailSettings {
   id            Int      @id @default(1) // singleton
   mode          String   @default("brevo")
@@ -196,10 +203,26 @@ model EmailSettings {
   smtpSecure    Boolean  @default(false)
   smtpUser      String?
   smtpPass      String?
-  // Mails automatiques à la résidence (défaut : activés)
-  incidentNotificationsEnabled Boolean @default(true)
-  listingNotificationsEnabled  Boolean @default(true)
   updatedAt     DateTime @updatedAt
+}
+
+// ─── File d'attente d'emails (quota Brevo dépassé) ───────────
+// Un email dont l'envoi échoue pour cause de quota (Brevo gratuit :
+// 300 emails/jour) est conservé ici et renvoyé automatiquement à la
+// prochaine réinitialisation du compteur. `attachments` : JSON
+// [{ "filename": ..., "path": ... }] — chemins relatifs au volume uploads.
+model EmailOutbox {
+  id          String   @id @default(uuid())
+  to          String
+  subject     String
+  html        String   @db.Text
+  attachments String?  @db.Text
+  attempts    Int      @default(0)
+  lastError   String?
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([sentAt, createdAt])
 }
 
 // ─── Invitation (QR code / lien à usage unique) ───────────────

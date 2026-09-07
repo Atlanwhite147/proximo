@@ -33,7 +33,10 @@ export class CommentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Liste les commentaires d'une annonce (chronologique). */
-  async listForListing(listingId: string, residenceId?: string | null): Promise<CommentWithAuthor[]> {
+  async listForListing(
+    listingId: string,
+    residenceId?: string | null,
+  ): Promise<CommentWithAuthor[]> {
     if (residenceId) {
       const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
       if (!listing || listing.residenceId !== residenceId) {
@@ -44,7 +47,10 @@ export class CommentsService {
   }
 
   /** Liste les commentaires d'un signalement (chronologique). */
-  async listForIncident(incidentId: string, residenceId?: string | null): Promise<CommentWithAuthor[]> {
+  async listForIncident(
+    incidentId: string,
+    residenceId?: string | null,
+  ): Promise<CommentWithAuthor[]> {
     if (residenceId) {
       const incident = await this.prisma.incident.findUnique({ where: { id: incidentId } });
       if (!incident || incident.residenceId !== residenceId) {

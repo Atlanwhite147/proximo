@@ -11,8 +11,7 @@ export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Record<string, any>>();
     const user = request.user as
-      | { role?: string; totpEnabled?: boolean; twoFactorVerified?: boolean }
-      | undefined;
+      { role?: string; totpEnabled?: boolean; twoFactorVerified?: boolean } | undefined;
 
     if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
       throw new ForbiddenException('Accès réservé aux administrateurs');

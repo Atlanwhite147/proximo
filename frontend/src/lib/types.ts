@@ -164,6 +164,10 @@ export interface SyndicSettings {
   email: string | null;
   residenceName?: string | null;
   residenceCode?: string | null;
+  /** Notifications par email de CETTE résidence (gérées par l'admin local). */
+  notifyAgencyOnIncident?: boolean;
+  notifyResidentsOnIncident?: boolean;
+  notifyResidentsOnListing?: boolean;
   updatedAt: string;
 }
 
@@ -179,9 +183,20 @@ export interface EmailSettings {
   smtpPort: number | null;
   smtpSecure: boolean;
   smtpUser: string | null;
-  incidentNotificationsEnabled: boolean;
-  listingNotificationsEnabled: boolean;
   effectiveMode: 'brevo' | 'smtp' | 'log';
+}
+
+/** Quota Brevo restant (GET /account, offre gratuite = 300 emails/jour). */
+export interface BrevoQuotaInfo {
+  remaining: number | null;
+  limit: number | null;
+}
+
+/** État de la file d'attente des emails (quota dépassé). */
+export interface EmailOutboxInfo {
+  pending: number;
+  oldestCreatedAt: string | null;
+  lastError: string | null;
 }
 
 export const CATEGORY_LABELS: Record<ListingCategory, string> = {

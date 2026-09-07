@@ -341,17 +341,49 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     neighborhood: string | null,
     reporterId: string,
   ): Promise<void> {
-    const settings = await this.prisma.syndicSettings.findUnique({ where: { id: 1 } });
-    const syndicEmail = settings?.email || process.env.SYNDIC_EMAIL;
+    // Multi-résidences : l'email de l'agence est celui de LA résidence du
+    // signalement (Residence.syndicEmail). Repli env SYNDIC_EMAIL (dev).
+    const residence = incident.residenceId
+      ? await this.prisma.residence.findUnique({
+          where: { id: incident.residenceId },
+          select: {
+            name: true,
+            agencyName: true,
+            syndicEmail: true,
+            notifyAgencyOnIncident: true,
+          },
+        })
+      : null;
+    const syndicEmail = residence?.syndicEmail?.trim() || process.env.SYNDIC_EMAIL?.trim();
     if (!syndicEmail) {
       return; // Aucun destinataire configuré : rien à envoyer.
+    }
+    if (residence && !residence.notifyAgencyOnIncident) {
+      this.logger.log(
+        `Emails à l'agence désactivés pour la résidence ${residence.name} (skippés).`,
+      );
+      return;
     }
 
     const reporter = await this.prisma.user.findUnique({
       where: { id: reporterId },
-      select: { firstName: true, lastName: true, email: true },
+      select: {
+        firstName: true,
+        lastName: true,
+        email: true,
+        building: true,
+        floor: true,
+        showDetails: true,
+      },
     });
     if (!reporter) return;
+
+    // Détails d'appartement affichés à l'agence uniquement si l'habitant
+    // a coché « afficher mes détails » (vie privée).
+    const contactDetails =
+      reporter.showDetails && (reporter.building || reporter.floor)
+        ? [reporter.building, reporter.floor].filter(Boolean).join(' · ')
+        : null;
 
     await this.emailService.sendIncidentToSyndic(
       syndicEmail,
@@ -361,9 +393,14 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
         description: incident.description,
         neighborhood: neighborhood ?? 'Non précisé',
       },
-      reporter,
-      attachments.map((a) => ({ filename: a.filename, mimeType: a.mimeType, path: a.path })),
-      settings?.residenceName,
+      {
+        firstName: reporter.firstName,
+        lastName: reporter.lastName,
+        email: reporter.email,
+        contactDetails,
+      },
+      attachments.map((a) => ({ filename: a.filename, path: a.path })),
+      residence ? { name: residence.name, agencyName: residence.agencyName } : null,
     );
   }
 }

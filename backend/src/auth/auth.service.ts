@@ -17,7 +17,6 @@ import {
   ACCESS_TOKEN_TTL_DEFAULT,
   REFRESH_TOKEN_COOKIE,
   REFRESH_TOKEN_TTL_DEFAULT,
-  ROLE_ADMIN,
   ROLE_SUPERADMIN,
   ROLE_USER,
   STATUS_ACTIVE,
@@ -115,10 +114,7 @@ export class AuthService {
     let neighborhood = dto.neighborhood?.trim() || null;
 
     if (dto.invitationToken) {
-      const invitationResidenceId = await this.consumeInvitation(
-        dto.invitationToken,
-        neighborhood,
-      );
+      const invitationResidenceId = await this.consumeInvitation(dto.invitationToken, neighborhood);
       residenceId = invitationResidenceId;
     } else {
       const submitted = (dto.residenceCode ?? '').trim();

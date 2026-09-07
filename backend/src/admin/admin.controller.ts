@@ -54,9 +54,7 @@ export class AdminController {
     // Un ADMIN local ne gère que SA résidence ; le SUPERADMIN voit tout,
     // et peut filtrer par résidence (console multi-résidences).
     const isSuper = user.role === 'SUPERADMIN';
-    const scopeResidenceId = !isSuper
-      ? user.residenceId
-      : requestedResidenceId || undefined;
+    const scopeResidenceId = !isSuper ? user.residenceId : requestedResidenceId || undefined;
     const users = await this.prisma.user.findMany({
       where: {
         ...(status ? { status } : {}),
@@ -147,10 +145,7 @@ export class AdminController {
   ) {
     const scopeResidenceId =
       user.role === 'SUPERADMIN' ? residenceId || undefined : user.residenceId || undefined;
-    const incidents = await this.incidentsService.listAll(
-      status,
-      scopeResidenceId ?? null,
-    );
+    const incidents = await this.incidentsService.listAll(status, scopeResidenceId ?? null);
     return { incidents };
   }
 
@@ -220,6 +215,10 @@ export class AdminController {
         residenceCode: residence.code,
         agencyName: residence.agencyName ?? '',
         email: residence.syndicEmail ?? '',
+        // Notifications par email (gérées par l'admin de la résidence)
+        notifyAgencyOnIncident: residence.notifyAgencyOnIncident,
+        notifyResidentsOnIncident: residence.notifyResidentsOnIncident,
+        notifyResidentsOnListing: residence.notifyResidentsOnListing,
       },
     };
   }
@@ -248,9 +247,16 @@ export class AdminController {
         ...(dto.residenceName !== undefined ? { name: dto.residenceName } : {}),
         ...(dto.agencyName !== undefined ? { agencyName: dto.agencyName } : {}),
         ...(dto.email !== undefined ? { syndicEmail: dto.email } : {}),
-        ...(canEditCode && dto.residenceCode !== undefined
-          ? { code: dto.residenceCode }
+        ...(dto.notifyAgencyOnIncident !== undefined
+          ? { notifyAgencyOnIncident: dto.notifyAgencyOnIncident }
           : {}),
+        ...(dto.notifyResidentsOnIncident !== undefined
+          ? { notifyResidentsOnIncident: dto.notifyResidentsOnIncident }
+          : {}),
+        ...(dto.notifyResidentsOnListing !== undefined
+          ? { notifyResidentsOnListing: dto.notifyResidentsOnListing }
+          : {}),
+        ...(canEditCode && dto.residenceCode !== undefined ? { code: dto.residenceCode } : {}),
       },
     });
     return {
@@ -260,6 +266,9 @@ export class AdminController {
         residenceCode: updated.code,
         agencyName: updated.agencyName ?? '',
         email: updated.syndicEmail ?? '',
+        notifyAgencyOnIncident: updated.notifyAgencyOnIncident,
+        notifyResidentsOnIncident: updated.notifyResidentsOnIncident,
+        notifyResidentsOnListing: updated.notifyResidentsOnListing,
       },
     };
   }
@@ -285,8 +294,6 @@ export class AdminController {
         smtpSecure: process.env.SMTP_SECURE === 'true',
         smtpUser: process.env.SMTP_USER ?? null,
         smtpPass: process.env.SMTP_PASS ?? null,
-        incidentNotificationsEnabled: true,
-        listingNotificationsEnabled: true,
       },
       update: {},
     });
@@ -304,10 +311,10 @@ export class AdminController {
         smtpPort: settings.smtpPort,
         smtpSecure: settings.smtpSecure,
         smtpUser: settings.smtpUser ?? '',
-        incidentNotificationsEnabled: settings.incidentNotificationsEnabled,
-        listingNotificationsEnabled: settings.listingNotificationsEnabled,
         effectiveMode: resolved.mode,
       },
+      brevo: await this.emailService.getBrevoQuota(),
+      outbox: await this.emailService.getOutboxStatus(),
     };
   }
 
@@ -347,12 +354,6 @@ export class AdminController {
           : dto.smtpPass === ''
             ? { smtpPass: current.smtpPass }
             : {}),
-        ...(dto.incidentNotificationsEnabled !== undefined
-          ? { incidentNotificationsEnabled: dto.incidentNotificationsEnabled }
-          : {}),
-        ...(dto.listingNotificationsEnabled !== undefined
-          ? { listingNotificationsEnabled: dto.listingNotificationsEnabled }
-          : {}),
       },
     });
     await this.emailService.refreshTransporter();
@@ -377,9 +378,7 @@ export class AdminController {
   /** Envoie un email de test à l'admin connecté (validation de la config). */
   @Post('email-settings/test')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  async testEmailSettings(
-    @CurrentUser() admin: { id: string; email: string; role: string },
-  ) {
+  async testEmailSettings(@CurrentUser() admin: { id: string; email: string; role: string }) {
     if (admin.role !== 'SUPERADMIN') {
       throw new ForbiddenException('Réservé au superadmin de la plateforme');
     }
@@ -404,6 +403,17 @@ export class AdminController {
       </div>`,
     );
     return { sent: true, mode: resolved.mode };
+  }
+
+  /** Renvoie immédiatement les emails mis en file (quota Brevo atteint). */
+  @Post('email-settings/flush')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async flushEmailOutbox(@CurrentUser() admin: { id: string; role: string }) {
+    if (admin.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin de la plateforme');
+    }
+    const result = await this.emailService.flushOutbox();
+    return { ...result, outbox: await this.emailService.getOutboxStatus() };
   }
 
   // ─── Signalements (modération) ─────────────────────────────
@@ -431,8 +441,7 @@ export class AdminController {
 
   @Get('stats')
   async stats(@CurrentUser() user: { role: string; residenceId?: string | null }) {
-    const scopeResidenceId =
-      user.role === 'SUPERADMIN' ? undefined : user.residenceId || undefined;
+    const scopeResidenceId = user.role === 'SUPERADMIN' ? undefined : user.residenceId || undefined;
     const where = scopeResidenceId ? { residenceId: scopeResidenceId } : {};
     const [members, pending, incidents, incidentsOpen, invitations] = await Promise.all([
       this.prisma.user.count({ where }),
@@ -458,9 +467,7 @@ export class AdminController {
   // Le superadmin gère toutes les résidences : liste, création, réglages.
 
   @Get('residences')
-  async listResidences(
-    @CurrentUser() user: { role: string },
-  ) {
+  async listResidences(@CurrentUser() user: { role: string }) {
     if (user.role !== 'SUPERADMIN') {
       throw new ForbiddenException('Réservé au superadmin');
     }

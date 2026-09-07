@@ -68,19 +68,4 @@ export class UpdateEmailSettingsDto {
   @IsString({ message: 'Mot de passe SMTP invalide' })
   @MaxLength(200, { message: 'Mot de passe SMTP trop long' })
   smtpPass?: string;
-
-  /**
-   * Mails automatiques à la résidence :
-   * - incident : notifier tous les habitants à la déclaration d'un signalement
-   * - annonce : autoriser l'envoi quand l'auteur coche « notifier la résidence »
-   */
-  @IsOptional()
-  @Transform(({ value }) => (value === 'true' || value === true ? true : false))
-  @IsBoolean({ message: 'Option de notification invalide' })
-  incidentNotificationsEnabled?: boolean;
-
-  @IsOptional()
-  @Transform(({ value }) => (value === 'true' || value === true ? true : false))
-  @IsBoolean({ message: 'Option de notification invalide' })
-  listingNotificationsEnabled?: boolean;
 }
