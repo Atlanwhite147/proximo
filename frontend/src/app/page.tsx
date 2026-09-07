@@ -56,7 +56,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-2 max-w-xl text-sm text-brand-50">
               Proximo rassemble les habitants d&apos;une même résidence : annonces
-              entre voisins, signalements au syndic, discussions et invitations —
+              entre voisins, signalements au syndic, discussions et invitations,
               le tout au même endroit, sans publicité.
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
