@@ -114,7 +114,7 @@ export default function InstallPage() {
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-900">Bienvenue sur Proximo 🎉</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Quelques informations pour configurer votre résidence — moins de 2 minutes.
+          Quelques informations pour configurer votre résidence, moins de 2 minutes.
         </p>
       </div>
 

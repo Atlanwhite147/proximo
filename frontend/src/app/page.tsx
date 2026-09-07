@@ -28,7 +28,7 @@ export default function HomePage() {
               {user.residenceName ?? 'Rejoignez votre résidence'}
             </h1>
             <p className="mt-2 max-w-xl text-sm text-brand-50">
-              Annonces entre voisins, signalements au syndic, invités — tout ce
+              Annonces entre voisins, signalements au syndic, invités : tout ce
               qui fait vivre votre immeuble, au même endroit.
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
@@ -98,7 +98,7 @@ export default function HomePage() {
               {
                 icon: '🔧',
                 title: 'Entraide entre voisins',
-                text: 'Prêt de matériel, services, dons — trouvez ce qu’il vous faut à deux pas.',
+                text: 'Prêt de matériel, services, dons : trouvez ce qu’il vous faut à deux pas.',
               },
               {
                 icon: '🛠️',
@@ -113,7 +113,7 @@ export default function HomePage() {
               {
                 icon: '🔒',
                 title: 'Réservé aux habitants',
-                text: 'Accès validé par la résidence — pas de publicité, pas de données revendues.',
+                text: 'Accès validé par la résidence : pas de publicité, pas de données revendues.',
               },
             ].map((feature) => (
               <div

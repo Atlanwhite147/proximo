@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Découvrir Proximo — La vie de votre résidence',
+  title: 'Découvrir Proximo · La vie de votre résidence',
   description:
     'Annonces entre voisins, signalements au syndic avec photos, discussions, invitations par QR code. Proximo est une plateforme open source pour votre résidence.',
 };
@@ -77,7 +77,7 @@ export default function DiscoverPage() {
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-brand-50">
           Proximo connecte les habitants d’une même résidence : prêt de matériel,
-          entraide, signalements au syndic, avis aux voisins — au même endroit,
+          entraide, signalements au syndic, avis aux voisins, au même endroit,
           à l’échelle de votre immeuble.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -141,7 +141,7 @@ export default function DiscoverPage() {
           Proximo est né d&apos;un constat simple : les habitants d&apos;une résidence
           n&apos;avaient plus d&apos;outil simple pour échanger entre voisins et suivre
           les sujets de l&apos;immeuble. Le projet est{' '}
-          <strong>open source</strong> — le code est public sur{' '}
+          <strong>open source</strong> : le code est public sur{' '}
           <a
             href="https://github.com/bounette14701-oss/proximo"
             target="_blank"
@@ -150,7 +150,7 @@ export default function DiscoverPage() {
           >
             GitHub
           </a>{' '}
-          — et chacun peut l&apos;héberger pour sa propre résidence, sans abonnement
+          et chacun peut l&apos;héberger pour sa propre résidence, sans abonnement
           ni publicité. Il est encore jeune : les retours des premiers habitants
           le font grandir.
         </p>

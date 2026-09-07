@@ -72,7 +72,7 @@ export function Comments({
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="font-semibold text-slate-900">💬 Discussion</h2>
       <p className="mt-0.5 text-sm text-slate-500">
-        Questions, précisions et retours — visibles par les habitants.
+        Questions, précisions et retours, visibles par les habitants.
       </p>
 
       {comments === null ? (
@@ -106,7 +106,7 @@ export function Comments({
           ))}
           {comments.length === 0 && (
             <p className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">
-              Aucun commentaire pour le moment — soyez le premier à réagir !
+              Aucun commentaire pour le moment : soyez le premier à réagir !
             </p>
           )}
         </ul>

@@ -66,7 +66,6 @@ export default function AdminPage() {
   const [agencyName, setAgencyName] = useState('');
   const [syndicEmail, setSyndicEmail] = useState('');
   const [residenceName, setResidenceName] = useState('');
-  const [residenceCode, setResidenceCode] = useState('');
 
   // Réglages email
   const [emailSettings, setEmailSettings] = useState<EmailSettings | null>(null);
@@ -124,7 +123,6 @@ export default function AdminPage() {
         setAgencyName(data.settings.agencyName ?? '');
         setSyndicEmail(data.settings.email ?? '');
         setResidenceName(data.settings.residenceName ?? '');
-        setResidenceCode(data.settings.residenceCode ?? '');
       })
       .catch(() => setSettings(null));
   }, []);
@@ -215,7 +213,7 @@ export default function AdminPage() {
         body: JSON.stringify({ neighborhood: invNeighborhood, expiresInHours: invHours }),
       });
       setInvNeighborhood('');
-      setSuccess('Invitation créée — imprimez le QR code ou partagez le lien.');
+      setSuccess('Invitation créée : imprimez le QR code ou partagez le lien.');
       loadInvitations();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Création impossible');
@@ -229,12 +227,7 @@ export default function AdminPage() {
     try {
       await api('/admin/settings', {
         method: 'PATCH',
-        body: JSON.stringify({
-          agencyName,
-          email: syndicEmail,
-          residenceName,
-          residenceCode: residenceCode || undefined,
-        }),
+        body: JSON.stringify({ agencyName, email: syndicEmail, residenceName }),
       });
       setSuccess('Réglages syndic enregistrés.');
       loadSettings();
@@ -792,23 +785,6 @@ export default function AdminPage() {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Code de résidence
-                </label>
-                <input
-                  type="text"
-                  maxLength={32}
-                  value={residenceCode}
-                  onChange={(event) => setResidenceCode(event.target.value)}
-                  placeholder="Ex. GERLAND-2026"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
-                />
-                <p className="mt-1 text-xs text-slate-400">
-                  Code requis pour créer un compte. Laissez vide pour permettre
-                  l&apos;inscription libre (non recommandé).
-                </p>
-              </div>
             </div>
             <button
               type="submit"
@@ -836,7 +812,7 @@ export default function AdminPage() {
                   onChange={(event) => setEmailMode(event.target.value as 'brevo' | 'smtp' | 'log')}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
                 >
-                  <option value="brevo">Brevo (API — recommandé)</option>
+                  <option value="brevo">Brevo (API, recommandé)</option>
                   <option value="smtp">SMTP générique</option>
                   <option value="log">Journal (aucun envoi)</option>
                 </select>
@@ -965,7 +941,7 @@ export default function AdminPage() {
             <div className="mt-6 border-t border-slate-100 pt-5">
               <h3 className="text-sm font-semibold text-slate-900">Mails automatiques</h3>
               <p className="mt-0.5 text-xs text-slate-500">
-                Notifications envoyées aux habitants (comptes ACTIVE) — désactivable à tout moment.
+                Notifications envoyées aux habitants (comptes ACTIVE), désactivable à tout moment.
               </p>
               <div className="mt-3 space-y-3">
                 <label className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">

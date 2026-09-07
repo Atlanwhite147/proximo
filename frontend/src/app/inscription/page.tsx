@@ -20,15 +20,13 @@ function InscriptionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitationToken = searchParams.get('invitationToken') ?? '';
-  // Code de résidence pré-rempli via le QR code du flyer (?code=...).
-  const prefillCode = searchParams.get('code') ?? '';
   const { setUser, refresh } = useAuth();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [residenceCode, setResidenceCode] = useState(prefillCode);
+  const [neighborhood, setNeighborhood] = useState('');
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +45,7 @@ function InscriptionForm() {
           lastName,
           email,
           password,
-          ...(invitationToken ? {} : { residenceCode: residenceCode || undefined }),
+          neighborhood: neighborhood || undefined,
           building: building || undefined,
           floor: floor || undefined,
           invitationToken: invitationToken || undefined,
@@ -99,38 +97,7 @@ function InscriptionForm() {
             : 'Entraide et partage de proximité 🤝'}
         </p>
 
-        {!invitationToken && (
-          <div className="mt-5 rounded-xl border border-brand-200 bg-brand-50 p-4">
-            <label className="mb-1 block text-sm font-semibold text-brand-800">
-              Code de résidence
-            </label>
-            <input
-              type="text"
-              required
-              minLength={4}
-              maxLength={32}
-              autoCapitalize="characters"
-              autoComplete="off"
-              value={residenceCode}
-              onChange={(event) => setResidenceCode(event.target.value)}
-              placeholder="Code de résidence"
-              className="w-full rounded-lg border border-brand-300 bg-white px-4 py-3 focus:border-brand-500 focus:outline-none"
-            />
-            <p className="mt-2 text-xs leading-relaxed text-brand-700">
-              Le code vous a été communiqué par votre syndic ou un voisin. Il est
-              requis pour toute inscription, <strong>y compris avec Google</strong>.
-            </p>
-          </div>
-        )}
-
-        <div className="mt-5">
-          <GoogleButton
-            label="S'inscrire avec Google"
-            residenceCode={residenceCode || undefined}
-            invitationToken={invitationToken || undefined}
-            required={!invitationToken}
-          />
-        </div>
+        <GoogleButton label="S'inscrire avec Google" />
 
         <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
@@ -182,13 +149,22 @@ function InscriptionForm() {
             placeholder="Mot de passe (8 caractères min.)"
             className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-brand-500 focus:outline-none"
           />
+          <input
+            type="text"
+            required
+            maxLength={120}
+            value={neighborhood}
+            onChange={(event) => setNeighborhood(event.target.value)}
+            placeholder="Résidence / immeuble (ex. Les Cèdres)"
+            className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-brand-500 focus:outline-none"
+          />
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
               maxLength={20}
               value={building}
               onChange={(event) => setBuilding(event.target.value)}
-              placeholder="Bâtiment (ex. B) — optionnel"
+              placeholder="Bâtiment (ex. B, optionnel)"
               className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-brand-500 focus:outline-none"
             />
             <input
@@ -196,7 +172,7 @@ function InscriptionForm() {
               maxLength={20}
               value={floor}
               onChange={(event) => setFloor(event.target.value)}
-              placeholder="Étage (ex. 3e) — optionnel"
+              placeholder="Étage (ex. 3e, optionnel)"
               className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-brand-500 focus:outline-none"
             />
           </div>

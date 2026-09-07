@@ -209,7 +209,7 @@ export default function ProfilPage() {
                 maxLength={20}
                 value={building}
                 onChange={(event) => setBuilding(event.target.value)}
-                placeholder="Bâtiment (ex. B) — optionnel"
+                placeholder="Bâtiment (ex. B, optionnel)"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
               />
               <input
@@ -217,7 +217,7 @@ export default function ProfilPage() {
                 maxLength={20}
                 value={floor}
                 onChange={(event) => setFloor(event.target.value)}
-                placeholder="Étage (ex. 3e) — optionnel"
+                placeholder="Étage (ex. 3e, optionnel)"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none"
               />
             </div>
@@ -255,7 +255,7 @@ export default function ProfilPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="font-semibold text-slate-900">Sécurité du compte admin</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Double authentification (TOTP — Google Authenticator, Authy…)
+              Double authentification (TOTP : Google Authenticator, Authy…)
             </p>
             <div className="mt-4">
               {totpEnabled ? (

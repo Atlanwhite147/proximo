@@ -57,7 +57,7 @@ export function emailLayout({
           <tr>
             <td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;">
               <p style="margin:0;font-size:12px;line-height:1.6;color:#94a3b8;">
-                ${footer ?? 'Ce message vous est envoyé via Proximo — la vie de votre résidence.'}
+                ${footer ?? 'Ce message vous est envoyé via Proximo, la vie de votre résidence.'}
               </p>
             </td>
           </tr>

@@ -173,7 +173,7 @@ function ListingsContent() {
             <p className="text-sm text-slate-500">
               {showIncidents
                 ? 'Vos signalements envoyés à l’agence et leur suivi.'
-                : 'Prêt, service, don, avis — tout ce qui circule dans votre résidence.'}
+                : 'Prêt, service, don, avis : tout ce qui circule dans votre résidence.'}
             </p>
           </div>
           <Link

@@ -40,7 +40,7 @@ export default function InviterPage() {
       <h1 className="text-2xl font-bold text-slate-900">Inviter un voisin</h1>
       <p className="mt-1 text-sm text-slate-600">
         Générez un lien d&apos;invitation pour{' '}
-        <strong>{user?.residenceName ?? user?.neighborhood ?? 'votre résidence'}</strong> — partagez-le
+        <strong>{user?.residenceName ?? user?.neighborhood ?? 'votre résidence'}</strong>, partagez-le
         par message, ou imprimez le QR code pour l&apos;afficher dans les parties
         communes.
       </p>
@@ -60,7 +60,7 @@ export default function InviterPage() {
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
           <img
             src={invitation.qrUrl}
-            alt={`QR code d'invitation — ${invitation.neighborhood}`}
+            alt={`QR code d'invitation : ${invitation.neighborhood}`}
             width={200}
             height={200}
             className="mx-auto rounded-xl border border-slate-200"
