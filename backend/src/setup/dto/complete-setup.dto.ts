@@ -30,6 +30,12 @@ export class CompleteSetupDto {
   @Length(1, 120, { message: 'Nom de résidence invalide' })
   residenceName!: string;
 
+  /** Code d'accès de la résidence (généré depuis le nom si absent). */
+  @IsOptional()
+  @IsString({ message: 'Code de résidence invalide' })
+  @Length(1, 32, { message: 'Code de résidence invalide' })
+  residenceCode?: string;
+
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'Nom d’agence invalide' })

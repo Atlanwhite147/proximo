@@ -20,7 +20,7 @@ export class SetupService {
   /** L'installation est requise tant qu'aucun administrateur n'existe. */
   async isRequired(): Promise<boolean> {
     const adminCount = await this.prisma.user.count({
-      where: { role: 'ADMIN' },
+      where: { role: { in: ['ADMIN', 'SUPERADMIN'] } },
     });
     return adminCount === 0;
   }
@@ -54,6 +54,35 @@ export class SetupService {
     const syndicEmail = dto.syndicEmail?.trim() || email;
 
     await this.prisma.$transaction(async (tx) => {
+      // Résidence initiale : le code d'accès est dérivé du nom si absent.
+      const residenceCode =
+        dto.residenceCode?.trim() ||
+        dto.residenceName
+          .trim()
+          .toUpperCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^A-Z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') ||
+        'PROXIMO';
+
+      const residence = await tx.residence.upsert({
+        where: { id: 'r-default' },
+        create: {
+          id: 'r-default',
+          name: dto.residenceName.trim(),
+          code: residenceCode,
+          agencyName,
+          syndicEmail,
+        },
+        update: {
+          name: dto.residenceName.trim(),
+          code: residenceCode,
+          agencyName,
+          syndicEmail,
+        },
+      });
+
       await tx.user.create({
         data: {
           email,
@@ -61,12 +90,15 @@ export class SetupService {
           firstName: dto.firstName.trim(),
           lastName: dto.lastName.trim(),
           neighborhood: dto.residenceName.trim(),
+          residenceId: residence.id,
           role: 'ADMIN',
           status: 'ACTIVE',
         },
       });
 
-      // Singleton de configuration de la résidence (id fixe = 1).
+      // Rétro-compat : le singleton SyndicSettings reste alimenté (lectures
+      // historiques de l'email agence), mais la source de vérité devient
+      // la table Residence.
       await tx.syndicSettings.upsert({
         where: { id: 1 },
         create: { id: 1, agencyName, email: syndicEmail, residenceName: dto.residenceName.trim() },
