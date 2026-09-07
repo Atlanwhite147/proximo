@@ -102,7 +102,15 @@ jobs:
         run: npm run lint
 
       - name: Tests unitaires
-        run: npm test
+        run: npm test 2>&1 | tee /tmp/jest.log; exit ${PIPESTATUS[0]}
+
+      - name: Upload logs jest (diagnostic CI rouge)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-logs
+          path: /tmp/jest.log
+          if-no-files-found: ignore
 
       - name: Build
         run: npm run build
