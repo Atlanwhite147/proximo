@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { SectionLabel } from '@/components/ui/section-label';
 
 export const metadata: Metadata = {
   title: 'Découvrir Proximo · La vie de votre résidence',
@@ -62,34 +63,42 @@ export default function DiscoverPage() {
   return (
     <div className="space-y-14 pb-10">
       {/* ─── Héros ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-emerald-700 px-6 py-14 text-center text-white shadow-lg sm:px-10">
-        <div className="absolute -left-8 -top-8 text-[140px] opacity-10" aria-hidden>
+      <section className="glow-bg relative overflow-hidden rounded-3xl bg-brand-gradient px-6 py-16 text-center text-white shadow-lg sm:px-10">
+        <div
+          aria-hidden
+          className="absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-white/10 blur-3xl"
+        />
+        <div className="absolute -left-4 -top-4 text-[120px] opacity-10" aria-hidden>
           🏢
         </div>
-        <div className="absolute -bottom-10 -right-6 text-[140px] opacity-10" aria-hidden>
+        <div className="absolute -bottom-8 -right-4 text-[120px] opacity-10" aria-hidden>
           🤝
         </div>
-        <p className="text-sm font-semibold uppercase tracking-widest text-brand-100">
+        <p className="relative font-mono text-xs font-semibold uppercase tracking-badge text-white/80">
           Open source · Sans publicité
         </p>
-        <h1 className="mx-auto mt-3 max-w-2xl text-3xl font-bold sm:text-4xl">
+        <h1 className="relative mx-auto mt-4 max-w-2xl font-display text-3xl font-normal leading-tight sm:text-5xl">
           Et si votre immeuble avait sa propre plateforme ?
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-brand-50">
+        <p className="relative mx-auto mt-5 max-w-xl text-sm leading-relaxed text-white/90 sm:text-base">
           Proximo connecte les habitants d’une même résidence : prêt de matériel,
           entraide, signalements au syndic, avis aux voisins, au même endroit,
           à l’échelle de votre immeuble.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="relative mt-9 flex flex-wrap items-center justify-center gap-3">
           <a
             href="mailto:proximo@147.ovh?subject=Équiper%20ma%20résidence%20avec%20Proximo"
-            className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow hover:bg-brand-50"
+            className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-7 text-sm font-semibold text-primary-700 shadow hover:bg-primary-50"
           >
             Équiper ma résidence
           </a>
           <Link
             href="/inscription"
-            className="rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+            className="inline-flex h-12 items-center justify-center rounded-xl border border-white/40 px-7 text-sm font-semibold text-white hover:bg-white/10"
           >
             J’ai un code d’invitation
           </Link>
@@ -98,17 +107,24 @@ export default function DiscoverPage() {
 
       {/* ─── Fonctionnalités ───────────────────────────────── */}
       <section>
-        <h2 className="text-center text-2xl font-bold text-slate-900">
-          Ce que Proximo change au quotidien
-        </h2>
+        <div className="text-center">
+          <SectionLabel color="blue">Fonctionnalités</SectionLabel>
+          <h2 className="mt-2 font-display text-3xl font-normal text-slate-900">
+            Ce que Proximo change au quotidien
+          </h2>
+        </div>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FUNCTIONNALITES.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="ds-card ds-card-hover p-6"
             >
-              <div className="text-3xl">{feature.icon}</div>
-              <h3 className="mt-3 font-semibold text-slate-900">{feature.title}</h3>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 text-2xl">
+                {feature.icon}
+              </div>
+              <h3 className="mt-4 font-sans text-lg font-semibold text-slate-900">
+                {feature.title}
+              </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{feature.text}</p>
             </div>
           ))}
@@ -116,16 +132,23 @@ export default function DiscoverPage() {
       </section>
 
       {/* ─── Comment ça marche ─────────────────────────────── */}
-      <section className="rounded-3xl bg-slate-50 px-6 py-10 sm:px-10">
-        <h2 className="text-center text-2xl font-bold text-slate-900">Comment ça marche</h2>
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+      <section className="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-12 text-white sm:px-10">
+        <div
+          aria-hidden
+          className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
+        />
+        <div className="relative text-center">
+          <SectionLabel color="amber">Comment ça marche</SectionLabel>
+          <h2 className="mt-2 font-display text-3xl font-normal">Trois étapes, zéro friction</h2>
+        </div>
+        <div className="relative mt-10 grid gap-8 sm:grid-cols-3">
           {ETAPES.map((step) => (
             <div key={step.num} className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-lg font-bold text-white">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient font-mono text-xl font-bold text-white shadow-glow">
                 {step.num}
               </div>
-              <h3 className="mt-3 font-semibold text-slate-900">{step.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{step.text}</p>
+              <h3 className="mt-4 font-sans text-lg font-semibold">{step.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{step.text}</p>
             </div>
           ))}
         </div>

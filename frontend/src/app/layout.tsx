@@ -1,7 +1,27 @@
 import type { Metadata } from 'next';
+import { Calistoga, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
 import { Navbar } from '@/components/Navbar';
+
+const calistoga = Calistoga({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-calistoga',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Proximo · La vie de votre résidence',
@@ -14,8 +34,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
-      <body className="flex min-h-screen flex-col">
+    <html lang="fr" className={`${calistoga.variable} ${inter.variable} ${jetbrains.variable}`}>
+      <body className="flex min-h-screen flex-col font-sans">
         <AuthProvider>
           <Navbar />
           <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>

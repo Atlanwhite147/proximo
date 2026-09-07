@@ -2,8 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-slate-100 text-slate-800 antialiased;
+/* ─── Design tokens (CSS variables) ─────────────────────────── */
+:root {
+  --background: #fafafa;
+  --foreground: #0f172a;
+  --primary: #0052ff;
+  --primary-secondary: #4d7cff;
+  --border: #e2e8f0;
+  --card: #ffffff;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-color: var(--background);
+  }
+
+  /* Titres display (Calistoga) appliqués via .font-display */
+  h1,
+  h2 {
+    @apply font-display;
+  }
+
+  /* Focus visible accessible (WCAG) */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+}
+
+@layer components {
+  /* Carte de base du design system */
+  .ds-card {
+    @apply rounded-2xl border border-border bg-card shadow-card;
+  }
+
+  .ds-card-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  /* Titre avec dégradé signature sur un mot clé */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #0052ff 0%, #4d7cff 100%);
+  }
+
+  /* Glow doux derrière les héros */
+  .glow-bg {
+    background-image: radial-gradient(circle, rgba(0, 82, 255, 0.06) 0%, transparent 70%);
+  }
+}
+
+@layer utilities {
+  /* Tap target accessible (≥ 44px) pour les petits contrôles */
+  .tap-target {
+    @apply relative;
+  }
+  .tap-target::after {
+    content: '';
+    @apply absolute -inset-2;
+  }
 }
 
 /* Marge basse sur mobile pour laisser la place à la tab bar */

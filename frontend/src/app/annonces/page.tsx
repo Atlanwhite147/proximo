@@ -6,14 +6,13 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import {
   CATEGORY_LABELS,
-  INCIDENT_CATEGORY_LABELS,
-  INCIDENT_STATUS_LABELS,
   type Incident,
   type Listing,
   type ListingCategory,
   type ListingPage,
 } from '@/lib/types';
 import { ListingCard } from '@/components/ListingCard';
+import { IncidentStatusBadge } from '@/components/ui/category-badge';
 import { ErrorMessage, Spinner } from '@/components/Feedback';
 import { RequireAccount } from '@/components/RequireAccount';
 import { formatLocation } from '@/lib/format';
@@ -88,17 +87,24 @@ function ListingsContent() {
 
   /** Carte de signalement (réutilisée en filtre « Signalements » et en fil « Toutes »). */
   const renderIncident = (incident: Incident) => (
-    <li key={incident.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <li
+      key={incident.id}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 pl-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+    >
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-1 bg-category-incident"
+      />
       <div className="flex items-start justify-between gap-3">
         <div>
           <Link
             href={`/signalements/${incident.id}`}
-            className="font-semibold text-slate-900 hover:text-brand-700 hover:underline"
+            className="font-sans font-semibold text-foreground transition-colors hover:text-category-incident"
           >
             {incident.title}
           </Link>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {INCIDENT_CATEGORY_LABELS[incident.category]} · 📍{' '}
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            📍{' '}
             {formatLocation(
               undefined,
               incident.neighborhood,
@@ -109,21 +115,11 @@ function ListingsContent() {
             {incident.user ? ` · ${incident.user.firstName}` : ''}
           </p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-            incident.status === 'OPEN'
-              ? 'bg-amber-100 text-amber-700'
-              : incident.status === 'IN_PROGRESS'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-green-100 text-green-700'
-          }`}
-        >
-          {INCIDENT_STATUS_LABELS[incident.status]}
-        </span>
+        <IncidentStatusBadge status={incident.status} />
       </div>
-      <p className="mt-2 line-clamp-2 text-sm text-slate-600">{incident.description}</p>
+      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{incident.description}</p>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-muted-foreground">
           {new Date(incident.createdAt).toLocaleDateString('fr-FR')} ·{' '}
           {incident.attachments?.length
             ? `${incident.attachments.length} pièce(s) jointe(s)`
@@ -131,7 +127,7 @@ function ListingsContent() {
         </p>
         <span className="flex items-center gap-2">
           {incident._count && incident._count.comments > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
+            <span className="inline-flex items-center gap-1 rounded-full bg-category-incident-soft px-2 py-0.5 font-mono text-[11px] font-semibold text-category-incident">
               💬 {incident._count.comments}
             </span>
           )}
@@ -152,7 +148,7 @@ function ListingsContent() {
                     setError(err instanceof Error ? err.message : 'Action impossible'),
                   );
               }}
-              className="rounded-lg border border-green-200 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-50"
+              className="rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
             >
               ✅ Marquer comme traité
             </button>

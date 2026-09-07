@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import type { Conversation } from '@/lib/types';
 import { useAuth } from './AuthProvider';
+import { BetaIndicator } from './ui/beta-indicator';
 
 /**
  * Navigation « app de résidence » :
@@ -63,16 +64,17 @@ export function Navbar() {
   return (
     <>
       {/* ─── Header (desktop + mobile) ─────────────────────── */}
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-border bg-white/95 backdrop-blur">
         <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="flex items-center gap-2 text-lg font-bold text-brand-700">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold text-foreground">
             <span
               aria-hidden
-              className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-base text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gradient text-base text-white"
             >
               🤝
             </span>
             Proximo
+            <BetaIndicator />
             {user?.residenceName && (
               <span className="hidden rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 sm:inline">
                 {user.residenceName}
@@ -88,13 +90,13 @@ export function Navbar() {
                 href={tab.href}
                 className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isTabActive(tab.href)
-                    ? 'bg-brand-50 text-brand-700'
+                    ? 'bg-primary-50 text-primary-700'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 {tab.label}
                 {tab.href === '/messages' && unread > 0 && (
-                  <span className="ml-1 rounded-full bg-brand-600 px-2 py-0.5 text-xs font-semibold text-white">
+                  <span className="ml-1 rounded-full bg-brand-gradient px-2 py-0.5 text-xs font-semibold text-white">
                     {unread}
                   </span>
                 )}
@@ -105,7 +107,7 @@ export function Navbar() {
                 href="/admin"
                 className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isTabActive('/admin')
-                    ? 'bg-brand-50 text-brand-700'
+                    ? 'bg-primary-50 text-primary-700'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
