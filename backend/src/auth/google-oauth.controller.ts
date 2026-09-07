@@ -43,16 +43,21 @@ export class GoogleOAuthController {
     // Un code fourni est vérifié immédiatement (retour rapide sur /inscription).
     // Pas de code fourni → la vérification est différée au callback : c'est le
     // cas du LOGIN (compte existant), où aucun code ne doit être demandé.
-    if (residenceCode !== undefined) {
-      const settings = await this.prisma.syndicSettings.findUnique({ where: { id: 1 } });
-      const configuredCode = settings?.residenceCode?.trim();
-      if (configuredCode) {
-        const submitted = (residenceCode ?? '').trim().toUpperCase();
-        if (!submitted || submitted !== configuredCode.toUpperCase()) {
-          throw new BadRequestException(
-            'Code de résidence invalide. Demandez-le à votre syndic ou à un voisin.',
-          );
-        }
+    if (residenceCode !== undefined && residenceCode !== '') {
+      const submitted = (residenceCode ?? '').trim();
+      if (!submitted) {
+        throw new BadRequestException(
+          'Code de résidence invalide. Demandez-le à votre syndic ou à un voisin.',
+        );
+      }
+      const residence = await this.prisma.residence.findFirst({
+        where: { code: { equals: submitted, mode: 'insensitive' } },
+        select: { id: true },
+      });
+      if (!residence) {
+        throw new BadRequestException(
+          'Code de résidence invalide. Demandez-le à votre syndic ou à un voisin.',
+        );
       }
     }
 

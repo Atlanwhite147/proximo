@@ -24,7 +24,6 @@ export default function ProfilPage() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [showDetails, setShowDetails] = useState(true);
@@ -42,7 +41,6 @@ export default function ProfilPage() {
     if (!user) return;
     setFirstName(user.firstName);
     setLastName(user.lastName);
-    setNeighborhood(user.neighborhood ?? '');
     setBuilding(user.building ?? '');
     setFloor(user.floor ?? '');
     setShowDetails(user.showDetails ?? true);
@@ -63,7 +61,6 @@ export default function ProfilPage() {
         body: JSON.stringify({
           firstName,
           lastName,
-          neighborhood,
           building,
           floor,
           showDetails,
@@ -196,13 +193,14 @@ export default function ProfilPage() {
                 className="input-field h-11 "
               />
             </div>
-            <input
-              type="text"
-              value={neighborhood}
-              onChange={(event) => setNeighborhood(event.target.value)}
-              placeholder="Résidence / immeuble"
-              className="input-field h-11 "
-            />
+            <div className="rounded-xl border border-border bg-slate-50 px-4 py-3">
+              <p className="text-xs font-mono uppercase tracking-badge text-muted-foreground">
+                🏢 Résidence
+              </p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">
+                {user?.residenceName ?? 'Non rattachée'}
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <input
                 type="text"

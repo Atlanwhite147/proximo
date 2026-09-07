@@ -26,7 +26,7 @@ function InscriptionForm() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
+  const [residenceCode, setResidenceCode] = useState('');
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +36,13 @@ function InscriptionForm() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    // Le code de résidence est obligatoire (sauf via un lien d'invitation QR).
+    if (!invitationToken && !residenceCode.trim()) {
+      setError(
+        'Saisissez le code de résidence. Demandez-le à votre syndic ou à un voisin.',
+      );
+      return;
+    }
     setSubmitting(true);
     try {
       const data = await api<{ user: User }>('/auth/register', {
@@ -45,7 +52,7 @@ function InscriptionForm() {
           lastName,
           email,
           password,
-          neighborhood: neighborhood || undefined,
+          residenceCode: residenceCode.trim() || undefined,
           building: building || undefined,
           floor: floor || undefined,
           invitationToken: invitationToken || undefined,
@@ -90,22 +97,17 @@ function InscriptionForm() {
   return (
     <div className="mx-auto max-w-md px-4 py-12">
       <div className="ds-card p-8">
-        <h1 className="text-2xl font-bold text-slate-900">Inscription</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gradient text-2xl text-white shadow-glow">
+          🤝
+        </div>
+        <h1 className="mt-4 font-display text-3xl font-normal text-foreground">Inscription</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           {invitationToken
             ? 'Rejoignez votre résidence 🏢'
             : 'Entraide et partage de proximité 🤝'}
         </p>
 
-        <GoogleButton label="S'inscrire avec Google" />
-
-        <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" />
-          ou créer un compte par email
-          <span className="h-px flex-1 bg-slate-200" />
-        </div>
-
-        <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
+        <form onSubmit={(event) => void handleSubmit(event)} className="mt-6 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
@@ -149,15 +151,27 @@ function InscriptionForm() {
             placeholder="Mot de passe (8 caractères min.)"
             className="input-field "
           />
-          <input
-            type="text"
-            required
-            maxLength={120}
-            value={neighborhood}
-            onChange={(event) => setNeighborhood(event.target.value)}
-            placeholder="Résidence / immeuble (ex. Les Cèdres)"
-            className="input-field "
-          />
+          {invitationToken ? (
+            <div className="rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-700">
+              🏢 Vous rejoignez la résidence via votre invitation.
+            </div>
+          ) : (
+            <div>
+              <input
+                type="text"
+                required
+                maxLength={32}
+                autoCapitalize="characters"
+                value={residenceCode}
+                onChange={(event) => setResidenceCode(event.target.value)}
+                placeholder="Code de résidence (ex. GERLAND-2026)"
+                className="input-field "
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                🔑 Le code vous a été donné par votre syndic ou un voisin.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
@@ -189,6 +203,18 @@ function InscriptionForm() {
             {submitting ? 'Création…' : 'Créer mon compte'}
           </button>
         </form>
+
+        <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          ou continuer avec Google
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+        <GoogleButton
+          label="S'inscrire avec Google"
+          residenceCode={residenceCode.trim() || undefined}
+          invitationToken={invitationToken || undefined}
+          required={!invitationToken}
+        />
 
         <p className="mt-5 text-center text-sm text-slate-600">
           Déjà inscrit ?{' '}

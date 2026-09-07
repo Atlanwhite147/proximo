@@ -115,6 +115,7 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     dto: CreateIncidentDto,
     files: Express.Multer.File[],
     userNeighborhood: string | null,
+    residenceId?: string | null,
   ): Promise<Incident & { attachments: IncidentAttachment[] }> {
     await mkdir(uploadsDir(), { recursive: true });
 
@@ -124,6 +125,7 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
         category: dto.category,
         description: dto.description.trim(),
         userId,
+        residenceId: residenceId ?? null,
       },
     });
 
@@ -160,6 +162,7 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
       incident,
       reporter?.firstName ?? '',
       attachments.map((a) => ({ filename: a.filename, path: a.path })),
+      residenceId ?? null,
     );
 
     return { ...incident, attachments };
@@ -206,7 +209,10 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     return incident;
   }
   /** Tous les signalements (administration). */
-  async listAll(status?: string): Promise<
+  async listAll(
+    status?: string,
+    residenceId?: string | null,
+  ): Promise<
     Array<
       Incident & {
         attachments: IncidentAttachment[];
@@ -223,7 +229,10 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     >
   > {
     return this.prisma.incident.findMany({
-      where: status ? { status } : undefined,
+      where: {
+        ...(status ? { status } : {}),
+        ...(residenceId ? { residenceId } : {}),
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         attachments: { orderBy: { createdAt: 'asc' } },
@@ -243,7 +252,7 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Signalements visibles par les habitants (jamais l'email des auteurs). */
-  async listPublic(): Promise<
+  async listPublic(residenceId?: string | null): Promise<
     Array<
       Incident & {
         attachments: IncidentAttachment[];
@@ -259,6 +268,7 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     >
   > {
     return this.prisma.incident.findMany({
+      where: residenceId ? { residenceId } : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
         attachments: { orderBy: { createdAt: 'asc' } },

@@ -90,7 +90,7 @@ export class ListingsService {
     // le nom de résidence configuré (settings) en dernier recours.
     const user = await this.prisma.user.findUnique({
       where: { id: ownerId },
-      select: { neighborhood: true },
+      select: { neighborhood: true, residenceId: true },
     });
     const residenceName = await this.getResidenceName();
     const effectiveDto: CreateListingDto = {
@@ -113,6 +113,7 @@ export class ListingsService {
         address: location.address,
         neighborhood: location.neighborhood,
         ownerId,
+        residenceId: user?.residenceId ?? null,
       },
     });
 
@@ -133,6 +134,7 @@ export class ListingsService {
       await this.emailService.sendListingToResidents(
         { id: listing.id, title: listing.title, description: listing.description },
         author?.firstName ?? '',
+        user?.residenceId ?? null,
       );
     }
 
@@ -143,6 +145,7 @@ export class ListingsService {
   async findAll(
     query: QueryListingsDto,
     viewerId?: string,
+    residenceId?: string | null,
   ): Promise<{ items: ListingResponse[]; total: number; page: number; limit: number }> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -157,6 +160,7 @@ export class ListingsService {
       lat: query.lat,
       lng: query.lng,
       radiusKm: query.radiusKm,
+      residenceId,
     });
 
     const selectColumns = hasGeo
@@ -195,13 +199,18 @@ export class ListingsService {
   }
 
   /** Détail d'une annonce (les annonces fermées restent visibles sur leur lien direct). */
-  async findOne(id: string, viewerId?: string): Promise<ListingResponse> {
+  async findOne(
+    id: string,
+    viewerId?: string,
+    residenceId?: string | null,
+  ): Promise<ListingResponse> {
     const rows = await this.prisma.$queryRaw<RawListingRow[]>(
       Prisma.sql`
         SELECT ${baseColumns}
         FROM "Listing" l
         JOIN "User" u ON u."id" = l."ownerId"
         WHERE l."id" = ${id}
+          ${residenceId ? Prisma.sql`AND l."residenceId" = ${residenceId}` : Prisma.sql``}
         LIMIT 1
       `,
     );

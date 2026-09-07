@@ -9,7 +9,12 @@ import { randomBytes } from 'crypto';
 import type { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
-import { OAUTH_STATE_COOKIE, ROLE_ADMIN, STATUS_ACTIVE, STATUS_PENDING } from './auth.constants';
+import {
+  OAUTH_STATE_COOKIE,
+  ROLE_SUPERADMIN,
+  STATUS_ACTIVE,
+  STATUS_PENDING,
+} from './auth.constants';
 
 /** Profil retourné par Google (id_token vérifié). */
 export interface GoogleProfile {
@@ -174,7 +179,7 @@ export class GoogleOAuthService {
     }
 
     // Création de compte : code de résidence ou invitation valide requis.
-    const settings = await this.prisma.syndicSettings.findUnique({ where: { id: 1 } });
+    let residenceId: string | null = null;
     let neighborhood: string | null = null;
 
     if (invitationToken) {
@@ -190,22 +195,32 @@ export class GoogleOAuthService {
       if (invitation.expiresAt < new Date()) {
         throw new BadRequestException("Ce jeton d'invitation a expiré");
       }
+      if (!invitation.residenceId) {
+        throw new BadRequestException("Cette invitation n'est liée à aucune résidence");
+      }
       await this.prisma.invitation.update({
         where: { id: invitation.id },
         data: { usedAt: new Date() },
       });
-      neighborhood = invitation.neighborhood;
+      residenceId = invitation.residenceId;
     } else {
-      const configuredCode = settings?.residenceCode?.trim();
-      if (configuredCode) {
-        const submitted = (residenceCode ?? '').trim().toUpperCase();
-        if (!submitted || submitted !== configuredCode.toUpperCase()) {
-          throw new BadRequestException(
-            'Code de résidence invalide. Demandez-le à votre syndic ou à un voisin.',
-          );
-        }
-        neighborhood = settings?.residenceName ?? null;
+      // Code de résidence OBLIGATOIRE : il détermine la résidence (multi).
+      const submitted = (residenceCode ?? '').trim();
+      if (!submitted) {
+        throw new BadRequestException(
+          'Le code de résidence est requis. Demandez-le à votre syndic ou à un voisin.',
+        );
       }
+      const residence = await this.prisma.residence.findFirst({
+        where: { code: { equals: submitted, mode: 'insensitive' } },
+      });
+      if (!residence) {
+        throw new BadRequestException(
+          'Code de résidence invalide. Demandez-le à votre syndic ou à un voisin.',
+        );
+      }
+      residenceId = residence.id;
+      neighborhood = residence.name;
     }
 
     const isAdmin = adminEmails().includes(profile.email);
@@ -217,7 +232,8 @@ export class GoogleOAuthService {
         firstName: profile.firstName,
         lastName: profile.lastName,
         neighborhood,
-        role: isAdmin ? ROLE_ADMIN : 'USER',
+        residenceId,
+        role: isAdmin ? ROLE_SUPERADMIN : 'USER',
         status: isAdmin ? STATUS_ACTIVE : STATUS_PENDING,
       },
     });

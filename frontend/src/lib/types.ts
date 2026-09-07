@@ -2,7 +2,7 @@
  * Types partagés — miroir des réponses de l'API (Sprint 2 inclus).
  */
 
-export type UserRole = 'USER' | 'ADMIN';
+export type UserRole = 'USER' | 'ADMIN' | 'SUPERADMIN';
 export type UserStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
 
 export interface User {
@@ -14,6 +14,8 @@ export interface User {
   building: string | null;
   floor: string | null;
   showDetails: boolean;
+  /** ID de la résidence de rattachement (multi-résidences). */
+  residenceId: string | null;
   residenceName: string | null;
   role: UserRole;
   status: UserStatus;

@@ -18,6 +18,7 @@ import {
   REFRESH_TOKEN_COOKIE,
   REFRESH_TOKEN_TTL_DEFAULT,
   ROLE_ADMIN,
+  ROLE_SUPERADMIN,
   ROLE_USER,
   STATUS_ACTIVE,
   STATUS_PENDING,
@@ -39,6 +40,7 @@ export interface PublicUser {
   building: string | null;
   floor: string | null;
   showDetails: boolean;
+  residenceId: string | null;
   residenceName: string | null;
   role: string;
   status: string;
@@ -106,24 +108,36 @@ export class AuthService {
       parallelism: 1,
     });
 
-    // Invitation (QR code) : valide le jeton et pré-remplit le quartier.
-    // Sinon, si un code de résidence est configuré, il est obligatoire et
-    // détermine la résidence (le champ « quartier » libre est ignoré).
-    const settings = await this.prisma.syndicSettings.findUnique({ where: { id: 1 } });
-    const configuredCode = settings?.residenceCode?.trim();
-
+    // Invitation (QR code) : valide le jeton → résidence de l'invitation.
+    // Sinon : le code de résidence est OBLIGATOIRE et détermine la résidence
+    // (multi-résidences : le code est unique par résidence, insensible à la casse).
+    let residenceId: string | null = null;
     let neighborhood = dto.neighborhood?.trim() || null;
+
     if (dto.invitationToken) {
-      neighborhood = await this.consumeInvitation(dto.invitationToken, neighborhood);
-    } else if (configuredCode) {
-      const submitted = (dto.residenceCode ?? '').trim().toUpperCase();
-      if (!submitted || submitted !== configuredCode.toUpperCase()) {
+      const invitationResidenceId = await this.consumeInvitation(
+        dto.invitationToken,
+        neighborhood,
+      );
+      residenceId = invitationResidenceId;
+    } else {
+      const submitted = (dto.residenceCode ?? '').trim();
+      if (!submitted) {
+        throw new BadRequestException(
+          'Le code de résidence est requis. Demandez-le à votre syndic ou à un voisin.',
+        );
+      }
+      const residence = await this.prisma.residence.findFirst({
+        where: { code: { equals: submitted, mode: 'insensitive' } },
+      });
+      if (!residence) {
         throw new BadRequestException(
           'Code de résidence invalide. Demandez-le à votre syndic ou à un voisin.',
         );
       }
-      // La résidence est celle de l'instance, pas du texte libre.
-      neighborhood = settings?.residenceName ?? neighborhood;
+      residenceId = residence.id;
+      // La résidence affichée est celle du code, pas du texte libre.
+      neighborhood = residence.name;
     }
 
     const isAdmin = adminEmails().includes(email);
@@ -134,10 +148,11 @@ export class AuthService {
         firstName: dto.firstName.trim(),
         lastName: dto.lastName.trim(),
         neighborhood,
+        residenceId,
         ...(dto.building !== undefined ? { building: dto.building.trim() || null } : {}),
         ...(dto.floor !== undefined ? { floor: dto.floor.trim() || null } : {}),
-        role: isAdmin ? ROLE_ADMIN : ROLE_USER,
-        // Les administrateurs déclarés sont actifs d'emblée ;
+        role: isAdmin ? ROLE_SUPERADMIN : ROLE_USER,
+        // Les super-administrateurs déclarés sont actifs d'emblée ;
         // les autres comptes attendent la validation d'un admin.
         status: isAdmin ? STATUS_ACTIVE : STATUS_PENDING,
       },
@@ -232,6 +247,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         status: user.status,
+        residenceId: user.residenceId ?? null,
         totpEnabled: user.totpEnabled,
         twoFactorVerified,
         type: 'access',
@@ -329,7 +345,7 @@ export class AuthService {
   }
 
   /** Champs utilisateur nécessaires à la représentation publique. */
-  private userShape(user: PublicUserFields): PublicUser {
+  private userShape(user: PublicUserFields & { residenceId?: string | null }): PublicUser {
     return {
       id: user.id,
       email: user.email,
@@ -339,6 +355,7 @@ export class AuthService {
       building: user.building,
       floor: user.floor,
       showDetails: user.showDetails,
+      residenceId: user.residenceId ?? null,
       residenceName: null,
       role: user.role,
       status: user.status,
@@ -348,18 +365,33 @@ export class AuthService {
     };
   }
 
-  toPublicUser(user: PublicUserFields, residenceName?: string | null): PublicUser {
+  toPublicUser(
+    user: PublicUserFields & { residenceId?: string | null },
+    residenceName?: string | null,
+  ): PublicUser {
     return {
       ...this.userShape(user),
       residenceName: residenceName ?? user.neighborhood ?? null,
     };
   }
 
-  /** Nom de la résidence configuré (settings singleton), avec repli sur le user. */
-  async toPublicUserWithResidence(user: PublicUserFields): Promise<PublicUser> {
+  /**
+   * Représentation publique avec le nom de la résidence (multi-résidences) :
+   * résolu depuis la relation User.residence (plus de singleton SyndicSettings).
+   */
+  async toPublicUserWithResidence(
+    user: PublicUserFields & { residenceId?: string | null },
+  ): Promise<PublicUser> {
     try {
-      const settings = await this.prisma.syndicSettings.findUnique({ where: { id: 1 } });
-      return this.toPublicUser(user, settings?.residenceName ?? user.neighborhood);
+      let residenceName: string | null = null;
+      if (user.residenceId) {
+        const residence = await this.prisma.residence.findUnique({
+          where: { id: user.residenceId },
+          select: { name: true },
+        });
+        residenceName = residence?.name ?? null;
+      }
+      return this.toPublicUser(user, residenceName ?? user.neighborhood);
     } catch {
       return this.toPublicUser(user);
     }
@@ -367,11 +399,11 @@ export class AuthService {
 
   /**
    * Consomme un jeton d'invitation : valide l'existence, l'expiration et
-   * l'usage unique, puis retourne le quartier ciblé (ou le quartier fourni).
+   * l'usage unique, puis retourne le residenceId de la résidence invitante.
    */
   private async consumeInvitation(
     token: string,
-    providedNeighborhood: string | null,
+    _providedNeighborhood: string | null,
   ): Promise<string> {
     const invitation = await this.prisma.invitation.findUnique({ where: { token } });
     if (!invitation) {
@@ -387,6 +419,9 @@ export class AuthService {
       where: { id: invitation.id },
       data: { usedAt: new Date() },
     });
-    return providedNeighborhood ?? invitation.neighborhood;
+    if (!invitation.residenceId) {
+      throw new BadRequestException("Cette invitation n'est liée à aucune résidence");
+    }
+    return invitation.residenceId;
   }
 }

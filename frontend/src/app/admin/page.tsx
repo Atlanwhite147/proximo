@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { ErrorMessage, Spinner } from '@/components/Feedback';
 import api from '@/lib/api';
+import { AdminResidences } from './AdminResidences';
 import {
   INCIDENT_CATEGORY_LABELS,
   INCIDENT_STATUS_LABELS,
@@ -37,7 +38,7 @@ interface AdminStats {
  * - réglages du syndic / de l'agence
  */
 export default function AdminPage() {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, isSuperAdmin, user } = useAuth();
   const [tab, setTab] = useState<Tab>('stats');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -296,8 +297,15 @@ export default function AdminPage() {
     <div className="mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-2xl font-bold text-slate-900">Administration</h1>
       <p className="mt-1 text-sm text-slate-600">
-        Connecté en tant que {user?.firstName} {user?.lastName} (2FA vérifiée) ✓
+        Connecté en tant que {user?.firstName} {user?.lastName}{' '}
+        {isSuperAdmin ? '(superadmin)' : '(2FA vérifiée) ✓'}
       </p>
+
+      {isSuperAdmin && (
+        <div className="mt-6">
+          <AdminResidences />
+        </div>
+      )}
 
       <div className="mt-6 flex gap-2">
         <button type="button" className={tabClass('stats')} onClick={() => setTab('stats')}>

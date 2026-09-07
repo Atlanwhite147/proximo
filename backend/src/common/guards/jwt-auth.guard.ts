@@ -7,6 +7,7 @@ export interface JwtPayload {
   email: string;
   role: string;
   status: string;
+  residenceId: string | null;
   totpEnabled: boolean;
   twoFactorVerified: boolean;
   type: 'access';
@@ -41,6 +42,7 @@ export class JwtAuthGuard implements CanActivate {
         email: payload.email,
         role: payload.role,
         status: payload.status,
+        residenceId: payload.residenceId ?? null,
         totpEnabled: payload.totpEnabled,
         twoFactorVerified: payload.twoFactorVerified,
       };

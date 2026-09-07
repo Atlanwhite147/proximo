@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -44,10 +45,17 @@ export class AdminController {
   // ─── Utilisateurs ────────────────────────────────────────────
 
   @Get('users')
-  async listUsers(@Query('status') status?: string, @Query('search') search?: string) {
+  async listUsers(
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ) {
+    // Un ADMIN local ne gère que SA résidence ; le SUPERADMIN voit tout.
+    const isSuper = user.role === 'SUPERADMIN';
     const users = await this.prisma.user.findMany({
       where: {
         ...(status ? { status } : {}),
+        ...(!isSuper && user.residenceId ? { residenceId: user.residenceId } : {}),
         ...(search
           ? {
               OR: [
@@ -66,6 +74,7 @@ export class AdminController {
         firstName: true,
         lastName: true,
         neighborhood: true,
+        residenceId: true,
         role: true,
         status: true,
         totpEnabled: true,
@@ -364,5 +373,69 @@ export class AdminController {
         invitationsActive: invitations,
       },
     };
+  }
+
+  // ─── Résidences (SUPERADMIN uniquement) ─────────────────────
+  // Le superadmin gère toutes les résidences : liste, création, réglages.
+
+  @Get('residences')
+  async listResidences(
+    @CurrentUser() user: { role: string },
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    const residences = await this.prisma.residence.findMany({
+      orderBy: { createdAt: 'asc' },
+      include: { _count: { select: { users: true, listings: true, incidents: true } } },
+    });
+    return { residences };
+  }
+
+  @Post('residences')
+  @HttpCode(HttpStatus.CREATED)
+  async createResidence(
+    @CurrentUser() user: { role: string },
+    @Body() dto: { name: string; code: string; agencyName?: string; syndicEmail?: string },
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    const name = dto.name?.trim();
+    const code = dto.code?.trim();
+    if (!name || !code) {
+      throw new BadRequestException('Nom et code de résidence requis');
+    }
+    const residence = await this.prisma.residence.create({
+      data: {
+        name,
+        code,
+        agencyName: dto.agencyName?.trim() || null,
+        syndicEmail: dto.syndicEmail?.trim() || null,
+      },
+    });
+    return { residence };
+  }
+
+  @Patch('residences/:id')
+  async updateResidence(
+    @CurrentUser() user: { role: string },
+    @Param('id') id: string,
+    @Body() dto: { name?: string; code?: string; agencyName?: string; syndicEmail?: string },
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    const residence = await this.prisma.residence.findUnique({ where: { id } });
+    if (!residence) {
+      throw new NotFoundException('Résidence introuvable');
+    }
+    const data: Record<string, string> = {};
+    if (dto.name !== undefined) data.name = dto.name.trim();
+    if (dto.code !== undefined) data.code = dto.code.trim();
+    if (dto.agencyName !== undefined) data.agencyName = dto.agencyName.trim() || '';
+    if (dto.syndicEmail !== undefined) data.syndicEmail = dto.syndicEmail.trim() || '';
+    const updated = await this.prisma.residence.update({ where: { id }, data });
+    return { residence: updated };
   }
 }

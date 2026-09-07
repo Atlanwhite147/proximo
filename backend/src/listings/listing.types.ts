@@ -72,8 +72,14 @@ export function buildListingWhere(query: {
   lat?: number;
   lng?: number;
   radiusKm?: number;
+  residenceId?: string | null;
 }): Prisma.Sql {
   const conditions: Prisma.Sql[] = [Prisma.sql`l."status" = 'OPEN'`];
+
+  // Isolation multi-résidences : chaque habitant ne voit que SA résidence.
+  if (query.residenceId) {
+    conditions.push(Prisma.sql`l."residenceId" = ${query.residenceId}`);
+  }
 
   if (query.category) {
     conditions.push(Prisma.sql`l."category" = ${query.category}`);

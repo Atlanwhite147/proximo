@@ -360,6 +360,8 @@ export class EmailService implements OnModuleInit {
     /** Construit le HTML pour un destinataire (prénom + lien personnalisés). */
     buildHtml: (recipient: { firstName: string; lastName: string }) => string;
     excludeUserId?: string;
+    /** Multi-résidences : restreint l'envoi aux habitants de CETTE résidence. */
+    residenceId?: string | null;
     attachments?: Array<{ filename: string; content: Buffer }>;
   }): Promise<void> {
     try {
@@ -367,6 +369,7 @@ export class EmailService implements OnModuleInit {
         where: {
           status: 'ACTIVE',
           ...(options.excludeUserId ? { id: { not: options.excludeUserId } } : {}),
+          ...(options.residenceId ? { residenceId: options.residenceId } : {}),
         },
         select: { id: true, firstName: true, lastName: true, email: true },
       });
@@ -397,6 +400,7 @@ export class EmailService implements OnModuleInit {
     incident: { id: string; title: string; category: string; description: string },
     authorFirstName: string,
     attachments?: Array<{ filename: string; path: string }>,
+    residenceId?: string | null,
   ): Promise<void> {
     if (!(await this.isResidentNotificationEnabled('incident'))) {
       this.logger.log('Notification incident à la résidence désactivée par l’admin (skippée).');
@@ -448,6 +452,7 @@ export class EmailService implements OnModuleInit {
           ctaLabel: 'Voir le signalement',
         }),
       attachments: attachmentBuffers,
+      residenceId,
     });
   }
 
@@ -455,6 +460,7 @@ export class EmailService implements OnModuleInit {
   async sendListingToResidents(
     listing: { id: string; title: string; description: string },
     authorFirstName: string,
+    residenceId?: string | null,
   ): Promise<void> {
     if (!(await this.isResidentNotificationEnabled('listing'))) {
       this.logger.log('Notification annonce à la résidence désactivée par l’admin (skippée).');
@@ -474,6 +480,7 @@ export class EmailService implements OnModuleInit {
           ctaUrl: `${this.appUrl()}/annonces/${listing.id}`,
           ctaLabel: 'Voir l’annonce',
         }),
+      residenceId,
     });
   }
 

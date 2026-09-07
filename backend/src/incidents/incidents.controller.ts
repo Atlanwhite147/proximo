@@ -64,7 +64,7 @@ export class IncidentsController {
     }),
   )
   async create(
-    @CurrentUser() user: { id: string; neighborhood?: string | null },
+    @CurrentUser() user: { id: string; neighborhood?: string | null; residenceId?: string | null },
     @Body() dto: CreateIncidentDto,
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
@@ -88,15 +88,16 @@ export class IncidentsController {
       dto,
       kept,
       user.neighborhood ?? null,
+      user.residenceId ?? null,
     );
     return { incident };
   }
 
   @Get()
-  async all() {
-    // Les habitants voient les signalements SANS l'email des auteurs
-    // (l'admin a son propre endpoint /admin/incidents avec les emails).
-    const incidents = await this.incidentsService.listPublic();
+  async all(@CurrentUser() user: { residenceId?: string | null }) {
+    // Les habitants voient les signalements de LEUR résidence, SANS l'email
+    // des auteurs (l'admin a son propre endpoint /admin/incidents).
+    const incidents = await this.incidentsService.listPublic(user.residenceId ?? null);
     return { incidents };
   }
 

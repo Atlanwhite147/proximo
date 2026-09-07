@@ -32,8 +32,11 @@ export class ListingsController {
 
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
-  async findAll(@Query() query: QueryListingsDto) {
-    const result = await this.listingsService.findAll(query);
+  async findAll(
+    @Query() query: QueryListingsDto,
+    @CurrentUser() user: { residenceId?: string | null },
+  ) {
+    const result = await this.listingsService.findAll(query, undefined, user.residenceId ?? null);
     return result;
   }
 
@@ -45,8 +48,11 @@ export class ListingsController {
 
   @Get(':id')
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    const listing = await this.listingsService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { residenceId?: string | null },
+  ) {
+    const listing = await this.listingsService.findOne(id, undefined, user.residenceId ?? null);
     return { listing };
   }
 

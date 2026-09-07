@@ -19,7 +19,13 @@ const argon2Mock = argon2 as jest.Mocked<typeof argon2>;
  */
 describe('AuthService', () => {
   let authService: AuthService;
-  let prisma: { user: any; refreshToken: any; invitation: any; syndicSettings: any };
+  let prisma: {
+    user: any;
+    refreshToken: any;
+    invitation: any;
+    syndicSettings: any;
+    residence: any;
+  };
   let jwtService: JwtService;
   let emailService: EmailService;
 
@@ -59,6 +65,14 @@ describe('AuthService', () => {
         // Aucun code configuré par défaut : inscription libre (comportement initial).
         findUnique: jest.fn().mockResolvedValue(null),
       },
+      residence: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'r-test',
+          name: 'Les Cèdres',
+          code: 'CEDRES-2026',
+        }),
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
     };
     jwtService = {
       signAsync: jest.fn().mockResolvedValue('jwt-token'),
@@ -83,6 +97,7 @@ describe('AuthService', () => {
         password: 'Motdepasse123',
         firstName: 'Claire',
         lastName: 'Martin',
+        residenceCode: 'cedres-2026',
       });
 
       expect(argon2Mock.hash).toHaveBeenCalledWith(
@@ -110,6 +125,7 @@ describe('AuthService', () => {
         password: 'Motdepasse123',
         firstName: 'Claire',
         lastName: 'Martin',
+        residenceCode: 'cedres-2026',
       });
       expect(emailService.sendWelcome).toHaveBeenCalledWith('voisin@example.com', 'Claire');
     });

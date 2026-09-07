@@ -16,6 +16,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Résidence (une instance héberge N résidences) ───────────
+// Chaque résidence a son code d'accès (prérequis inscription),
+// son agence/syndic (email destinataire des signalements) et son nom.
+model Residence {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String?  @unique // requis pour créer un compte (vide = inscription libre)
+  agencyName  String?
+  syndicEmail String? // email de l'agence / du syndic (alertes signalements)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  listings    Listing[]
+  incidents   Incident[]
+  invitations Invitation[]
+}
+
 // ─── Utilisateur ──────────────────────────────────────────────
 model User {
   id                 String    @id @default(uuid())
@@ -28,13 +46,16 @@ model User {
   building           String? // bâtiment (optionnel, ex. « B »)
   floor              String? // étage (optionnel, ex. « 3e »)
   showDetails        Boolean   @default(true) // afficher bâtiment/étage sur les annonces
-  role               String    @default("USER") // USER | ADMIN
+  role               String    @default("USER") // USER | ADMIN | SUPERADMIN
   status             String    @default("PENDING") // PENDING | ACTIVE | SUSPENDED
   totpSecret         String? // secret TOTP chiffré côté application (2FA admin)
   totpEnabled        Boolean   @default(false)
   emailNotifications Boolean   @default(true)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+
+  residenceId String?
+  residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: SetNull)
 
   listings      Listing[]
   conversationsA Conversation[] @relation("convA")
@@ -44,6 +65,8 @@ model User {
   incidents     Incident[]
   invitations   Invitation[]
   comments      Comment[]
+
+  @@index([residenceId])
 }
 
 // ─── Annonce d'entraide ───────────────────────────────────────
@@ -60,11 +83,14 @@ model Listing {
   ownerId     String
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   comments    Comment[]
+  residenceId String?
+  residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([ownerId])
   @@index([category, status])
+  @@index([residenceId])
 }
 
 // ─── Token de rafraîchissement (révocable) ────────────────────
@@ -120,11 +146,14 @@ model Incident {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   attachments IncidentAttachment[]
   comments    Comment[]
+  residenceId String?
+  residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
+  @@index([residenceId])
 }
 
 // ─── Pièce jointe d'un signalement ────────────────────────────
@@ -180,11 +209,14 @@ model Invitation {
   neighborhood String // quartier / résidence ciblé par l'invitation
   createdById  String
   createdBy    User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  residenceId  String?
+  residence    Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   expiresAt    DateTime
   usedAt       DateTime?
   createdAt    DateTime  @default(now())
 
   @@index([createdById])
+  @@index([residenceId])
 }
 
 // ─── Demande de souscription (tunnel de vente) ────────────────
