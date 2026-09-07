@@ -27,6 +27,8 @@ function InscriptionForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [residenceCode, setResidenceCode] = useState('');
+  // Code saisi dans le bloc Google (indépendant du formulaire email).
+  const [googleResidenceCode, setGoogleResidenceCode] = useState('');
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +109,49 @@ function InscriptionForm() {
             : 'Entraide et partage de proximité 🤝'}
         </p>
 
-        <form onSubmit={(event) => void handleSubmit(event)} className="mt-6 space-y-4">
+        {!invitationToken && (
+          <p className="mt-4 rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-800">
+            🔑 <strong>Code de résidence requis</strong> : demandez-le à votre
+            syndic ou à un voisin pour rejoindre votre résidence.
+          </p>
+        )}
+
+        {!invitationToken && (
+          <div className="mt-4">
+            <input
+              type="text"
+              required
+              maxLength={32}
+              autoCapitalize="characters"
+              value={googleResidenceCode}
+              onChange={(event) => setGoogleResidenceCode(event.target.value)}
+              placeholder="Code de résidence (ex. GERLAND-2026)"
+              className="input-field "
+              aria-label="Code de résidence pour Google"
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              🔑 Saisissez le code pour activer l&apos;inscription avec Google.
+            </p>
+          </div>
+        )}
+
+        <div className="mt-4">
+          <GoogleButton
+            label="S'inscrire avec Google"
+            residenceCode={googleResidenceCode.trim() || undefined}
+            invitationToken={invitationToken || undefined}
+            required={!invitationToken}
+            disabled={!invitationToken && !googleResidenceCode.trim()}
+          />
+        </div>
+
+        <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          ou créer un compte par email
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
@@ -203,18 +247,6 @@ function InscriptionForm() {
             {submitting ? 'Création…' : 'Créer mon compte'}
           </button>
         </form>
-
-        <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" />
-          ou continuer avec Google
-          <span className="h-px flex-1 bg-slate-200" />
-        </div>
-        <GoogleButton
-          label="S'inscrire avec Google"
-          residenceCode={residenceCode.trim() || undefined}
-          invitationToken={invitationToken || undefined}
-          required={!invitationToken}
-        />
 
         <p className="mt-5 text-center text-sm text-slate-600">
           Déjà inscrit ?{' '}

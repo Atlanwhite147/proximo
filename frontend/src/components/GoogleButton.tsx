@@ -14,11 +14,14 @@ export function GoogleButton({
   residenceCode,
   invitationToken,
   required = false,
+  disabled = false,
 }: {
   label?: string;
   residenceCode?: string;
   invitationToken?: string;
   required?: boolean;
+  /** Grisé tant que le code de résidence n'est pas saisi (inscription). */
+  disabled?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,6 +30,7 @@ export function GoogleButton({
     setError(null);
     // Blocage côté client : le code est obligatoire avant d'ouvrir Google
     // (un code invalide est aussi rejeté par le serveur).
+    if (disabled) return;
     if (required && !residenceCode) {
       setError('Saisissez d’abord le code de résidence.');
       return;
@@ -51,8 +55,8 @@ export function GoogleButton({
       <button
         type="button"
         onClick={handleClick}
-        disabled={loading}
-        className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border bg-white px-4 font-medium text-foreground shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-card-hover active:scale-[0.99] disabled:opacity-50"
+        disabled={loading || disabled}
+        className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border bg-white px-4 font-medium text-foreground shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-card-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-sm"
       >
         <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
           <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
