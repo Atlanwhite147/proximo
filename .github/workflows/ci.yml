@@ -102,7 +102,17 @@ jobs:
         run: npm run lint
 
       - name: Tests unitaires
-        run: npm test 2>&1 | tee /tmp/jest.log; exit ${PIPESTATUS[0]}
+        run: |
+          npm test 2>&1 | tee /tmp/jest.log
+          STATUS=${PIPESTATUS[0]}
+          if [ $STATUS -ne 0 ]; then
+            echo "::group::Jest failure"
+            tail -60 /tmp/jest.log | sed 's/%/%25/g; s/\r//g; s/::/%3A/g; s/;/%3B/g' | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            echo "::endgroup::"
+          fi
+          exit $STATUS
 
       - name: Upload logs jest (diagnostic CI rouge)
         if: failure()
