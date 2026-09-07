@@ -155,9 +155,10 @@ export default function AdminPage() {
     if (tab === 'invitations') loadInvitations();
     if (tab === 'settings') {
       loadSettings();
-      loadEmailSettings();
+      // L'envoi d'emails (Brevo/SMTP) est une config plateforme : superadmin seul.
+      if (isSuperAdmin) loadEmailSettings();
     }
-  }, [tab, loadStats, loadUsers, loadListings, loadIncidents, loadInvitations, loadSettings, loadEmailSettings]);
+  }, [tab, loadStats, loadUsers, loadListings, loadIncidents, loadInvitations, loadSettings, loadEmailSettings, isSuperAdmin]);
 
   if (!isAdmin) {
     return (
@@ -802,6 +803,8 @@ export default function AdminPage() {
             </button>
           </form>
 
+          {/* Envoi d'emails : configuration plateforme, réservée au superadmin */}
+          {isSuperAdmin && (
           <form
             onSubmit={(event) => void saveEmailSettings(event)}
             className="mt-6 ds-card p-5"
@@ -1009,6 +1012,7 @@ export default function AdminPage() {
               </button>
             </div>
           </form>
+          )}
         </section>
       )}
     </div>

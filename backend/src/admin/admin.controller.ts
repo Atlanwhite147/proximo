@@ -141,10 +141,16 @@ export class AdminController {
 
   @Get('incidents')
   async listIncidents(
+    @CurrentUser() user: { role: string; residenceId?: string | null },
     @Query('status') status?: string,
     @Query('residenceId') residenceId?: string,
   ) {
-    const incidents = await this.incidentsService.listAll(status, residenceId ?? null);
+    const scopeResidenceId =
+      user.role === 'SUPERADMIN' ? residenceId || undefined : user.residenceId || undefined;
+    const incidents = await this.incidentsService.listAll(
+      status,
+      scopeResidenceId ?? null,
+    );
     return { incidents };
   }
 
@@ -162,13 +168,16 @@ export class AdminController {
 
   @Get('listings')
   async listListings(
+    @CurrentUser() user: { role: string; residenceId?: string | null },
     @Query('status') status?: string,
     @Query('residenceId') residenceId?: string,
   ) {
+    const scopeResidenceId =
+      user.role === 'SUPERADMIN' ? residenceId || undefined : user.residenceId || undefined;
     const listings = await this.prisma.listing.findMany({
       where: {
         ...(status ? { status } : {}),
-        ...(residenceId ? { residenceId } : {}),
+        ...(scopeResidenceId ? { residenceId: scopeResidenceId } : {}),
       },
       orderBy: { createdAt: 'desc' },
       take: 200,
@@ -189,44 +198,79 @@ export class AdminController {
     await this.prisma.listing.delete({ where: { id } });
   }
 
-  // ─── Réglages syndic / agence ────────────────────────────────
+  // ─── Réglages syndic / agence (scopés à la résidence de l'admin) ─────
 
   @Get('settings')
-  async getSettings() {
-    const settings = await this.prisma.syndicSettings.upsert({
-      where: { id: 1 },
-      create: { id: 1, agencyName: 'Agence de gestion', email: '' },
-      update: {},
+  async getSettings(@CurrentUser() user: { residenceId?: string | null }) {
+    // Multi-résidences : chaque admin gère les réglages de SA résidence
+    // (nom, agence, email de réception des signalements).
+    if (!user.residenceId) {
+      throw new BadRequestException('Aucune résidence rattachée à ce compte');
+    }
+    const residence = await this.prisma.residence.findUnique({
+      where: { id: user.residenceId },
     });
-    return { settings };
+    if (!residence) {
+      throw new NotFoundException('Résidence introuvable');
+    }
+    return {
+      settings: {
+        id: residence.id,
+        residenceName: residence.name,
+        residenceCode: residence.code,
+        agencyName: residence.agencyName ?? '',
+        email: residence.syndicEmail ?? '',
+      },
+    };
   }
 
   @Patch('settings')
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
-  async updateSettings(@Body() dto: UpdateSyndicSettingsDto) {
-    const settings = await this.prisma.syndicSettings.upsert({
-      where: { id: 1 },
-      create: {
-        id: 1,
-        agencyName: dto.agencyName ?? 'Agence de gestion',
-        email: dto.email ?? '',
-        ...(dto.residenceName !== undefined ? { residenceName: dto.residenceName } : {}),
-        ...(dto.residenceCode !== undefined ? { residenceCode: dto.residenceCode } : {}),
-      },
-      update: {
+  async updateSettings(
+    @CurrentUser() user: { role: string; residenceId?: string | null },
+    @Body() dto: UpdateSyndicSettingsDto,
+  ) {
+    if (!user.residenceId) {
+      throw new BadRequestException('Aucune résidence rattachée à ce compte');
+    }
+    const residence = await this.prisma.residence.findUnique({
+      where: { id: user.residenceId },
+    });
+    if (!residence) {
+      throw new NotFoundException('Résidence introuvable');
+    }
+    // Le code d'accès reste une donnée sensible : seul le superadmin peut
+    // le changer (les admins locaux peuvent renommer / changer l'agence).
+    const canEditCode = user.role === 'SUPERADMIN';
+    const updated = await this.prisma.residence.update({
+      where: { id: residence.id },
+      data: {
+        ...(dto.residenceName !== undefined ? { name: dto.residenceName } : {}),
         ...(dto.agencyName !== undefined ? { agencyName: dto.agencyName } : {}),
-        ...(dto.email !== undefined ? { email: dto.email } : {}),
-        ...(dto.residenceName !== undefined ? { residenceName: dto.residenceName } : {}),
-        ...(dto.residenceCode !== undefined ? { residenceCode: dto.residenceCode } : {}),
+        ...(dto.email !== undefined ? { syndicEmail: dto.email } : {}),
+        ...(canEditCode && dto.residenceCode !== undefined
+          ? { code: dto.residenceCode }
+          : {}),
       },
     });
-    return { settings };
+    return {
+      settings: {
+        id: updated.id,
+        residenceName: updated.name,
+        residenceCode: updated.code,
+        agencyName: updated.agencyName ?? '',
+        email: updated.syndicEmail ?? '',
+      },
+    };
   }
 
   // ─── Réglages d'envoi d'emails ───────────────────────────────
 
   @Get('email-settings')
-  async getEmailSettings() {
+  async getEmailSettings(@CurrentUser() user: { role: string }) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin de la plateforme');
+    }
     const settings = await this.prisma.emailSettings.upsert({
       where: { id: 1 },
       create: {
@@ -269,7 +313,13 @@ export class AdminController {
 
   @Patch('email-settings')
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
-  async updateEmailSettings(@Body() dto: UpdateEmailSettingsDto) {
+  async updateEmailSettings(
+    @CurrentUser() user: { role: string },
+    @Body() dto: UpdateEmailSettingsDto,
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin de la plateforme');
+    }
     const current = await this.prisma.emailSettings.upsert({
       where: { id: 1 },
       create: { id: 1 },
@@ -327,7 +377,12 @@ export class AdminController {
   /** Envoie un email de test à l'admin connecté (validation de la config). */
   @Post('email-settings/test')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  async testEmailSettings(@CurrentUser() admin: { id: string; email: string }) {
+  async testEmailSettings(
+    @CurrentUser() admin: { id: string; email: string; role: string },
+  ) {
+    if (admin.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin de la plateforme');
+    }
     const resolved = await this.emailService.resolveConfig();
     if (resolved.mode === 'log') {
       throw new BadRequestException(
@@ -362,21 +417,31 @@ export class AdminController {
   // ─── Invitations ─────────────────────────────────────────────
 
   @Get('invitations')
-  async listInvitations(@Query('residenceId') residenceId?: string) {
-    const invitations = await this.invitationsService.listAll(residenceId ?? null);
+  async listInvitations(
+    @CurrentUser() user: { role: string; residenceId?: string | null },
+    @Query('residenceId') residenceId?: string,
+  ) {
+    const scopeResidenceId =
+      user.role === 'SUPERADMIN' ? residenceId || undefined : user.residenceId || undefined;
+    const invitations = await this.invitationsService.listAll(scopeResidenceId ?? null);
     return { invitations };
   }
 
   // ─── Vue d'ensemble (stats) ─────────────────────────────────
 
   @Get('stats')
-  async stats() {
+  async stats(@CurrentUser() user: { role: string; residenceId?: string | null }) {
+    const scopeResidenceId =
+      user.role === 'SUPERADMIN' ? undefined : user.residenceId || undefined;
+    const where = scopeResidenceId ? { residenceId: scopeResidenceId } : {};
     const [members, pending, incidents, incidentsOpen, invitations] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.count({ where: { status: 'PENDING' } }),
-      this.prisma.incident.count(),
-      this.prisma.incident.count({ where: { status: 'OPEN' } }),
-      this.prisma.invitation.count({ where: { usedAt: null, expiresAt: { gt: new Date() } } }),
+      this.prisma.user.count({ where }),
+      this.prisma.user.count({ where: { ...where, status: 'PENDING' } }),
+      this.prisma.incident.count({ where }),
+      this.prisma.incident.count({ where: { ...where, status: 'OPEN' } }),
+      this.prisma.invitation.count({
+        where: { ...where, usedAt: null, expiresAt: { gt: new Date() } },
+      }),
     ]);
     return {
       stats: {
