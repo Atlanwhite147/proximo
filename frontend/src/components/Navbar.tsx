@@ -176,6 +176,21 @@ export function Navbar() {
               </Link>
             );
           })}
+          {/* Onglet Admin (mobile) : le lien du header est masqué sous md. */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
+                isTabActive('/admin') ? 'text-brand-700' : 'text-slate-400'
+              }`}
+            >
+              <span className="text-xl leading-none">⚙️</span>
+              Admin
+              {isTabActive('/admin') && (
+                <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-brand-600" />
+              )}
+            </Link>
+          )}
         </div>
       </nav>
     </>

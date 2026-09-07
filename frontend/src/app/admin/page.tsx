@@ -355,7 +355,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="mt-6 flex gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
         <button type="button" className={tabClass('stats')} onClick={() => setTab('stats')}>
           📊 Vue d&apos;ensemble
         </button>
