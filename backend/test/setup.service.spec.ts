@@ -15,6 +15,7 @@ describe('SetupService', () => {
   let setupService: SetupService;
   let prisma: {
     user: { count: jest.Mock; findUnique: jest.Mock; create: jest.Mock };
+    residence: { upsert: jest.Mock };
     syndicSettings: { upsert: jest.Mock };
     $transaction: jest.Mock;
   };
@@ -25,6 +26,9 @@ describe('SetupService', () => {
         count: jest.fn(),
         findUnique: jest.fn(),
         create: jest.fn().mockResolvedValue({ id: 'admin-1' }),
+      },
+      residence: {
+        upsert: jest.fn().mockResolvedValue({ id: 'r-default', name: 'Les Lilas' }),
       },
       syndicSettings: {
         upsert: jest.fn().mockResolvedValue({ id: 1 }),
