@@ -694,10 +694,15 @@ function InvitationsList({ invitations }: { invitations: Invitation[] | null }) 
           key={invitation.id}
           className="flex items-center justify-between rounded-xl border border-border px-4 py-3"
         >
-          <p className="text-sm text-foreground">
-            Par {invitation.createdBy?.firstName ?? 'inconnu'}{' '}
-            {invitation.createdBy?.lastName ?? ''}
-          </p>
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {invitation.neighborhood || 'Invitation'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Par {invitation.createdBy?.firstName ?? 'inconnu'}{' '}
+              {invitation.createdBy?.lastName ?? ''}
+            </p>
+          </div>
           <span
             className={cn(
               'rounded-full px-2.5 py-1 text-xs font-medium',

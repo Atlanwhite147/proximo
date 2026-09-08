@@ -8,6 +8,7 @@ import api from '@/lib/api';
 
 interface InvitationInfo {
   neighborhood: string;
+  residenceName: string;
   expiresAt: string;
   valid: boolean;
 }
@@ -76,7 +77,7 @@ function RejoindreContent() {
         <div className="text-4xl">🏘️</div>
         <h1 className="mt-3 text-2xl font-bold text-slate-900">Bienvenue dans votre résidence !</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Un voisin vous invite à rejoindre <strong className="text-slate-900">{invitation.neighborhood}</strong>{' '}
+          Un voisin vous invite à rejoindre <strong className="text-slate-900">{invitation.residenceName}</strong>{' '}
           sur Proximo : prêt de matériel, entraide, dons…
         </p>
         <div className="mt-6 flex flex-col gap-3">

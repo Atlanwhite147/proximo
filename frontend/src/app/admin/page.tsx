@@ -232,7 +232,10 @@ export default function AdminPage() {
     try {
       await api('/invitations', {
         method: 'POST',
-        body: JSON.stringify({ neighborhood: invNeighborhood, expiresInHours: invHours }),
+        body: JSON.stringify({
+          ...(invNeighborhood.trim() ? { neighborhood: invNeighborhood.trim() } : {}),
+          expiresInHours: invHours,
+        }),
       });
       setInvNeighborhood('');
       setSuccess('Invitation créée : imprimez le QR code ou partagez le lien.');
@@ -715,16 +718,20 @@ export default function AdminPage() {
           >
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex-1">
-                <label className="mb-1 block text-sm font-medium text-slate-700">Résidence</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Référence <span className="font-normal text-slate-400">(facultatif)</span>
+                </label>
                 <input
                   type="text"
-                  required
                   maxLength={120}
                   value={invNeighborhood}
                   onChange={(event) => setInvNeighborhood(event.target.value)}
-                  placeholder="Ex. Lyon 7e"
+                  placeholder="Ex. Famille Martin — Bât. B"
                   className="input-field h-11 "
                 />
+                <p className="mt-1 text-xs text-slate-400">
+                  Pour identifier l&apos;invitation dans la liste (imprimé sur le QR).
+                </p>
               </div>
               <div className="w-32">
                 <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -759,7 +766,14 @@ export default function AdminPage() {
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-slate-900">{invitation.neighborhood}</p>
+                      <p className="font-semibold text-slate-900">
+                        {invitation.neighborhood || 'Invitation'}
+                        {invitation.usedAt && (
+                          <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                            Utilisée
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-slate-400">
                         Créée par {invitation.createdBy?.firstName}{' '}
                         {invitation.createdBy?.lastName} · expire le{' '}
@@ -769,7 +783,7 @@ export default function AdminPage() {
                     <div className="flex items-center gap-3">
                       <img
                         src={invitation.qrUrl}
-                        alt={`QR code ${invitation.neighborhood}`}
+                        alt={`QR code ${invitation.neighborhood || 'invitation'}`}
                         width={64}
                         height={64}
                         className="rounded-md border border-slate-200"

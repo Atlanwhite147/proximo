@@ -30,7 +30,7 @@ export class InvitationsService {
     const invitation = await this.prisma.invitation.create({
       data: {
         token,
-        neighborhood: dto.neighborhood.trim(),
+        neighborhood: dto.neighborhood?.trim() ?? '',
         createdById,
         residenceId,
         expiresAt: new Date(Date.now() + expiresInHours * 3_600_000),
@@ -51,14 +51,18 @@ export class InvitationsService {
   /** État public d'une invitation (landing page avant inscription). */
   async getPublic(
     token: string,
-  ): Promise<{ neighborhood: string; expiresAt: Date; valid: boolean }> {
-    const invitation = await this.prisma.invitation.findUnique({ where: { token } });
+  ): Promise<{ neighborhood: string; residenceName: string; expiresAt: Date; valid: boolean }> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { token },
+      include: { residence: { select: { name: true } } },
+    });
     if (!invitation) {
       throw new NotFoundException("Jeton d'invitation invalide");
     }
     const valid = !invitation.usedAt && invitation.expiresAt > new Date();
     return {
       neighborhood: invitation.neighborhood,
+      residenceName: invitation.residence?.name ?? invitation.neighborhood,
       expiresAt: invitation.expiresAt,
       valid,
     };
