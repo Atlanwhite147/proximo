@@ -21,6 +21,9 @@ interface AdminResidence {
   code: string | null;
   agencyName: string | null;
   syndicEmail: string | null;
+  notifyAgencyOnIncident?: boolean;
+  notifyResidentsOnIncident?: boolean;
+  notifyResidentsOnListing?: boolean;
   createdAt: string;
   membersActive?: number;
   membersPending?: number;
@@ -61,6 +64,9 @@ export function AdminResidences() {
   const [editCode, setEditCode] = useState('');
   const [editAgency, setEditAgency] = useState('');
   const [editSyndicEmail, setEditSyndicEmail] = useState('');
+  const [editNotifyAgency, setEditNotifyAgency] = useState(true);
+  const [editNotifyIncident, setEditNotifyIncident] = useState(true);
+  const [editNotifyListing, setEditNotifyListing] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -86,6 +92,9 @@ export function AdminResidences() {
     setEditCode(residence.code ?? '');
     setEditAgency(residence.agencyName ?? '');
     setEditSyndicEmail(residence.syndicEmail ?? '');
+    setEditNotifyAgency(residence.notifyAgencyOnIncident ?? true);
+    setEditNotifyIncident(residence.notifyResidentsOnIncident ?? true);
+    setEditNotifyListing(residence.notifyResidentsOnListing ?? true);
     setError(null);
     setSuccess(null);
   };
@@ -134,6 +143,9 @@ export function AdminResidences() {
           code: editCode.trim(),
           agencyName: editAgency.trim() || undefined,
           syndicEmail: editSyndicEmail.trim() || undefined,
+          notifyAgencyOnIncident: editNotifyAgency,
+          notifyResidentsOnIncident: editNotifyIncident,
+          notifyResidentsOnListing: editNotifyListing,
         }),
       });
       setSuccess('Résidence mise à jour.');
@@ -183,6 +195,12 @@ export function AdminResidences() {
         setEditAgency={setEditAgency}
         editSyndicEmail={editSyndicEmail}
         setEditSyndicEmail={setEditSyndicEmail}
+        editNotifyAgency={editNotifyAgency}
+        setEditNotifyAgency={setEditNotifyAgency}
+        editNotifyIncident={editNotifyIncident}
+        setEditNotifyIncident={setEditNotifyIncident}
+        editNotifyListing={editNotifyListing}
+        setEditNotifyListing={setEditNotifyListing}
         saving={saving}
         onSave={save}
         deleting={deleting}
@@ -294,6 +312,12 @@ function ResidenceDetail({
   setEditAgency,
   editSyndicEmail,
   setEditSyndicEmail,
+  editNotifyAgency,
+  setEditNotifyAgency,
+  editNotifyIncident,
+  setEditNotifyIncident,
+  editNotifyListing,
+  setEditNotifyListing,
   saving,
   onSave,
   deleting,
@@ -315,6 +339,12 @@ function ResidenceDetail({
   setEditAgency: (v: string) => void;
   editSyndicEmail: string;
   setEditSyndicEmail: (v: string) => void;
+  editNotifyAgency: boolean;
+  setEditNotifyAgency: (v: boolean) => void;
+  editNotifyIncident: boolean;
+  setEditNotifyIncident: (v: boolean) => void;
+  editNotifyListing: boolean;
+  setEditNotifyListing: (v: boolean) => void;
   saving: boolean;
   onSave: (event: React.FormEvent) => void;
   deleting: boolean;
@@ -451,6 +481,71 @@ function ResidenceDetail({
           <button type="submit" disabled={saving} className="btn-primary-sm">
             {saving ? 'Enregistrement…' : 'Enregistrer les paramètres'}
           </button>
+        </div>
+
+        {/* Notifications par email de la résidence */}
+        <div className="mt-5 border-t border-border pt-4">
+          <p className="text-xs font-semibold text-foreground">Notifications par email</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Emails envoyés automatiquement pour cette résidence (agence + habitants).
+            Les habitants peuvent aussi désactiver leurs notifications dans leur profil.
+          </p>
+          <div className="mt-3 space-y-2">
+            <label className="flex items-start justify-between gap-3 rounded-xl border border-border bg-white px-4 py-2.5">
+              <span>
+                <span className="block text-sm font-medium text-foreground">
+                  Signalement envoyé à l&apos;agence
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Description et photos, à l&apos;adresse de l&apos;agence ci-dessus.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={editNotifyAgency}
+                onChange={(event) => setEditNotifyAgency(event.target.checked)}
+                className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
+                aria-label="Emails à l'agence pour les signalements"
+              />
+            </label>
+            <label className="flex items-start justify-between gap-3 rounded-xl border border-border bg-white px-4 py-2.5">
+              <span>
+                <span className="block text-sm font-medium text-foreground">
+                  Nouveau signalement aux habitants
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Email à tous les habitants à la déclaration d&apos;un signalement.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={editNotifyIncident}
+                onChange={(event) => setEditNotifyIncident(event.target.checked)}
+                className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
+                aria-label="Emails de signalement aux habitants"
+              />
+            </label>
+            <label className="flex items-start justify-between gap-3 rounded-xl border border-border bg-white px-4 py-2.5">
+              <span>
+                <span className="block text-sm font-medium text-foreground">
+                  Nouvelle annonce aux habitants
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Email aux habitants quand un voisin coche « notifier la résidence ».
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={editNotifyListing}
+                onChange={(event) => setEditNotifyListing(event.target.checked)}
+                className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition checked:bg-brand-600"
+                aria-label="Emails d'annonce aux habitants"
+              />
+            </label>
+          </div>
         </div>
       </form>
 

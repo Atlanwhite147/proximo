@@ -536,7 +536,16 @@ export class AdminController {
   async updateResidence(
     @CurrentUser() user: { role: string },
     @Param('id') id: string,
-    @Body() dto: { name?: string; code?: string; agencyName?: string; syndicEmail?: string },
+    @Body()
+    dto: {
+      name?: string;
+      code?: string;
+      agencyName?: string;
+      syndicEmail?: string;
+      notifyAgencyOnIncident?: boolean;
+      notifyResidentsOnIncident?: boolean;
+      notifyResidentsOnListing?: boolean;
+    },
   ) {
     if (user.role !== 'SUPERADMIN') {
       throw new ForbiddenException('Réservé au superadmin');
@@ -545,11 +554,21 @@ export class AdminController {
     if (!residence) {
       throw new NotFoundException('Résidence introuvable');
     }
-    const data: Record<string, string> = {};
+    const data: Record<string, string | boolean> = {};
     if (dto.name !== undefined) data.name = dto.name.trim();
     if (dto.code !== undefined) data.code = dto.code.trim();
     if (dto.agencyName !== undefined) data.agencyName = dto.agencyName.trim() || '';
     if (dto.syndicEmail !== undefined) data.syndicEmail = dto.syndicEmail.trim() || '';
+    // Notifications par email de la résidence (interrupteurs mail).
+    if (dto.notifyAgencyOnIncident !== undefined) {
+      data.notifyAgencyOnIncident = dto.notifyAgencyOnIncident;
+    }
+    if (dto.notifyResidentsOnIncident !== undefined) {
+      data.notifyResidentsOnIncident = dto.notifyResidentsOnIncident;
+    }
+    if (dto.notifyResidentsOnListing !== undefined) {
+      data.notifyResidentsOnListing = dto.notifyResidentsOnListing;
+    }
     const updated = await this.prisma.residence.update({ where: { id }, data });
     return { residence: updated };
   }
