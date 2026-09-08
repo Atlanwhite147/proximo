@@ -21,6 +21,8 @@ export default function IncidentDetailPage() {
   const [incident, setIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (authLoading || !user) return; // RequireAccount gère la redirection
@@ -29,6 +31,26 @@ export default function IncidentDetailPage() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Signalement introuvable'))
       .finally(() => setLoading(false));
   }, [id, user, authLoading]);
+
+  /** Marque comme traité, ou rouvre si marqué par erreur (résidents ACTIVE). */
+  const toggleStatus = async () => {
+    if (!incident || busy) return;
+    const resolved = incident.status === 'RESOLVED';
+    if (!window.confirm(resolved ? `Rouvrir « ${incident.title} » ?` : `Marquer « ${incident.title} » comme traité ?`)) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const route = resolved ? 'reopen' : 'resolve';
+      const data = await api<{ incident: Incident }>(`/incidents/${incident.id}/${route}`, {
+        method: 'PATCH',
+      });
+      setIncident(data.incident);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Action impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (authLoading) return <Spinner label="Vérification du compte…" />;
 
@@ -98,6 +120,31 @@ export default function IncidentDetailPage() {
               ))}
             </div>
           )}
+
+          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+            {incident.status === 'RESOLVED' ? (
+              <button
+                type="button"
+                onClick={() => void toggleStatus()}
+                disabled={busy}
+                className="rounded-lg border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+              >
+                {busy ? 'Rouverture…' : '↩ Rouvrir (marqué par erreur ?)'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void toggleStatus()}
+                disabled={busy}
+                className="rounded-lg border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+              >
+                {busy ? 'Enregistrement…' : '✅ Marquer comme traité'}
+              </button>
+            )}
+            {actionError && (
+              <ErrorMessage message={actionError} />
+            )}
+          </div>
         </div>
 
         {/* Discussion publique dédiée */}
