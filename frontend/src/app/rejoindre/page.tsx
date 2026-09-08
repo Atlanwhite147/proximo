@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { AddToHomeScreen } from '@/components/AddToHomeScreen';
 import { ErrorMessage } from '@/components/Feedback';
 import api from '@/lib/api';
 
@@ -73,13 +74,50 @@ function RejoindreContent() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="ds-card p-8 text-center">
+      <div className="ds-card p-6 text-center sm:p-8">
         <div className="text-4xl">🏘️</div>
         <h1 className="mt-3 text-2xl font-bold text-slate-900">Bienvenue dans votre résidence !</h1>
         <p className="mt-2 text-sm text-slate-600">
           Un voisin vous invite à rejoindre <strong className="text-slate-900">{invitation.residenceName}</strong>{' '}
           sur Proximo : prêt de matériel, entraide, dons…
         </p>
+
+        {/* Ce que permet Proximo */}
+        <ul className="mt-5 space-y-2 rounded-xl border border-border bg-slate-50 p-4 text-left text-sm text-slate-700">
+          <li className="flex gap-2.5">
+            <span aria-hidden>📦</span>
+            <span>Publier des annonces entre voisins (prêt, don, entraide).</span>
+          </li>
+          <li className="flex gap-2.5">
+            <span aria-hidden>🚨</span>
+            <span>Signaler un problème au syndic, avec photos.</span>
+          </li>
+          <li className="flex gap-2.5">
+            <span aria-hidden>💬</span>
+            <span>Échanger avec les habitants de la résidence.</span>
+          </li>
+        </ul>
+
+        {/* Déroulement en 3 étapes */}
+        <ol className="mt-5 flex flex-col gap-2 text-left text-sm sm:flex-row sm:items-stretch sm:gap-2 sm:text-center">
+          {[
+            ['1', 'Créez votre compte', 'Email ou Google, 2 minutes.'],
+            ['2', 'Validation', 'Un administrateur de la résidence valide votre inscription.'],
+            ['3', 'Accès direct', 'Ajoutez Proximo à l’écran d’accueil du téléphone.'],
+          ].map(([step, title, detail]) => (
+            <li
+              key={step}
+              className="flex-1 rounded-xl border border-border bg-white p-3 sm:flex sm:flex-col sm:items-center sm:justify-center"
+            >
+              <span className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+                {step}
+              </span>
+              <span className="mt-1.5 block text-xs font-semibold text-slate-900">{title}</span>
+              <span className="block text-xs text-muted-foreground">{detail}</span>
+            </li>
+          ))}
+        </ol>
+
         <div className="mt-6 flex flex-col gap-3">
           <Link
             href={`/inscription?invitationToken=${token}`}
@@ -94,6 +132,11 @@ function RejoindreContent() {
             J&apos;ai déjà un compte
           </Link>
         </div>
+
+        <div className="mt-5">
+          <AddToHomeScreen />
+        </div>
+
         <ErrorMessage message={error} />
       </div>
     </div>
