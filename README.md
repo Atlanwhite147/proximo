@@ -1,6 +1,6 @@
 # 🤝 Proximo
 
-**Plateforme open source de vie de résidence : annonces entre voisins, signalements au syndic, discussions, invitations de voisinage.**
+**Plateforme open source de vie de résidence (multi-résidences) : annonces entre voisins, signalements au syndic, discussions, invitations QR.**
 
 Prêtez un outil, proposez un service, donnez ce qui vous encombre, signalez
 une fuite — Proximo met en relation les habitants d'une même résidence,
@@ -23,8 +23,9 @@ une fuite — Proximo met en relation les habitants d'une même résidence,
 | **Inscription & connexion** | Email + mot de passe (Argon2id) ou Google — sessions JWT en cookies HTTP-only, refresh token révocable avec rotation, « Se souvenir de moi » (90 j) |
 | **Connexion Google** | OAuth2 / OpenID Connect (bouton « Continuer avec Google »), identité vérifiée par Google |
 | **Validation des membres** | Nouveaux comptes en attente (`PENDING`) jusqu'à validation par un admin (sauf emails déclarés administrateurs) ; suspension, réactivation et suppression depuis le back-office |
-| **Rôles** | Habitant (`USER`) ou administrateur (`ADMIN`) — **un admin peut élever ou rétrograder n'importe quel membre** depuis la liste des utilisateurs (garde-fous : impossible de se modifier soi-même) |
-| **Double authentification (admin)** | TOTP obligatoire pour le back-office (Google Authenticator / Authy) — QR code au premier setup, vérification stricte du code à 6 chiffres à la connexion |
+| **Rôles** | Habitant (`USER`), administrateur local (`ADMIN`, gère **sa** résidence) ou **`SUPERADMIN`** (plateforme, toutes les résidences) — élévation/rétrogradation depuis le back-office (garde-fous : impossible de se modifier soi-même) |
+| **Multi-résidences** | Chaque résidence a son **code d'accès** et ses invitations QR ; l'inscription est rattachée à la résidence du code ou du jeton. Le **SUPERADMIN** gère toutes les résidences (création, membres, paramètres, interrupteurs mail) depuis sa console « Toutes les résidences » |
+| **Double authentification (admin)** | TOTP optionnelle et recommandée (Google Authenticator / Authy) — QR code au premier setup, vérification stricte du code à 6 chiffres à la connexion, activable dans Sécurité du compte |
 
 ### 📦 Annonces entre voisins
 
@@ -33,15 +34,15 @@ une fuite — Proximo met en relation les habitants d'une même résidence,
 | **Publication** | 5 catégories : prêt de matériel (🔧), service entre voisins (🤝), don (🎁), avis aux résidents (📢), autre — avec titre, description, bâtiment/étage (au choix), résidence |
 | **Gestion** | Modifier, clôturer, supprimer (propriétaire) — les annonces fermées restent visibles sur leur lien direct |
 | **Recherche** | Par mot-clé (titre/description) et par catégorie, pagination |
-| **Option « notifier la résidence »** | Case à cocher à la publication (défaut : désactivée) — si cochée, tous les habitants reçoivent un email avec l'annonce |
+| **Option « notifier la résidence »** | Case à cocher à la publication (défaut : désactivée) — si cochée, tous les habitants reçoivent un email avec l'annonce (si l'interrupteur « nouvelle annonce » de la résidence est actif) |
 
 ### 🛠️ Signalements au syndic
 
 | Fonctionnalité | Description |
 |---|---|
 | **Déclaration** | Catégories : fuite d'eau, panne d'ascenseur, dégradation, autre — avec localisation libre (hall, étage, parking…) et **jusqu'à 5 pièces jointes** (JPG/PNG/WEBP/PDF, 10 Mo max chacune) |
-| **Alerte agence automatique** | Email récapitulatif au syndic **avec les pièces jointes attachées** (type, localisation, auteur, description) |
-| **Alerte habitants** | Email « nouveau signalement » à **tous les habitants** (avec pièces jointes) — désactivable par l'admin |
+| **Alerte agence automatique** | Email récapitulatif à **l'adresse de l'agence de la résidence** **avec les pièces jointes attachées** (type, localisation, auteur, description) |
+| **Alerte habitants** | Email « nouveau signalement » à **tous les habitants** (avec pièces jointes) — piloté par les interrupteurs mail de la résidence |
 | **Suivi** | Statut visible : nouveau / en cours / résolu — n'importe quel habitant peut marquer un signalement traité (le déclarant est prévenu par email) |
 | **Visibilité** | Chaque signalement a sa page détail publique (habitants ACTIVE) avec ses pièces jointes téléchargeables |
 
@@ -57,7 +58,8 @@ une fuite — Proximo met en relation les habitants d'une même résidence,
 
 | Fonctionnalité | Description |
 |---|---|
-| **Invitations par QR code** | Lien d'invitation lié à la résidence, usage unique et expirable (72 h), page d'atterrissage avec pré-remplissage de la résidence |
+| **Invitations par QR code** | Lien d'invitation lié à la résidence, usage unique et expirable (72 h) — page d'atterrissage expliquant Proximo (annonces, signalements, messagerie), le déroulement en 3 étapes (compte → validation → accès direct) et l'ajout à l'écran d'accueil du téléphone |
+| **Accès mobile** | Onglet « Admin » dans la barre de navigation mobile pour les admins ; aide contextuelle « 📲 Ajouter Proximo à l'écran d'accueil » (étapes iOS Safari / Android Chrome) |
 | **Messagerie 1-1** | Conversations privées entre voisins, messages non lus, marquage lu — depuis le profil du propriétaire d'une annonce |
 | **Accueil personnalisé** | Dernières annonces, signalements en cours, accès rapides — réservé aux membres validés |
 
@@ -65,10 +67,11 @@ une fuite — Proximo met en relation les habitants d'une même résidence,
 
 | Fonctionnalité | Description |
 |---|---|
-| **Fournisseur configurable** | **Brevo** (API transactionnelle, recommandé) ou **SMTP** générique (Nodemailer) — configurable depuis l'admin, avec **email de test** |
-| **Mails automatiques** | Bienvenue, nouveau message, changement de statut d'un signalement, nouveau signalement (habitants), nouvelle annonce (si l'auteur le choisit) |
-| **Interrupteurs admin** | Depuis Réglages → Envoi d'emails : **activer/couper les mails automatiques** (signalement et annonce) pour toute la résidence, sans toucher au serveur |
-| **Pièces jointes** | Les photos d'un signalement sont **jointes aux mails** (agence + habitants), pas seulement listées |
+| **Transport (superadmin)** | **Brevo** (API transactionnelle, recommandé) ou **SMTP** générique (Nodemailer), expéditeur et **email de test** — configuré par le SUPERADMIN dans Réglages → Envoi d'emails |
+| **Interrupteurs par résidence** | 3 interrupteurs gérés par l'admin local (Réglages) ou le SUPERADMIN (console résidences) : signalement → agence, signalement → habitants, annonce → habitants |
+| **Quota Brevo & file d'attente** | Le plan gratuit Brevo (300 emails/jour) est surveillé : compteur restant affiché dans l'admin, et si le quota est atteint les emails partent dans une **file d'attente** (`EmailOutbox`) avec **renvoi automatique** (~10 min après réinitialisation) + bouton « Renvoyer maintenant » — aucun email perdu |
+| **Opt-out individuel** | Chaque habitant peut désactiver ses emails de masse (signalements, annonces) depuis son profil |
+| **Templates sobres** | Emails au design épuré (bleu électrique `#0052FF`, CSS inline compatible Gmail/Outlook), objet préfixé du nom de résidence, **pièces jointes attachées** aux mails agence et habitants |
 
 ### 🛡️ Sécurité & vie privée
 
@@ -77,7 +80,7 @@ une fuite — Proximo met en relation les habitants d'une même résidence,
 | **Confidentialité** | L'adresse exacte, les emails et coordonnées des habitants ne sont **jamais** exposés via l'API publique — les listings n'exposent pas l'email du propriétaire, les signalements non plus |
 | **Sessions** | Cookies HTTP-only + SameSite=Lax + Secure (HTTPS), refresh tokens hashés (SHA-256) révocables avec rotation (détection de rejeu) |
 | **Protections** | Argon2id, validation stricte (whitelist + rejet des champs inconnus), SQL paramétré, anti-CSRF, rate limiting par IP, Helmet + CSP, uploads filtrés (MIME + extension + taille + noms UUID) |
-| **Back-office protégé** | Toutes les routes admin exigent le rôle ADMIN + 2FA vérifiée dans la session |
+| **Back-office protégé** | Les routes admin exigent le rôle ADMIN (scopé à sa résidence) ou SUPERADMIN, + 2FA vérifiée dans la session si activée |
 
 ## 🧱 Stack technique
 
@@ -95,7 +98,8 @@ proximo/
 ├── docker-compose.yml         # Orchestration complète (db, backend, frontend, nginx)
 ├── nginx/nginx.conf           # Reverse proxy (/ → frontend, /api → backend)
 ├── backend/                   # API NestJS
-│   ├── prisma/schema.prisma   # Modèle de données (User, Listing, Incident, Comment…)
+│   ├── prisma/schema.prisma   # Modèle (Residence, User, Listing, Incident,
+│   │                          #  EmailSettings, EmailOutbox, Invitation…)
 │   ├── prisma/migrations/     # Migrations SQL versionnées
 │   └── src/
 │       ├── auth/              # JWT + cookies HTTP-only, rotation, Google OAuth2, 2FA TOTP
@@ -104,13 +108,15 @@ proximo/
 │       ├── messages/          # Messagerie 1-1 + notifications email
 │       ├── incidents/         # Signalements syndic + pièces jointes (upload sécurisé)
 │       ├── invitations/       # Invitations QR (jeton usage unique / expirable)
-│       ├── admin/             # Back-office (2FA, membres, rôles, signalements, réglages)
-│       ├── email/             # Emails transactionnels (Brevo / SMTP, templates HTML)
+│       ├── admin/             # Back-office (multi-résidences, membres, rôles,
+│       │                      #  résidences, interrupteurs mail)
+│       ├── email/             # Emails transactionnels (Brevo / SMTP, templates,
+│       │                      #  quota 300/j + file d'attente EmailOutbox)
 │       ├── users/             # Profils + réglages de notification
 │       └── common/            # Guards : JWT, rôles, statut, admin, anti-CSRF, rate limiting
 └── frontend/                  # Next.js (App Router)
-    └── src/app/               # Pages : accueil, annonces, messagerie, signalements,
-                               #          admin, invitation, profil
+    │    └── src/app/               # Pages : accueil, annonces, messagerie, signalements,
+    │                               #          admin (multi-résidences), rejoindre (QR), install
 ```
 
 ## 🚀 Démarrage rapide (1 commande)
@@ -210,9 +216,11 @@ par un tunnel Cloudflare ; sinon ouvrez aussi `8080` (Instance → Security List
 > par git. En production, pensez à HTTPS (TLS terminé sur le reverse proxy)
 > — les cookies sont alors marqués `Secure` automatiquement.
 >
-> **Configuration par l'admin (sans SSH)** : le back-office (Réglages → Envoi
-> d'emails) permet de configurer le fournisseur (Brevo/SMTP), l'expéditeur,
-> d'envoyer un email de test et d'activer/couper les mails automatiques.
+> **Configuration par l'admin (sans SSH)** : le SUPERADMIN configure le
+> transport (Réglages → Envoi d'emails : Brevo/SMTP, expéditeur, email de
+> test, compteur Brevo et renvoi de la file d'attente) ; chaque admin local
+> pilote les interrupteurs mail de sa résidence (Réglages), le SUPERADMIN
+> ceux de toutes les résidences (console « Toutes les résidences »).
 
 ## 📡 API (résumé)
 
@@ -245,12 +253,12 @@ Toutes les routes sont préfixées par `/api`.
 | GET | `/geocode?q=…` | public (limitée) | Recherche d'adresse (géocodage, repli si nécessaire) |
 | GET | `/invitations/:token` | public | Consulter une invitation |
 | POST | `/admin/invitations` | admin (2FA) | Générer une invitation + QR |
-| GET | `/admin/users` | admin (2FA) | Liste des membres (filtres statut/recherche) |
-| PATCH | `/admin/users/:id` | admin (2FA) | Valider / suspendre / **élever ou rétrograder (rôle)** |
-| DELETE | `/admin/users/:id` | admin (2FA) | Supprimer un compte |
-| GET | `/admin/settings` · PATCH | admin (2FA) | Réglages syndic (nom résidence, email agence) |
-| GET | `/admin/email-settings` · PATCH | admin (2FA) | Config email (Brevo/SMTP, expéditeur, mails automatiques) |
-| POST | `/admin/email-settings/test` | admin (2FA) | Envoyer un email de test |
+| GET | `/admin/residences` · POST | **SUPERADMIN** | Liste / créer une résidence (console plateforme) |
+| PATCH | `/admin/residences/:id` | **SUPERADMIN** | Nom, code, agence, email syndic **+ interrupteurs mail de la résidence** |
+| GET | `/admin/users` · PATCH · DELETE | admin (2FA) | Membres (validation, suspension, rôles) — scopé à la résidence de l'admin |
+| GET | `/admin/settings` · PATCH | admin (2FA) | Réglages syndic de la résidence de l'admin (agence, email, interrupteurs mail) |
+| GET | `/admin/email-settings` · PATCH | **SUPERADMIN** | Transport (Brevo/SMTP, expéditeur) + **quota Brevo et file d'attente** |
+| POST | `/admin/email-settings/test` · `/flush` | **SUPERADMIN** | Email de test / **renvoyer la file d'attente** |
 | GET | `/health` | public | Healthcheck (état API + base) |
 
 ## 🛡️ Sécurité
