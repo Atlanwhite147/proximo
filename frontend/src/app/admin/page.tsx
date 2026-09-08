@@ -242,6 +242,25 @@ export default function AdminPage() {
     }
   };
 
+  /** Supprime une invitation : le lien et le QR deviennent inutilisables. */
+  const deleteInvitation = async (invitation: Invitation) => {
+    setError(null);
+    setSuccess(null);
+    if (
+      !window.confirm(
+        `Supprimer l'invitation « ${invitation.neighborhood || 'sans nom'} » ? Le lien et le QR code ne fonctionneront plus.`,
+      )
+    )
+      return;
+    try {
+      await api(`/admin/invitations/${invitation.id}`, { method: 'DELETE' });
+      setSuccess('Invitation supprimée.');
+      loadInvitations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Suppression impossible');
+    }
+  };
+
   const saveSettings = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -764,15 +783,24 @@ export default function AdminPage() {
                         >
                           {invitation.url}
                         </a>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void navigator.clipboard.writeText(invitation.url);
-                          }}
-                          className="mt-1 font-medium text-slate-600 hover:underline"
-                        >
-                          Copier le lien
-                        </button>
+                        <div className="mt-1 flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(invitation.url);
+                            }}
+                            className="font-medium text-slate-600 hover:underline"
+                          >
+                            Copier le lien
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void deleteInvitation(invitation)}
+                            className="font-medium text-red-500 hover:underline"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

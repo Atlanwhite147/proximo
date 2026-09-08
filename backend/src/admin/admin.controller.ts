@@ -437,6 +437,13 @@ export class AdminController {
     return { invitations };
   }
 
+  /** Supprime une invitation (lien + QR invalidés). */
+  @Delete('invitations/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteInvitation(@Param('id', ParseUUIDPipe) id: string) {
+    await this.invitationsService.remove(id);
+  }
+
   // ─── Vue d'ensemble (stats) ─────────────────────────────────
 
   @Get('stats')

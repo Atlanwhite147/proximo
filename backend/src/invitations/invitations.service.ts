@@ -91,4 +91,16 @@ export class InvitationsService {
       qrUrl: `${apiBase}/invitations/${invitation.token}/qr.png`,
     }));
   }
+
+  /** Supprime une invitation (administration). */
+  async remove(invitationId: string): Promise<void> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { id: invitationId },
+      select: { id: true },
+    });
+    if (!invitation) {
+      throw new NotFoundException('Invitation introuvable');
+    }
+    await this.prisma.invitation.delete({ where: { id: invitationId } });
+  }
 }
