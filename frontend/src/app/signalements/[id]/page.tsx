@@ -44,7 +44,11 @@ export default function IncidentDetailPage() {
       const data = await api<{ incident: Incident }>(`/incidents/${incident.id}/${route}`, {
         method: 'PATCH',
       });
-      setIncident(data.incident);
+      // La réponse PATCH ne contient pas les relations (user, attachments) :
+      // on ne remplace que le statut pour conserver le détail complet.
+      setIncident((current) =>
+        current ? { ...current, status: data.incident.status } : current,
+      );
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action impossible');
     } finally {
