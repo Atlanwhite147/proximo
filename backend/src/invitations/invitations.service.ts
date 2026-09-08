@@ -77,11 +77,18 @@ export class InvitationsService {
 
   /** Liste des invitations (administration). */
   async listAll(residenceId?: string | null) {
-    return this.prisma.invitation.findMany({
+    const invitations = await this.prisma.invitation.findMany({
       where: residenceId ? { residenceId } : undefined,
       orderBy: { createdAt: 'desc' },
       take: 100,
       include: { createdBy: { select: { firstName: true, lastName: true } } },
     });
+    // Ajoute les champs calculés (lien + QR) attendus par l'interface.
+    const apiBase = process.env.API_URL ?? '/api';
+    return invitations.map((invitation) => ({
+      ...invitation,
+      url: `${APP_URL}/rejoindre?token=${invitation.token}`,
+      qrUrl: `${apiBase}/invitations/${invitation.token}/qr.png`,
+    }));
   }
 }
