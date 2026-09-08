@@ -109,9 +109,7 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
       throw new NotFoundException('Signalement introuvable');
     }
     if (incident.status !== 'RESOLVED') {
-      throw new BadRequestException(
-        'Seul un signalement marqué comme traité peut être rouvert',
-      );
+      throw new BadRequestException('Seul un signalement marqué comme traité peut être rouvert');
     }
     const updated = await this.prisma.incident.update({
       where: { id: incidentId },
@@ -132,7 +130,6 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     }
     return updated;
   }
-
 
   /** Suppression par un administrateur (fichiers joints nettoyés). */
   async adminRemove(incidentId: string): Promise<void> {
