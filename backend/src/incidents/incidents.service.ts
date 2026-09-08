@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -74,6 +75,9 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     if (!incident) {
       throw new NotFoundException('Signalement introuvable');
     }
+    if (incident.status === 'RESOLVED') {
+      throw new BadRequestException('Ce signalement est déjà marqué comme traité');
+    }
     const updated = await this.prisma.incident.update({
       where: { id: incidentId },
       data: { status: 'RESOLVED' },
@@ -93,6 +97,42 @@ export class IncidentsService implements OnModuleInit, OnModuleDestroy {
     }
     return updated;
   }
+
+  /**
+   * Rouvre un signalement marqué « Résolu » par erreur.
+   * N'importe quel résident ACTIVE peut corriger : un « traité » par erreur
+   * repasse en cours (OPEN) au lieu d'être purgé après 48 h.
+   */
+  async reopen(incidentId: string): Promise<Incident> {
+    const incident = await this.prisma.incident.findUnique({ where: { id: incidentId } });
+    if (!incident) {
+      throw new NotFoundException('Signalement introuvable');
+    }
+    if (incident.status !== 'RESOLVED') {
+      throw new BadRequestException(
+        'Seul un signalement marqué comme traité peut être rouvert',
+      );
+    }
+    const updated = await this.prisma.incident.update({
+      where: { id: incidentId },
+      data: { status: 'OPEN' },
+    });
+    // L'auteur est prévenu du retour en cours de traitement.
+    const author = await this.prisma.user.findUnique({
+      where: { id: incident.userId },
+      select: { email: true, emailNotifications: true },
+    });
+    if (author?.emailNotifications) {
+      await this.emailService.sendIncidentStatusUpdate(
+        author.email,
+        incident.title,
+        'OPEN',
+        'Signalement rouvert : il redevient visible dans les signalements en cours.',
+      );
+    }
+    return updated;
+  }
+
 
   /** Suppression par un administrateur (fichiers joints nettoyés). */
   async adminRemove(incidentId: string): Promise<void> {

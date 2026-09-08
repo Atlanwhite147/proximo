@@ -108,6 +108,14 @@ export class IncidentsController {
     return { incident };
   }
 
+  /** Rouvre un signalement marqué « traité » par erreur (résidents ACTIVE). */
+  @Patch(':id/reopen')
+  @HttpCode(HttpStatus.OK)
+  async reopen(@Param('id', ParseUUIDPipe) id: string) {
+    const incident = await this.incidentsService.reopen(id);
+    return { incident };
+  }
+
   /** Détail public d'un signalement (visible par tous les habitants ACTIVE). */
   @Get(':id/public')
   async publicDetail(@Param('id', ParseUUIDPipe) id: string) {

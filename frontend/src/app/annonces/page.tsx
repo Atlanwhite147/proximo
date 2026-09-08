@@ -131,7 +131,33 @@ function ListingsContent() {
               💬 {incident._count.comments}
             </span>
           )}
-          {incident.status !== 'RESOLVED' && (
+          {incident.status === 'RESOLVED' ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Rouvrir « ${incident.title} » ? Utilisez cette option si le signalement a été marqué comme traité par erreur.`,
+                  )
+                )
+                  return;
+                api(`/incidents/${incident.id}/reopen`, { method: 'PATCH' })
+                  .then(() => {
+                    setIncidents((current) =>
+                      current.map((item) =>
+                        item.id === incident.id ? { ...item, status: 'OPEN' } : item,
+                      ),
+                    );
+                  })
+                  .catch((err) =>
+                    setError(err instanceof Error ? err.message : 'Action impossible'),
+                  );
+              }}
+              className="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+            >
+              ↩ Rouvrir
+            </button>
+          ) : (
             <button
               type="button"
               onClick={() => {
