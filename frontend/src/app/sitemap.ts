@@ -5,9 +5,13 @@ import type { MetadataRoute } from 'next';
  * Les pages privées (connexion, inscription, admin, messagerie, annonces
  * résidents…) sont exclues : elles exigent un compte et ne doivent pas
  * apparaître dans les résultats.
+ * Route DYNAMIQUE : la base URL vient de l'ENV runtime (APP_URL) pour que
+ * chaque environnement (prod, bêta) serve son propre domaine.
  */
+export const dynamic = 'force-dynamic';
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://proximo.147.ovh';
+  const base = process.env.APP_URL ?? 'https://proximo.147.ovh';
 
   return [
     { url: base, changeFrequency: 'weekly', priority: 1 },

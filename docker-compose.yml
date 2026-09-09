@@ -88,6 +88,8 @@ services:
       # URL interne du backend (nom du service Docker) pour le middleware
       # d'installation (redirection vers /install au premier lancement).
       API_INTERNAL_URL: http://backend:3001/api
+      # URL publique (sitemap, robots.txt, Open Graph) — propre à chaque env.
+      APP_URL: ${APP_URL:-http://localhost:3000}
     depends_on:
       backend:
         condition: service_healthy
