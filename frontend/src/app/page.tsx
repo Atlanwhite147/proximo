@@ -172,6 +172,77 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* ─── Contenu public (SEO) : fonctionnement + FAQ ───── */}
+      {!user && (
+        <>
+          <section className="ds-card p-6 sm:p-8">
+            <SectionLabel color="blue">● Comment ça marche</SectionLabel>
+            <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
+              Une application pour rapprocher les habitants d&apos;une même résidence
+            </h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              {[
+                {
+                  step: '1',
+                  title: 'Créez la résidence',
+                  text: 'Un habitant crée l&apos;espace de son immeuble et reçoit un code d&apos;accès unique à partager à ses voisins, en main propre ou par QR code.',
+                },
+                {
+                  step: '2',
+                  title: 'Vos voisins rejoignent',
+                  text: 'Chaque habitant s&apos;inscrit avec le code de la résidence (email ou Google). Un administrateur valide les comptes : seuls les vrais habitants entrent.',
+                },
+                {
+                  step: '3',
+                  title: 'La vie de l&apos;immeuble au même endroit',
+                  text: 'Annonces (prêt, don, service), signalements au syndic avec photos, discussions et invitations : tout circule dans un espace privé et sans publicité.',
+                },
+              ].map((item) => (
+                <div key={item.step} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
+                    {item.step}
+                  </span>
+                  <h3 className="mt-3 font-semibold text-slate-900">{item.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="ds-card p-6 sm:p-8">
+            <SectionLabel color="blue">● Questions fréquentes</SectionLabel>
+            <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
+              Proximo, l&apos;entraide entre voisins expliquée
+            </h2>
+            <div className="mt-5 space-y-4">
+              {[
+                {
+                  q: 'Proximo est-il gratuit pour les habitants ?',
+                  a: 'Oui. Proximo est un projet open source : le code est public sur GitHub. Les habitants d&apos;une résidence utilisent les annonces, les signalements et les discussions sans frais.',
+                },
+                {
+                  q: 'Qui peut rejoindre une résidence sur Proximo ?',
+                  a: 'Uniquement les habitants : l&apos;inscription demande le code d&apos;accès de la résidence (distribué par un voisin ou l&apos;administrateur), puis un administrateur valide chaque compte. Pas de publicité, pas de données personnelles revendues.',
+                },
+                {
+                  q: 'À quoi servent les signalements ?',
+                  a: 'Fuite d&apos;eau, ascenseur en panne, dégradation dans les parties communes : chaque signalement peut inclure des photos et est notifié à l&apos;agence ou au syndic configuré par la résidence.',
+                },
+                {
+                  q: 'Proximo remplace-t-il le groupe WhatsApp de l&apos;immeuble ?',
+                  a: 'Proximo organise ce que WhatsApp ne fait pas : des annonces structurées (prêt, don, service), des fils de discussion par sujet et des signalements suivis — sans mélanger vie privée et vie d&apos;immeuble.',
+                },
+              ].map((item) => (
+                <div key={item.q} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
+                  <h3 className="font-semibold text-slate-900">{item.q}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
       {/* ─── Accès rapides ─────────────────────────────────── */}
       {user && user.status === 'ACTIVE' && (
         <section className="grid grid-cols-3 gap-3">
