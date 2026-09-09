@@ -1,0 +1,15 @@
+User-Agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /annonces
+Disallow: /signalements
+Disallow: /messages
+Disallow: /profil
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /install
+Disallow: /inviter
+Disallow: /rejoindre
+
+Sitemap: https://proximo.147.ovh/sitemap.xml
