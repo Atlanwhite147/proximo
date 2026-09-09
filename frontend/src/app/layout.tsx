@@ -67,6 +67,42 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${calistoga.variable} ${inter.variable} ${jetbrains.variable}`}>
+      <head>
+        {/* Balisage structuré : nom du site explicite pour Google (le domaine
+            147.ovh s'affichait à la place de « Proximo » dans les résultats). */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'WebSite',
+                  '@id': 'https://proximo.147.ovh/#website',
+                  url: 'https://proximo.147.ovh/',
+                  name: 'Proximo',
+                  alternateName: 'Proximo · La vie de votre résidence',
+                  description:
+                    'Plateforme de vie de résidence : annonces entre voisins, signalements au syndic, invitations de voisinage.',
+                  inLanguage: 'fr-FR',
+                },
+                {
+                  '@type': 'SoftwareApplication',
+                  name: 'Proximo',
+                  applicationCategory: 'LifestyleApplication',
+                  operatingSystem: 'Web',
+                  url: 'https://proximo.147.ovh/',
+                  description:
+                    'Annonces entre voisins, signalements au syndic, discussions et invitations : connectez votre résidence.',
+                  inLanguage: 'fr-FR',
+                  license: 'https://github.com/Atlanwhite147/proximo',
+                  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+                },
+              ],
+            }),
+          }}
+        />
+      </head>
       <body className="flex min-h-screen flex-col font-sans">
         <AuthProvider>
           <Navbar />
