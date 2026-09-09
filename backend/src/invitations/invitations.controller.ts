@@ -41,6 +41,13 @@ export class InvitationsController {
     return this.invitationsService.getPublic(token);
   }
 
+  /** Lien court (TinyURL) pour le partage WhatsApp. */
+  @Get(':token/short-url')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  async shortUrl(@Param('token') token: string) {
+    return this.invitationsService.getShortUrl(token);
+  }
+
   /** QR code PNG de l'invitation. */
   @Get(':token/qr.png')
   @Header('Content-Type', 'image/png')

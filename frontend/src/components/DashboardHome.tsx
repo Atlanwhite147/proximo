@@ -41,14 +41,15 @@ type Activity = { kind: keyof typeof TYPE_VISUAL; date: string; node: React.Reac
 /** Widget « Inviter un voisin » : QR généré à la demande + partage WhatsApp. */
 function InviteWidget() {
   const { user } = useAuth();
-  const [invitation, setInvitation] = useState<{ url: string; qrUrl?: string } | null>(null);
+  const [invitation, setInvitation] = useState<{ url: string; qrUrl?: string; token?: string } | null>(null);
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const generate = async () => {
     setBusy(true);
     try {
-      const created = await api<{ url: string; qrUrl?: string }>('/invitations', {
+      const created = await api<{ url: string; qrUrl?: string; token?: string }>('/invitations', {
         method: 'POST',
         body: JSON.stringify({
           neighborhood: user?.residenceName ?? user?.neighborhood ?? '',
@@ -56,6 +57,12 @@ function InviteWidget() {
         }),
       });
       setInvitation(created);
+      // Lien court pour le partage (TinyURL) — silencieux si indisponible.
+      if (created.token) {
+        api<{ shortUrl: string }>(`/invitations/${created.token}/short-url`)
+          .then((data) => setShortUrl(data.shortUrl))
+          .catch(() => undefined);
+      }
     } catch {
       /* silencieux : le lien /inviter reste accessible */
     } finally {
@@ -63,15 +70,18 @@ function InviteWidget() {
     }
   };
 
+  /** Lien effectif : le court si dispo, sinon le lien complet. */
+  const shareUrl = shortUrl ?? invitation?.url ?? null;
+
   const copy = async () => {
-    if (!invitation?.url) return;
-    await navigator.clipboard.writeText(invitation.url).catch(() => undefined);
+    if (!shareUrl) return;
+    await navigator.clipboard.writeText(shareUrl).catch(() => undefined);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const whatsappUrl = invitation?.url
-    ? `https://wa.me/?text=${encodeURIComponent(`Rejoignez notre résidence sur Proximo : ${invitation.url}`)}`
+  const whatsappUrl = shareUrl
+    ? `https://wa.me/?text=${encodeURIComponent(`Rejoignez notre résidence sur Proximo : ${shareUrl}`)}`
     : null;
 
   if (!invitation) {
@@ -107,7 +117,9 @@ function InviteWidget() {
         ) : null}
       </Link>
       <div className="min-w-0 flex-1">
-        <p className="break-all font-mono text-xs text-white/80">{invitation.url}</p>
+        <p className="break-all font-mono text-xs text-white/80">
+          {shareUrl ?? invitation.url}
+        </p>
         <div className="mt-2.5 flex flex-wrap gap-2">
           {whatsappUrl && (
             <a

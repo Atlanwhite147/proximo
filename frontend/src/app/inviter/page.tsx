@@ -15,6 +15,7 @@ import { RequireAccount } from '@/components/RequireAccount';
 export default function InviterPage() {
   const { user } = useAuth();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,12 +28,21 @@ export default function InviterPage() {
         body: JSON.stringify({ neighborhood: user?.residenceName ?? user?.neighborhood ?? '', expiresInHours: 72 }),
       });
       setInvitation(data);
+      // Lien court (TinyURL) pour le partage — silencieux si indisponible.
+      if (data.token) {
+        api<{ shortUrl: string }>(`/invitations/${data.token}/short-url`)
+          .then((res) => setShortUrl(res.shortUrl))
+          .catch(() => undefined);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Création impossible');
     } finally {
       setSubmitting(false);
     }
   };
+
+  /** Lien affiché / copié : le court si dispo, sinon le lien complet. */
+  const shareUrl = shortUrl ?? invitation?.url ?? null;
 
   return (
     <RequireAccount>
@@ -69,21 +79,35 @@ export default function InviterPage() {
           <p className="text-xs text-slate-400">
             Expire le {new Date(invitation.expiresAt).toLocaleDateString('fr-FR')} · usage unique
           </p>
-          <a
-            href={invitation.url}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 block break-all text-sm text-brand-600 hover:underline"
-          >
-            {invitation.url}
-          </a>
-          <button
-            type="button"
-            onClick={() => void navigator.clipboard.writeText(invitation.url)}
-            className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Copier le lien
-          </button>
+          {shareUrl && (
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 block break-all text-sm text-brand-600 hover:underline"
+            >
+              {shareUrl}
+            </a>
+          )}
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {shareUrl && (
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Rejoignez notre résidence sur Proximo : ${shareUrl}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg bg-[#25D366] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              >
+                Partager sur WhatsApp
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => void navigator.clipboard.writeText(shareUrl ?? invitation.url)}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Copier le lien
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -7,6 +7,36 @@ import { CreateInvitationDto } from './dto/create-invitation.dto';
 const DEFAULT_TTL_HOURS = 72;
 const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 
+/** Cache mémoire des URLs raccourcies (token → lien court, 12 h). */
+const shortUrlCache = new Map<string, { short: string; at: number }>();
+const SHORT_URL_TTL_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * Raccourcit une URL via TinyURL (repli is.gd). Sans clé API, timeout court.
+ * Retourne l'URL d'origine si les deux services échouent (dégradation douce).
+ */
+async function shortenWithService(longUrl: string): Promise<string | null> {
+  const encoded = encodeURIComponent(longUrl);
+  const services = [
+    `https://tinyurl.com/api-create.php?url=${encoded}`,
+    `https://is.gd/create.php?format=simple&url=${encoded}`,
+  ];
+  for (const endpoint of services) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4_000);
+      const response = await fetch(endpoint, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!response.ok) continue;
+      const text = (await response.text()).trim();
+      if (text.startsWith('http') && !text.includes(' ')) return text;
+    } catch {
+      /* service injoignable → essayer le suivant */
+    }
+  }
+  return null;
+}
+
 /**
  * Invitations de voisinage : jeton aléatoire à usage unique, expirable,
  * lié à un quartier / une résidence, distribué via lien ou QR code.
@@ -95,6 +125,35 @@ export class InvitationsService {
       url: `${APP_URL}/rejoindre?token=${invitation.token}`,
       qrUrl: `${apiBase}/invitations/${invitation.token}/qr.png`,
     }));
+  }
+
+  /**
+   * Lien court pour le partage (WhatsApp…) : TinyURL en priorité, is.gd en
+   * repli, sinon l'URL complète (dégradation douce). Cache 12 h par token.
+   */
+  async getShortUrl(token: string): Promise<{ shortUrl: string }> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { token },
+      select: { id: true },
+    });
+    if (!invitation) {
+      throw new NotFoundException("Jeton d'invitation invalide");
+    }
+    const longUrl = `${APP_URL}/rejoindre?token=${token}`;
+
+    const cached = shortUrlCache.get(token);
+    if (cached && Date.now() - cached.at < SHORT_URL_TTL_MS) {
+      return { shortUrl: cached.short };
+    }
+
+    const short = (await shortenWithService(longUrl)) ?? longUrl;
+    shortUrlCache.set(token, { short, at: Date.now() });
+    // Borne la taille du cache (évite une fuite mémoire avec beaucoup de jetons).
+    if (shortUrlCache.size > 500) {
+      const oldest = [...shortUrlCache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+      if (oldest) shortUrlCache.delete(oldest[0]);
+    }
+    return { shortUrl: short };
   }
 
   /** Supprime une invitation (administration). */
