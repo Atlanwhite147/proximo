@@ -286,7 +286,7 @@ export function AdminResidences() {
             maxLength={32}
             value={newCode}
             onChange={(event) => setNewCode(event.target.value)}
-            placeholder="Code d'accès (ex. CEDRES-2026)"
+            placeholder="Code d'accès (ex. MA-RESID-2026)"
             className="input-field h-11 "
           />
         </div>

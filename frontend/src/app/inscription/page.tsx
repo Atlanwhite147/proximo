@@ -130,7 +130,7 @@ function InscriptionForm() {
               autoCapitalize="characters"
               value={googleResidenceCode}
               onChange={(event) => setGoogleResidenceCode(event.target.value)}
-              placeholder="Code de résidence (ex. LES-CEDRES)"
+              placeholder="Ex. 4 caractères ou plus (fourni par votre syndic)"
               className="input-field "
               aria-label="Code de résidence pour Google"
             />
@@ -213,7 +213,7 @@ function InscriptionForm() {
                 autoCapitalize="characters"
                 value={residenceCode}
                 onChange={(event) => setResidenceCode(event.target.value)}
-                placeholder="Code de résidence (ex. LES-CEDRES)"
+                placeholder="Ex. 4 caractères ou plus (fourni par votre syndic)"
                 className="input-field "
               />
               <p className="mt-1.5 text-xs text-muted-foreground">

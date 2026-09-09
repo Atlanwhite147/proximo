@@ -35,7 +35,7 @@ export class UsersController {
 
   /** Indicateurs de vie de la résidence (dashboard : habitants, annonces…). */
   @Get('me/residence-stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, StatusGuard)
   async residenceStats(@CurrentUser() user: { id: string }) {
     return this.usersService.getResidenceStats(user.id);
   }
