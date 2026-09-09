@@ -124,4 +124,26 @@ export class UsersService {
     });
     return user;
   }
+
+  /**
+   * Indicateurs de vie de la résidence de l'utilisateur (dashboard) :
+   * habitants actifs, annonces, signalements ouverts — pour lutter contre
+   * le « sentiment de vide » d'une application communautaire.
+   */
+  async getResidenceStats(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { residenceId: true },
+    });
+    if (!user?.residenceId) {
+      return { activeResidents: 0, listingsCount: 0, openIncidentsCount: 0 };
+    }
+    const residenceId = user.residenceId;
+    const [activeResidents, listingsCount, openIncidentsCount] = await Promise.all([
+      this.prisma.user.count({ where: { residenceId, status: 'ACTIVE' } }),
+      this.prisma.listing.count({ where: { residenceId } }),
+      this.prisma.incident.count({ where: { residenceId, status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+    ]);
+    return { activeResidents, listingsCount, openIncidentsCount };
+  }
 }

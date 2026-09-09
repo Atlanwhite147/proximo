@@ -1,90 +1,79 @@
 'use client';
 
 import Link from 'next/link';
-import { LatestListings } from '@/components/LatestListings';
-import { LatestIncidents } from '@/components/LatestIncidents';
+import { DashboardHome } from '@/components/DashboardHome';
 import { useAuth } from '@/components/AuthProvider';
 import { SectionLabel } from '@/components/ui/section-label';
 
 /**
- * Accueil « vie de résidence » :
- * - bannière de la résidence de l'utilisateur (ou CTA rejoindre)
- * - accès rapides : annonces, signalements, inviter un voisin
- * - fil des dernières annonces de la résidence
+ * Accueil :
+ * - membre ACTIVE  → DashboardHome (vie de la résidence : indicateurs,
+ *                    fil d'activité unifié, messagerie, invitation)
+ * - membre PENDING → message d'attente de validation
+ * - visiteur       → hero marketing + contenu SEO (Google)
  */
 export default function HomePage() {
   const { user, isAdmin } = useAuth();
 
   return (
     <div className="space-y-6">
-      {/* ─── Bannière résidence ───────────────────────────── */}
-      <section className="glow-bg relative overflow-hidden rounded-3xl bg-brand-gradient px-6 py-10 text-white shadow-lg sm:px-10">
-        <div
-          aria-hidden
-          className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl"
-        />
-        <div className="absolute -right-4 -top-4 text-[100px] opacity-20" aria-hidden>
-          {user ? '🏢' : '🤝'}
-        </div>
-        {user ? (
-          <>
-            <p className="relative font-mono text-xs font-medium uppercase tracking-badge text-white/80">
-              Votre résidence
-            </p>
-            <h1 className="relative mt-2 text-2xl font-bold sm:text-3xl">
-              {user.residenceName ?? 'Rejoignez votre résidence'}
-            </h1>
-            <p className="relative mt-2 max-w-xl text-sm text-white/90">
-              Annonces entre voisins, signalements au syndic, invités : tout ce
-              qui fait vivre votre immeuble, au même endroit.
-            </p>
-            <div className="relative mt-6 flex flex-wrap gap-2.5">
-              <Link
-                href="/annonces/nouvelle"
-                className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow hover:bg-primary-50"
-              >
-                + Publier dans la résidence
-              </Link>
-              {user.status === 'ACTIVE' && (
-                <Link
-                  href="/annonces/nouvelle?categorie=SIGNALEMENT"
-                  className="rounded-xl border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
-                >
-                  Signaler un incident
-                </Link>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="relative font-mono text-xs font-medium uppercase tracking-badge text-white/80">
-              Bienvenue sur Proximo
-            </p>
-            <h1 className="relative mt-2 font-display text-3xl font-normal leading-tight sm:text-4xl">
-              Votre résidence, <span className="text-white">connectée</span>
-            </h1>
-            <p className="relative mt-3 max-w-xl text-sm leading-relaxed text-white/90">
-              Proximo rassemble les habitants d&apos;une même résidence : annonces
-              entre voisins, signalements au syndic, discussions et invitations,
-              le tout au même endroit, sans publicité.
-            </p>
-            <div className="relative mt-6 flex flex-wrap gap-2.5">
-              <Link
-                href="/connexion"
-                className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow hover:bg-primary-50"
-              >
-                Se connecter
-              </Link>
-              <Link
-                href="/inscription"
-                className="rounded-xl border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Créer un compte
-              </Link>
-            </div>
-          </>
-        )}
-      </section>
+      {/* ─── Membres ACTIVE : tableau de bord de la résidence ─ */}
+      {user && user.status === 'ACTIVE' && <DashboardHome />}
+
+      {/* ─── Membres PENDING : en attente de validation ─────── */}
+      {user?.status === 'PENDING' && (
+        <section className="glow-bg relative overflow-hidden rounded-3xl bg-brand-gradient px-6 py-10 text-white shadow-lg sm:px-10">
+          <div aria-hidden className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <p className="relative font-mono text-xs font-medium uppercase tracking-badge text-white/80">
+            Votre résidence
+          </p>
+          <h1 className="relative mt-2 text-2xl font-bold sm:text-3xl">
+            {user.residenceName ?? 'Bienvenue sur Proximo'}
+          </h1>
+          <p className="relative mt-3 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-800">
+            ⏳ Votre compte est en attente de validation par un administrateur.
+            Vous recevrez un email dès qu&apos;il sera actif.
+          </p>
+        </section>
+      )}
+
+      {/* ─── Visiteurs : hero marketing ─────────────────────── */}
+      {!user && (
+        <section className="glow-bg relative overflow-hidden rounded-3xl bg-brand-gradient px-6 py-10 text-white shadow-lg sm:px-10">
+          <div
+            aria-hidden
+            className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl"
+          />
+          <div className="absolute -right-4 -top-4 text-[100px] opacity-20" aria-hidden>
+            🤝
+          </div>
+          <p className="relative font-mono text-xs font-medium uppercase tracking-badge text-white/80">
+            Bienvenue sur Proximo
+          </p>
+          <h1 className="relative mt-2 font-display text-3xl font-normal leading-tight sm:text-4xl">
+            Votre résidence, <span className="text-white">connectée</span>
+          </h1>
+          <p className="relative mt-3 max-w-xl text-sm leading-relaxed text-white/90">
+            Proximo rassemble les habitants d&apos;une même résidence : annonces
+            entre voisins, signalements au syndic, discussions et invitations,
+            le tout au même endroit, sans publicité.
+          </p>
+          <div className="relative mt-6 flex flex-wrap gap-2.5">
+            <Link
+              href="/connexion"
+              className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow hover:bg-primary-50"
+            >
+              Se connecter
+            </Link>
+            <Link
+              href="/inscription"
+              className="rounded-xl border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              Créer un compte
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* ─── Mention discrète (visiteurs sans résidence) ───── */}
       {!user && (
@@ -241,67 +230,6 @@ export default function HomePage() {
             </div>
           </section>
         </>
-      )}
-
-      {/* ─── Accès rapides ─────────────────────────────────── */}
-      {user && user.status === 'ACTIVE' && (
-        <section className="grid grid-cols-3 gap-3">
-          {[
-            { href: '/annonces', icon: '📦', label: 'Annonces' },
-            { href: '/annonces?categorie=SIGNALEMENT', icon: '🛠️', label: 'Signalements' },
-            { href: '/inviter', icon: '📲', label: 'Inviter un voisin' },
-          ].map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex flex-col items-center gap-1.5 ds-card ds-card-hover px-3 py-4 text-center"
-            >
-              <span className="text-2xl">{item.icon}</span>
-              <span className="text-xs font-semibold text-slate-700">{item.label}</span>
-            </Link>
-          ))}
-        </section>
-      )}
-
-      {/* ─── Fil des annonces (réservé aux membres validés) ── */}
-      {user?.status === 'ACTIVE' && (
-        <section>
-          <div className="mb-3 flex items-end justify-between">
-            <div>
-              <SectionLabel color="blue">● Annonces entre voisins</SectionLabel>
-              <h2 className="mt-1 text-xl font-bold text-slate-900">Dernières annonces</h2>
-            </div>
-            <Link href="/annonces" className="text-sm font-medium text-primary hover:underline">
-              Tout voir →
-            </Link>
-          </div>
-          <LatestListings />
-        </section>
-      )}
-
-      {/* ─── Derniers signalements (réservé aux membres validés) ── */}
-      {user?.status === 'ACTIVE' && (
-        <section>
-          <div className="mb-3 flex items-end justify-between">
-            <div>
-              <SectionLabel color="amber">● Signalements syndic</SectionLabel>
-              <h2 className="mt-1 text-xl font-bold text-slate-900">Signalements en cours</h2>
-            </div>
-            <Link
-              href="/annonces?categorie=SIGNALEMENT"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              Tout voir →
-            </Link>
-          </div>
-          <LatestIncidents />
-        </section>
-      )}
-
-      {user?.status === 'PENDING' && (
-        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-center text-sm font-medium text-amber-800">
-          ⏳ Votre compte est en attente de validation par un administrateur.
-        </p>
       )}
 
       {isAdmin && (

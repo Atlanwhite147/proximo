@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import type { Conversation } from '@/lib/types';
+import type { User } from '@/lib/types';
 import { useAuth } from './AuthProvider';
 import { BetaIndicator } from './ui/beta-indicator';
 
@@ -21,6 +22,9 @@ const TABS = [
   { href: '/messages', label: 'Messages', icon: '💬' },
   { href: '/profil', label: 'Profil', icon: '👤' },
 ];
+
+/** Onglets du header desktop : Profil remplacé par le menu avatar. */
+const DESKTOP_TABS = TABS.filter((tab) => tab.href !== '/profil');
 
 function useUnreadCount(user: unknown, pathname: string): number {
   const [unread, setUnread] = useState(0);
@@ -44,6 +48,89 @@ function useUnreadCount(user: unknown, pathname: string): number {
     };
   }, [user, pathname]);
   return unread;
+}
+
+/** Menu avatar (desktop) : Profil / Admin / Déconnexion. */
+function UserMenu({
+  user,
+  isAdmin,
+  onLogout,
+}: {
+  user: User;
+  isAdmin: boolean;
+  onLogout: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
+  const initial = (user.firstName ?? 'U').charAt(0).toUpperCase();
+
+  return (
+    <div ref={menuRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white shadow-sm transition-transform hover:scale-105"
+        title="Mon compte"
+      >
+        {initial}
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          <div className="border-b border-slate-100 px-4 py-2.5">
+            <p className="truncate text-sm font-semibold text-slate-800">
+              {user.firstName} {user.lastName}
+            </p>
+            <p className="truncate text-xs text-slate-400">{user.email}</p>
+          </div>
+          <Link
+            href="/profil"
+            role="menuitem"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            👤 Mon profil
+          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              ⚙️ Administration
+            </Link>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={onLogout}
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+          >
+            ← Déconnexion
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Navbar() {
@@ -84,7 +171,7 @@ export function Navbar() {
 
           {/* Liens desktop */}
           <div className="hidden items-center gap-1 md:flex">
-            {TABS.filter((tab) => tab.href !== '/messages' || user).map((tab) => (
+            {DESKTOP_TABS.filter((tab) => tab.href !== '/messages' || user).map((tab) => (
               <Link
                 key={tab.href}
                 href={tab.href}
@@ -102,29 +189,11 @@ export function Navbar() {
                 )}
               </Link>
             ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isTabActive('/admin')
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                Admin
-              </Link>
-            )}
           </div>
 
           <div className="flex items-center gap-2">
             {loading ? null : user ? (
-              <button
-                type="button"
-                onClick={() => void handleLogout()}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-              >
-                Déconnexion
-              </button>
+              <UserMenu isAdmin={isAdmin} onLogout={() => void handleLogout()} user={user} />
             ) : (
               <>
                 <Link
@@ -155,6 +224,45 @@ export function Navbar() {
             const effectiveHref = !user && isProfile ? '/connexion' : tab.href;
             const effectiveLabel = !user && isProfile ? 'Connexion' : tab.label;
             const active = isTabActive(effectiveHref);
+            // Bouton « + » central : inséré entre Annonces et Messages,
+            // sauf si cet onglet est lui-même le « + ».
+            if (tab.href === '/messages') {
+              const fab = user?.status === 'ACTIVE';
+              return (
+                <div key="group-center" className="flex flex-1 items-stretch justify-around">
+                  {fab && (
+                    <Link
+                      href="/annonces/nouvelle"
+                      aria-label="Publier une annonce"
+                      className="relative -mt-5 flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-semibold text-brand-700"
+                    >
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-gradient text-2xl font-bold text-white shadow-lg ring-4 ring-white active:scale-95">
+                        +
+                      </span>
+                      Publier
+                    </Link>
+                  )}
+                  <Link
+                    key={tab.href}
+                    href={effectiveHref}
+                    className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
+                      active ? 'text-brand-700' : 'text-slate-400'
+                    }`}
+                  >
+                    <span className="text-xl leading-none">{tab.icon}</span>
+                    {effectiveLabel}
+                    {tab.href === '/messages' && unread > 0 && (
+                      <span className="absolute right-1/2 top-1 translate-x-3 rounded-full bg-brand-600 px-1.5 text-[10px] font-bold text-white">
+                        {unread}
+                      </span>
+                    )}
+                    {active && (
+                      <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-brand-600" />
+                    )}
+                  </Link>
+                </div>
+              );
+            }
             return (
               <Link
                 key={tab.href}

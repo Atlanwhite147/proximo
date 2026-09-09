@@ -33,6 +33,13 @@ export class UsersController {
     return { user: profile };
   }
 
+  /** Indicateurs de vie de la résidence (dashboard : habitants, annonces…). */
+  @Get('me/residence-stats')
+  @UseGuards(JwtAuthGuard)
+  async residenceStats(@CurrentUser() user: { id: string }) {
+    return this.usersService.getResidenceStats(user.id);
+  }
+
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   async updateMe(@CurrentUser() user: { id: string }, @Body() dto: UpdateProfileDto) {
