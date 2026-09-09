@@ -3,9 +3,19 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import {
+  Home,
+  LogOut,
+  MessageCircle,
+  Package,
+  Plus,
+  Settings,
+  User,
+  type LucideIcon,
+} from 'lucide-react';
 import api from '@/lib/api';
 import type { Conversation } from '@/lib/types';
-import type { User } from '@/lib/types';
+import type { User as AppUser } from '@/lib/types';
 import { useAuth } from './AuthProvider';
 import { BetaIndicator } from './ui/beta-indicator';
 
@@ -16,11 +26,11 @@ import { BetaIndicator } from './ui/beta-indicator';
  *   Signalements, Profil) — navigation type application résidentielle.
  */
 
-const TABS = [
-  { href: '/', label: 'Accueil', icon: '🏠' },
-  { href: '/annonces', label: 'Annonces', icon: '📦' },
-  { href: '/messages', label: 'Messages', icon: '💬' },
-  { href: '/profil', label: 'Profil', icon: '👤' },
+const TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
+  { href: '/', label: 'Accueil', icon: Home },
+  { href: '/annonces', label: 'Annonces', icon: Package },
+  { href: '/messages', label: 'Messages', icon: MessageCircle },
+  { href: '/profil', label: 'Profil', icon: User },
 ];
 
 /** Onglets du header desktop : Profil remplacé par le menu avatar. */
@@ -56,7 +66,7 @@ function UserMenu({
   isAdmin,
   onLogout,
 }: {
-  user: User;
+  user: AppUser;
   isAdmin: boolean;
   onLogout: () => void;
 }) {
@@ -106,26 +116,29 @@ function UserMenu({
           <Link
             href="/profil"
             role="menuitem"
-            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
-            👤 Mon profil
+            <User className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
+            Mon profil
           </Link>
           {isAdmin && (
             <Link
               href="/admin"
               role="menuitem"
-              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
             >
-              ⚙️ Administration
+              <Settings className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
+              Administration
             </Link>
           )}
           <button
             type="button"
             role="menuitem"
             onClick={onLogout}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
           >
-            ← Déconnexion
+            <LogOut className="h-4 w-4" strokeWidth={1.75} />
+            Déconnexion
           </button>
         </div>
       )}
@@ -224,8 +237,8 @@ export function Navbar() {
             const effectiveHref = !user && isProfile ? '/connexion' : tab.href;
             const effectiveLabel = !user && isProfile ? 'Connexion' : tab.label;
             const active = isTabActive(effectiveHref);
-            // Bouton « + » central : inséré entre Annonces et Messages,
-            // sauf si cet onglet est lui-même le « + ».
+            const Icon = tab.icon;
+            // Bouton « + » central : inséré entre Annonces et Messages.
             if (tab.href === '/messages') {
               const fab = user?.status === 'ACTIVE';
               return (
@@ -236,8 +249,8 @@ export function Navbar() {
                       aria-label="Publier une annonce"
                       className="relative -mt-5 flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-semibold text-brand-700"
                     >
-                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-gradient text-2xl font-bold text-white shadow-lg ring-4 ring-white active:scale-95">
-                        +
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-gradient text-white shadow-lg ring-4 ring-white active:scale-95">
+                        <Plus className="h-6 w-6" strokeWidth={2.25} />
                       </span>
                       Publier
                     </Link>
@@ -249,7 +262,7 @@ export function Navbar() {
                       active ? 'text-brand-700' : 'text-slate-400'
                     }`}
                   >
-                    <span className="text-xl leading-none">{tab.icon}</span>
+                    <Icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
                     {effectiveLabel}
                     {tab.href === '/messages' && unread > 0 && (
                       <span className="absolute right-1/2 top-1 translate-x-3 rounded-full bg-brand-600 px-1.5 text-[10px] font-bold text-white">
@@ -271,13 +284,8 @@ export function Navbar() {
                   active ? 'text-brand-700' : 'text-slate-400'
                 }`}
               >
-                <span className="text-xl leading-none">{tab.icon}</span>
+                <Icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
                 {effectiveLabel}
-                {tab.href === '/messages' && unread > 0 && (
-                  <span className="absolute right-1/2 top-1 translate-x-3 rounded-full bg-brand-600 px-1.5 text-[10px] font-bold text-white">
-                    {unread}
-                  </span>
-                )}
                 {active && (
                   <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-brand-600" />
                 )}
@@ -292,8 +300,8 @@ export function Navbar() {
                 isTabActive('/admin') ? 'text-brand-700' : 'text-slate-400'
               }`}
             >
-              <span className="text-xl leading-none">⚙️</span>
-              Admin
+                <Settings className="h-[22px] w-[22px]" strokeWidth={1.75} />
+                Admin
               {isTabActive('/admin') && (
                 <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-brand-600" />
               )}
