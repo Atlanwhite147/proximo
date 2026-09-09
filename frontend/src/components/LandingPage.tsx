@@ -190,7 +190,7 @@ export function LandingPage() {
           Accès sur demande : écrivez-nous et nous vous répondons sous 24 h.
         </p>
         <a
-          href="mailto:bounette14701@gmail.com"
+          href="mailto:proximo@147.ovh"
           className="mt-6 inline-block rounded-xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-400"
         >
           Nous contacter

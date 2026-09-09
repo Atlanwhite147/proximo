@@ -34,6 +34,7 @@ function InscriptionForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pending, setPending] = useState(false);
+  const [acceptCgu, setAcceptCgu] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -43,6 +44,10 @@ function InscriptionForm() {
       setError(
         'Saisissez le code de résidence. Demandez-le à votre syndic ou à un voisin.',
       );
+      return;
+    }
+    if (!acceptCgu) {
+      setError('Vous devez accepter les conditions générales pour créer un compte.');
       return;
     }
     setSubmitting(true);
@@ -238,6 +243,38 @@ function InscriptionForm() {
             Bâtiment et étage : facultatifs, pour aider vos voisins à vous trouver (cela peut être
             masqué sur vos publications depuis votre profil).
           </p>
+
+          <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+            <input
+              type="checkbox"
+              checked={acceptCgu}
+              onChange={(event) => setAcceptCgu(event.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              aria-label="Accepter les conditions générales"
+            />
+            <span>
+              J&apos;accepte les{' '}
+              <Link
+                href="/cgu"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-brand-600 hover:underline"
+              >
+                conditions générales d&apos;utilisation
+              </Link>{' '}
+              et la{' '}
+              <Link
+                href="/confidentialite"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-brand-600 hover:underline"
+              >
+                politique de confidentialité
+              </Link>
+              .
+            </span>
+          </label>
+
           <ErrorMessage message={error} />
           <button
             type="submit"

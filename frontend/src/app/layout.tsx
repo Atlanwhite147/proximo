@@ -68,8 +68,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
             <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4">
               <span title="En savoir plus sur Proximo">
-                ⓘ Proximo, une initiative des habitants, en cours de développement
+                ⓘ Proximo, une initiative des habitants
               </span>
+              <span aria-hidden>·</span>
+              <a href="/mentions-legales" className="hover:text-brand-600">
+                Mentions légales
+              </a>
+              <span aria-hidden>·</span>
+              <a href="/confidentialite" className="hover:text-brand-600">
+                Confidentialité
+              </a>
+              <span aria-hidden>·</span>
+              <a href="/cgu" className="hover:text-brand-600">
+                CGU
+              </a>
               <span aria-hidden>·</span>
               <a href="mailto:proximo@147.ovh" className="hover:text-brand-600">
                 Nous contacter

@@ -15,7 +15,7 @@ export default function SouscrireSuccessPage() {
           souhaite rejoindre Proximo, écrivez-nous et nous vous répondons sous 24 h.
         </p>
         <a
-          href="mailto:bounette14701@gmail.com"
+          href="mailto:proximo@147.ovh"
           className="btn-primary mt-6 inline-flex w-auto px-6"
         >
           Nous contacter
