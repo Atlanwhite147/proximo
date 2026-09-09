@@ -154,6 +154,84 @@ export default function DiscoverPage() {
         </div>
       </section>
 
+      {/* ─── Deux façons d'adopter Proximo ────────────────── */}
+      <section className="ds-card p-6 sm:p-8">
+        <div className="text-center">
+          <SectionLabel color="blue">Deux façons de déployer Proximo</SectionLabel>
+          <h2 className="mt-2 text-2xl font-bold text-slate-900">
+            En autonomie avec GitHub, ou accompagné
+          </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+            Proximo est un logiciel libre : vous pouvez l&apos;installer vous-même,
+            ou confier la mise en place à son créateur. Les deux chemins mènent
+            au même espace de résidence.
+          </p>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {/* Option 1 : autonomie */}
+          <div className="flex flex-col rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-xl">
+              🧑‍💻
+            </span>
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">
+              Installation en autonomie (open source)
+            </h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+              Le code est public et libre sur GitHub. Une personne à l&apos;aise
+              avec Docker peut héberger Proximo pour sa résidence en suivant la
+              documentation :
+            </p>
+            <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
+              <li>• Docker Compose (backend, base de données, frontend)</li>
+              <li>• Domaines et emails configurables (SMTP / Brevo)</li>
+              <li>• Communauté open source : chacun peut contribuer</li>
+            </ul>
+            <div className="mt-auto pt-5">
+              <a
+                href="https://github.com/bounette14701-oss/proximo"
+                target="_blank"
+                rel="noreferrer"
+                className="btn-primary-sm inline-flex w-full items-center justify-center rounded-xl px-5"
+              >
+                Voir le code sur GitHub →
+              </a>
+              <p className="mt-2 text-center text-xs text-slate-400">
+                Gratuit, sans abonnement
+              </p>
+            </div>
+          </div>
+
+          {/* Option 2 : accompagnement */}
+          <div className="flex flex-col rounded-2xl border border-brand-200 bg-brand-gradient p-6 text-white shadow-glow">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl">
+              🤝
+            </span>
+            <h3 className="mt-4 text-lg font-semibold">Mise en place accompagnée</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-white/90">
+              Pas de compétences techniques ? Proximo s&apos;installe pour vous :
+              hébergement, configuration, invitations des habitants et prise en
+              main. Un interlocuteur dédié jusqu&apos;à ce que la résidence vive.
+            </p>
+            <ul className="mt-3 space-y-1.5 text-sm text-white/90">
+              <li>• Installation et hébergement clé en main</li>
+              <li>• Accompagnement des premiers habitants</li>
+              <li>• Support et évolutions sur mesure</li>
+            </ul>
+            <div className="mt-auto pt-5">
+              <a
+                href="mailto:proximo@147.ovh?subject=Mise%20en%20place%20de%20Proximo%20dans%20ma%20résidence"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+              >
+                ✉️ Demander un devis
+              </a>
+              <p className="mt-2 text-center text-xs text-white/70">
+                Réponse sous 48 h ouvrées
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── Fait par des habitants ────────────────────────── */}
       <section className="mx-auto max-w-2xl text-center">
         <div className="text-4xl">🌿</div>

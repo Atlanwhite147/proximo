@@ -185,16 +185,16 @@ export default function HomePage() {
                 {
                   step: '1',
                   title: 'Créez la résidence',
-                  text: 'Un habitant crée l&apos;espace de son immeuble et reçoit un code d&apos;accès unique à partager à ses voisins, en main propre ou par QR code.',
+                  text: 'Un habitant crée l’espace de son immeuble et reçoit un code d’accès unique à partager à ses voisins, en main propre ou par QR code.',
                 },
                 {
                   step: '2',
                   title: 'Vos voisins rejoignent',
-                  text: 'Chaque habitant s&apos;inscrit avec le code de la résidence (email ou Google). Un administrateur valide les comptes : seuls les vrais habitants entrent.',
+                  text: 'Chaque habitant s’inscrit avec le code de la résidence (email ou Google). Un administrateur valide les comptes : seuls les vrais habitants entrent.',
                 },
                 {
                   step: '3',
-                  title: 'La vie de l&apos;immeuble au même endroit',
+                  title: 'La vie de l’immeuble au même endroit',
                   text: 'Annonces (prêt, don, service), signalements au syndic avec photos, discussions et invitations : tout circule dans un espace privé et sans publicité.',
                 },
               ].map((item) => (
@@ -218,19 +218,19 @@ export default function HomePage() {
               {[
                 {
                   q: 'Proximo est-il gratuit pour les habitants ?',
-                  a: 'Oui. Proximo est un projet open source : le code est public sur GitHub. Les habitants d&apos;une résidence utilisent les annonces, les signalements et les discussions sans frais.',
+                  a: 'Oui. Proximo est un projet open source : le code est public sur GitHub. Les habitants d’une résidence utilisent les annonces, les signalements et les discussions sans frais.',
                 },
                 {
                   q: 'Qui peut rejoindre une résidence sur Proximo ?',
-                  a: 'Uniquement les habitants : l&apos;inscription demande le code d&apos;accès de la résidence (distribué par un voisin ou l&apos;administrateur), puis un administrateur valide chaque compte. Pas de publicité, pas de données personnelles revendues.',
+                  a: 'Uniquement les habitants : l’inscription demande le code d’accès de la résidence (distribué par un voisin ou l’administrateur), puis un administrateur valide chaque compte. Pas de publicité, pas de données personnelles revendues.',
                 },
                 {
                   q: 'À quoi servent les signalements ?',
-                  a: 'Fuite d&apos;eau, ascenseur en panne, dégradation dans les parties communes : chaque signalement peut inclure des photos et est notifié à l&apos;agence ou au syndic configuré par la résidence.',
+                  a: 'Fuite d’eau, ascenseur en panne, dégradation dans les parties communes : chaque signalement peut inclure des photos et est notifié à l’agence ou au syndic configuré par la résidence.',
                 },
                 {
-                  q: 'Proximo remplace-t-il le groupe WhatsApp de l&apos;immeuble ?',
-                  a: 'Proximo organise ce que WhatsApp ne fait pas : des annonces structurées (prêt, don, service), des fils de discussion par sujet et des signalements suivis — sans mélanger vie privée et vie d&apos;immeuble.',
+                  q: 'Proximo remplace-t-il le groupe WhatsApp de l’immeuble ?',
+                  a: 'Proximo organise ce que WhatsApp ne fait pas : des annonces structurées (prêt, don, service), des fils de discussion par sujet et des signalements suivis — sans mélanger vie privée et vie d’immeuble.',
                 },
               ].map((item) => (
                 <div key={item.q} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
