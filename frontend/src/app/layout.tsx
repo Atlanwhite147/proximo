@@ -24,11 +24,37 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Proximo · La vie de votre résidence',
+  metadataBase: new URL('https://proximo.147.ovh'),
+  title: {
+    default: 'Proximo · La vie de votre résidence',
+    template: '%s · Proximo',
+  },
   description:
     "Plateforme open source de vie de résidence : annonces entre voisins, signalements au syndic, invitations de voisinage. Connectez votre immeuble.",
+  keywords: [
+    'vie de résidence',
+    'voisins',
+    'immeuble',
+    'copropriété',
+    'annonces de quartier',
+    'entraide entre voisins',
+    'signalement syndic',
+  ],
   icons: {
     icon: '/favicon.svg',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: 'https://proximo.147.ovh',
+    siteName: 'Proximo',
+    title: 'Proximo · La vie de votre résidence',
+    description:
+      'Annonces entre voisins, signalements au syndic, invitations de voisinage : connectez votre résidence.',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
