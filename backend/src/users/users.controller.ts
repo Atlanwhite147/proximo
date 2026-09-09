@@ -54,6 +54,13 @@ export class UsersController {
     await this.usersService.deleteAccount(user.id);
   }
 
+  /** Annuaire des voisins ACTIVE de la même résidence (messagerie). */
+  @Get('neighbors')
+  @UseGuards(JwtAuthGuard, StatusGuard)
+  async neighbors(@CurrentUser() user: { id: string }) {
+    return this.usersService.getNeighbors(user.id);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard, StatusGuard)
   async getPublic(@Param('id') id: string) {

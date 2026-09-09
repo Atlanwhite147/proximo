@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
@@ -16,6 +17,16 @@ interface ResidenceStats {
   activeResidents: number;
   listingsCount: number;
   openIncidentsCount: number;
+}
+
+/** Entrée d'annuaire : voisin ACTIVE de la même résidence (sans email). */
+interface Neighbor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  building: string | null;
+  floor: string | null;
+  role: string;
 }
 
 /** Icône + couleur par type d'activité (fil unifié). */
@@ -137,10 +148,12 @@ function InviteWidget() {
  */
 export function DashboardHome() {
   const { user } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState<ResidenceStats | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [neighbors, setNeighbors] = useState<Neighbor[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -150,12 +163,14 @@ export function DashboardHome() {
       api<{ items: Listing[] }>('/listings?limit=6'),
       api<{ incidents: Incident[] }>('/incidents'),
       api<{ conversations: Conversation[] }>('/messages'),
-    ]).then(([s, l, i, c]) => {
+      api<{ neighbors: Neighbor[] }>('/users/neighbors'),
+    ]).then(([s, l, i, c, n]) => {
       if (cancelled) return;
       if (s.status === 'fulfilled') setStats(s.value);
       if (l.status === 'fulfilled') setListings(l.value.items);
       if (i.status === 'fulfilled') setIncidents(i.value.incidents);
       if (c.status === 'fulfilled') setConversations(c.value.conversations);
+      if (n.status === 'fulfilled') setNeighbors(n.value.neighbors);
       setLoading(false);
     });
     return () => {
@@ -164,6 +179,22 @@ export function DashboardHome() {
   }, []);
 
   const residenceName = user?.residenceName ?? 'votre résidence';
+
+  /** Démarre (ou retrouve) une conversation avec un voisin, puis l'ouvre. */
+  const contact = async (neighbor: Neighbor) => {
+    try {
+      const data = await api<{ conversationId: string }>('/messages', {
+        method: 'POST',
+        body: JSON.stringify({
+          recipientId: neighbor.id,
+          content: `Bonjour ${neighbor.firstName}, je vous contacte depuis l'annuaire de la résidence.`,
+        }),
+      });
+      router.push(`/messages/${data.conversationId}`);
+    } catch {
+      // Silencieux : l'utilisateur peut passer par une annonce du voisin.
+    }
+  };
 
   /** Fil d'activité unifié : 5 annonces + 5 signalements, triés par date. */
   const activity: Activity[] = [
@@ -441,22 +472,78 @@ export function DashboardHome() {
         </section>
       )}
 
-      {/* ─── Rappel messagerie si aucune conversation ───────── */}
-      {conversations.length === 0 && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-semibold text-slate-800">💬 Messages privés</h2>
-              <p className="text-sm text-slate-500">
-                Échangez en direct avec un voisin depuis une annonce ou un signalement.
-              </p>
-            </div>
-            <Link href="/annonces" className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
-              Trouver un voisin
+      {/* ─── Annuaire des voisins (messagerie directe) ──────── */}
+      <section>
+        <div className="mb-3 flex items-end justify-between">
+          <div>
+            <p className="font-mono text-[11px] font-medium uppercase tracking-badge text-slate-400">
+              ● Annuaire de la résidence
+            </p>
+            <h2 className="mt-0.5 text-lg font-bold text-slate-900">Voisins</h2>
+          </div>
+          {neighbors.length > 0 && (
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
+              {neighbors.length} habitant{neighbors.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+
+        {neighbors.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
+            <p className="text-2xl">👥</p>
+            <p className="mt-2 text-sm font-medium text-slate-600">
+              L&apos;annuaire se remplira au fil des inscriptions
+            </p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
+              Invitez vos voisins pour échanger en direct, ou contactez-les depuis
+              leurs annonces et signalements.
+            </p>
+            <Link
+              href="/inviter"
+              className="mt-4 inline-block rounded-xl bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              📲 Inviter un voisin
             </Link>
           </div>
-        </section>
-      )}
+        ) : (
+          <ul className="ds-card divide-y divide-slate-100">
+            {neighbors.map((neighbor) => (
+              <li key={neighbor.id} className="flex items-center gap-3 px-4 py-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
+                  {neighbor.firstName.charAt(0).toUpperCase()}
+                  {neighbor.lastName?.charAt(0).toUpperCase() ?? ''}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold text-slate-800">
+                    {neighbor.firstName} {neighbor.lastName}
+                    {neighbor.role === 'ADMIN' && (
+                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                        Admin
+                      </span>
+                    )}
+                  </span>
+                  <span className="block truncate text-xs text-slate-400">
+                    {neighbor.building && neighbor.floor
+                      ? `Bât. ${neighbor.building} · Étage ${neighbor.floor}`
+                      : neighbor.building
+                        ? `Bât. ${neighbor.building}`
+                        : neighbor.floor
+                          ? `Étage ${neighbor.floor}`
+                          : 'Voisin de la résidence'}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void contact(neighbor)}
+                  className="shrink-0 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-100"
+                >
+                  💬 Message
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {unreadTotal > 0 && (
         <p className="text-center text-xs text-slate-400">

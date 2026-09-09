@@ -146,4 +146,40 @@ export class UsersService {
     ]);
     return { activeResidents, listingsCount, openIncidentsCount };
   }
+
+  /**
+   * Annuaire de la résidence : voisins ACTIVE (hors soi-même), sans email.
+   * Le bâtiment/étage n'est renvoyé que si le voisin a coché « afficher
+   * mes détails » (showDetails). Tri par prénom.
+   */
+  async getNeighbors(userId: string) {
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { residenceId: true },
+    });
+    if (!me?.residenceId) {
+      return { neighbors: [] };
+    }
+    const neighbors = await this.prisma.user.findMany({
+      where: { residenceId: me.residenceId, status: 'ACTIVE', id: { not: userId } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        building: true,
+        floor: true,
+        showDetails: true,
+        role: true,
+        createdAt: true,
+      },
+      orderBy: { firstName: 'asc' },
+    });
+    // Confidentialité : on ne renvoie building/floor que si showDetails.
+    const safe = neighbors.map(({ showDetails, building, floor, ...rest }) => ({
+      ...rest,
+      building: showDetails ? building : null,
+      floor: showDetails ? floor : null,
+    }));
+    return { neighbors: safe };
+  }
 }
