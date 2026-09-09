@@ -67,6 +67,7 @@ model User {
   conversationsB Conversation[] @relation("convB")
   sentMessages  Message[]      @relation("msgSender")
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   incidents     Incident[]
   invitations   Invitation[]
   comments      Comment[]
@@ -106,6 +107,19 @@ model RefreshToken {
   tokenHash String // SHA-256 du token (jamais stocké en clair)
   expiresAt DateTime
   revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ─── Réinitialisation de mot de passe (lien à usage unique) ──
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique // SHA-256 du jeton (jamais stocké en clair)
+  expiresAt DateTime
+  usedAt    DateTime?
   createdAt DateTime  @default(now())
 
   @@index([userId])

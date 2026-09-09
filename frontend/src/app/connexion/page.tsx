@@ -180,15 +180,23 @@ function ConnexionForm() {
             placeholder="Mot de passe"
             className="input-field "
           />
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(event) => setRememberMe(event.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-brand-600"
-            />
-            Se souvenir de moi (90 jours)
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-brand-600"
+              />
+              Se souvenir de moi (90 jours)
+            </label>
+            <Link
+              href="/mot-de-passe-oublie"
+              className="text-sm font-medium text-brand-600 hover:underline"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
           <ErrorMessage message={error} />
           <button
             type="submit"

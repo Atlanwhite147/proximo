@@ -28,10 +28,6 @@ export default function MentionsLegalesPage() {
               proximo@147.ovh
             </a>
           </p>
-          <p className="mt-2 text-xs text-slate-400">
-            (Identifiant SIREN à compléter dès l&apos;immatriculation de la
-            micro-entreprise — voir note en bas de page.)
-          </p>
         </section>
 
         <section>
@@ -116,13 +112,6 @@ export default function MentionsLegalesPage() {
             .
           </p>
         </section>
-
-        <p className="border-t border-slate-100 pt-4 text-xs text-slate-400">
-          Note : dès l&apos;immatriculation de la micro-entreprise (auto-entrepreneur),
-          le SIREN, l&apos;adresse du siège et le statut juridique exact devront être
-          ajoutés ci-dessus, conformément à l&apos;article 6 de la loi n° 2004-575 du
-          21 juin 2004 pour la confiance dans l&apos;économie numérique (LCEN).
-        </p>
       </div>
     </div>
   );

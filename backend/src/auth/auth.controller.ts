@@ -18,6 +18,8 @@ import { TWO_FACTOR_TOKEN_COOKIE } from './auth.constants';
 import { AuthService, PublicUser } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyTotpDto } from './dto/verify-totp.dto';
 import { TwoFactorService } from './two-factor.service';
 
@@ -72,6 +74,22 @@ export class AuthController {
 
     await this.authService.issueSession(response, user, { rememberMe: dto.rememberMe });
     return { user };
+  }
+
+  /** Mot de passe oublié — envoie un lien de réinitialisation par email. */
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.requestPasswordReset(dto.email);
+  }
+
+  /** Réinitialise le mot de passe avec le jeton reçu par email. */
+  @Post('reset-password')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 
   /** Deuxième étape de connexion : vérification du code TOTP. */

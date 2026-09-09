@@ -10,6 +10,7 @@ import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'crypto';
 import type { Response } from 'express';
 import { authenticator } from 'otplib';
+import { emailLayout } from '../email/email.templates';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -420,5 +421,114 @@ export class AuthService {
       data: { usedAt: new Date() },
     });
     return invitation.residenceId;
+  }
+
+  /**
+   * Mot de passe oublié : crée un jeton à usage unique (expiration 1 h) et
+   * l'envoie par email. Réponse identique que le compte existe ou non
+   * (anti-énumération). Les comptes créés via Google (sans mot de passe)
+   * ne reçoivent rien, mais la réponse reste identique.
+   */
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const normalized = email.toLowerCase().trim();
+    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
+
+    // Même réponse que le compte existe ou non.
+    const generic = {
+      message:
+        'Si un compte existe avec cette adresse et un mot de passe, un lien de réinitialisation vient de vous être envoyé.',
+    };
+
+    // Compte Google uniquement (pas de mot de passe) → aucune action, mais
+    // réponse générique pour ne pas révéler l'existence du compte.
+    if (!user || !user.passwordHash) {
+      return generic;
+    }
+
+    // Invalide les éventuels jetons précédents non utilisés (anti-rejeu).
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    // Jeton aléatoire de 32 octets → hexadécimal ; seul son SHA-256 est stocké.
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 heure
+
+    await this.prisma.passwordResetToken.create({
+      data: { userId: user.id, tokenHash, expiresAt },
+    });
+
+    const appUrl = (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+    const resetUrl = `${appUrl}/reinitialiser-mot-de-passe?token=${token}`;
+
+    const sent = await this.emailService.sendMail(
+      user.email,
+      'Proximo — Réinitialisation de votre mot de passe',
+      emailLayout({
+        recipientFirstName: user.firstName,
+        heading: '🔑 Réinitialisation de votre mot de passe',
+        body: `<p style="margin:0 0 12px;">Vous avez demandé la réinitialisation de votre mot de passe Proximo.</p>
+<p style="margin:0 0 12px;">Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien est valable <strong>1 heure</strong> et ne peut être utilisé qu'une seule fois.</p>
+<p style="margin:0 0 4px;font-size:13px;color:#64748b;">Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email : votre mot de passe reste inchangé.</p>`,
+        ctaUrl: resetUrl,
+        ctaLabel: 'Choisir un nouveau mot de passe',
+        footer: 'Proximo — Sécurité de votre compte.',
+      }),
+    );
+
+    // En mode « log » (email non configuré) on renvoie quand même le message
+    // générique ; le lien est visible dans les logs du backend.
+    if (sent === 'failed') {
+      console.warn(`[auth] Échec d'envoi de l'email de reset à ${user.email}`);
+    }
+    return generic;
+  }
+
+  /**
+   * Réinitialise le mot de passe avec le jeton reçu par email : vérifie
+   * l'existence, l'expiration (1 h) et l'usage unique, puis révoque tous
+   * les refresh tokens (déconnexion des autres sessions).
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!record || record.usedAt) {
+      throw new BadRequestException("Ce lien de réinitialisation est invalide ou a déjà été utilisé");
+    }
+    if (record.expiresAt < new Date()) {
+      throw new BadRequestException("Ce lien de réinitialisation a expiré. Veuillez en demander un nouveau.");
+    }
+
+    const passwordHash = await argon2.hash(newPassword, {
+      type: argon2.argon2id,
+      memoryCost: 19_456,
+      timeCost: 2,
+      parallelism: 1,
+    });
+
+    // Consomme le jeton + met à jour le mot de passe (transaction).
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: record.userId },
+        data: { passwordHash },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      }),
+      // Révoque toutes les sessions existantes (sécurité).
+      this.prisma.refreshToken.updateMany({
+        where: { userId: record.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+
+    return { message: 'Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.' };
   }
 }
