@@ -251,6 +251,7 @@ model Invitation {
   residence    Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   expiresAt    DateTime
   usedAt       DateTime?
+  multiUse     Boolean   @default(false) // affiche QR : usage illimité jusqu'à expiration
   createdAt    DateTime  @default(now())
 
   @@index([createdById])

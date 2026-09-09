@@ -413,7 +413,7 @@ export class AuthService {
     if (!invitation) {
       throw new BadRequestException("Jeton d'invitation invalide");
     }
-    if (invitation.usedAt) {
+    if (invitation.usedAt && !invitation.multiUse) {
       throw new BadRequestException("Ce jeton d'invitation a déjà été utilisé");
     }
     if (invitation.expiresAt < new Date()) {
@@ -422,11 +422,14 @@ export class AuthService {
     if (!invitation.residenceId) {
       throw new BadRequestException("Cette invitation n'est liée à aucune résidence");
     }
-    // Tout est valide : on consomme le jeton (usage unique).
-    await this.prisma.invitation.update({
-      where: { id: invitation.id },
-      data: { usedAt: new Date() },
-    });
+    // Invitation d'affiche (multiUse) : pas de consommation — valable pour
+    // tous les habitants jusqu'à l'expiration. Sinon : usage unique.
+    if (!invitation.multiUse) {
+      await this.prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { usedAt: new Date() },
+      });
+    }
     return invitation.residenceId;
   }
 

@@ -34,6 +34,7 @@ export class InvitationsService {
         createdById,
         residenceId,
         expiresAt: new Date(Date.now() + expiresInHours * 3_600_000),
+        ...(dto.multiUse !== undefined ? { multiUse: dto.multiUse } : {}),
       },
     });
 
@@ -59,7 +60,7 @@ export class InvitationsService {
     if (!invitation) {
       throw new NotFoundException("Jeton d'invitation invalide");
     }
-    const valid = !invitation.usedAt && invitation.expiresAt > new Date();
+    const valid = (!invitation.usedAt || invitation.multiUse) && invitation.expiresAt > new Date();
     return {
       neighborhood: invitation.neighborhood,
       residenceName: invitation.residence?.name ?? invitation.neighborhood,
