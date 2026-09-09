@@ -41,7 +41,13 @@ export const metadata: Metadata = {
     'signalement syndic',
   ],
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon-48.png', type: 'image/png', sizes: '48x48' },
+      { url: '/icon-96.png', type: 'image/png', sizes: '96x96' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+    ],
+    apple: [{ url: '/icon-192.png', sizes: '192x192' }],
   },
   openGraph: {
     type: 'website',
