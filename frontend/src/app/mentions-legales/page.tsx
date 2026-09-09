@@ -35,7 +35,7 @@ export default function MentionsLegalesPage() {
             Proximo est un logiciel libre distribué sous licence Apache 2.0. Le code
             source est disponible sur{' '}
             <a
-              href="https://github.com/bounette14701-oss/proximo"
+              href="https://github.com/Atlanwhite147/proximo"
               target="_blank"
               rel="noreferrer"
               className="text-brand-600 hover:underline"

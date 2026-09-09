@@ -76,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </a>
               <span aria-hidden>·</span>
               <a
-                href="https://github.com/bounette14701-oss/proximo/issues/new"
+                href="https://github.com/Atlanwhite147/proximo/issues/new"
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-brand-600"
@@ -85,7 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </a>
               <span aria-hidden>·</span>
               <a
-                href="https://github.com/bounette14701-oss/proximo"
+                href="https://github.com/Atlanwhite147/proximo"
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-brand-600"

@@ -2,7 +2,7 @@
 # Proximo — Intégration continue
 # Vérifie : lint, tests unitaires, builds (backend + frontend),
 # puis build + publication des images Docker sur GHCR
-# (ghcr.io/bounette14701-oss/proximo-{backend,frontend}).
+# (ghcr.io/Atlanwhite147/proximo-{backend,frontend}).
 # ============================================================
 
 name: CI

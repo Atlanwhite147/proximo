@@ -6,8 +6,8 @@ Prêtez un outil, proposez un service, donnez ce qui vous encombre, signalez
 une fuite — Proximo met en relation les habitants d'une même résidence,
 **sans jamais révéler d'adresse exacte ni de coordonnées personnelles**.
 
-[![Licence](https://img.shields.io/github/license/bounette14701-oss/proximo)](LICENSE)
-[![CI](https://github.com/bounette14701-oss/proximo/actions/workflows/ci.yml/badge.svg)](https://github.com/bounette14701-oss/proximo/actions/workflows/ci.yml)
+[![Licence](https://img.shields.io/github/license/Atlanwhite147/proximo)](LICENSE)
+[![CI](https://github.com/Atlanwhite147/proximo/actions/workflows/ci.yml/badge.svg)](https://github.com/Atlanwhite147/proximo/actions/workflows/ci.yml)
 ![Node](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
 ![PostGIS](https://img.shields.io/badge/PostgreSQL%2016%20%2B%20PostGIS-4169E1?logo=postgresql)
@@ -127,13 +127,13 @@ proximo/
 # Installation complète : vérifie Docker, génère un .env sécurisé
 # (secrets aléatoires), tire les images pré-buildées (ou compile),
 # démarre la stack et ouvre l'assistant d'installation.
-curl -fsSL https://raw.githubusercontent.com/bounette14701-oss/proximo/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Atlanwhite147/proximo/main/install.sh | bash
 ```
 
 …ou en version « manuelle » :
 
 ```bash
-git clone https://github.com/bounette14701-oss/proximo.git
+git clone https://github.com/Atlanwhite147/proximo.git
 cd proximo
 ./install.sh --yes      # non interactif ; voir ./install.sh --help
 ```
@@ -143,7 +143,7 @@ lancement, vous êtes redirigé vers **`/install`** : l'assistant crée votre
 compte administrateur et configure le nom de la résidence en 2 minutes.
 Ensuite, connectez-vous et invitez vos voisins (QR code).
 
-> **Images pré-buildées :** la CI publie `ghcr.io/bounette14701-oss/proximo-{backend,frontend}`.
+> **Images pré-buildées :** la CI publie `ghcr.io/Atlanwhite147/proximo-{backend,frontend}`.
 > `install.sh` les télécharge automatiquement (pas de compilation) et retombe
 > sur un build local si elles n'existent pas encore.
 
@@ -157,7 +157,7 @@ docker compose down -v   # arrêt + suppression des données
 ## ⚙️ Installation manuelle (sans script)
 
 ```bash
-git clone https://github.com/bounette14701-oss/proximo.git
+git clone https://github.com/Atlanwhite147/proximo.git
 cd proximo
 cp .env.example .env
 # Générer des secrets robustes :
@@ -307,7 +307,7 @@ Chaque push sur `main` (et chaque pull request) déclenche :
 1. **Backend** : lint (ESLint, zéro warning) → tests unitaires (Jest) → build
 2. **Frontend** : lint (ESLint) → build
 3. **Docker** : validation `docker compose config` → **publication des images
-   sur GHCR** (`ghcr.io/bounette14701-oss/proximo-{backend,frontend}`,
+   sur GHCR** (`ghcr.io/Atlanwhite147/proximo-{backend,frontend}`,
    tags `latest` + `sha-…`) — ces images sont utilisées par `install.sh`
 
 ```bash

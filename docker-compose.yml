@@ -24,7 +24,7 @@ services:
 
   backend:
     # Image pré-buildée publiée sur GHCR (CI) ; sinon build local.
-    image: ghcr.io/bounette14701-oss/proximo-backend:latest
+    image: ghcr.io/Atlanwhite147/proximo-backend:latest
     build:
       context: ./backend
     restart: unless-stopped
@@ -80,7 +80,7 @@ services:
 
   frontend:
     # Image pré-buildée publiée sur GHCR (CI) ; sinon build local.
-    image: ghcr.io/bounette14701-oss/proximo-frontend:latest
+    image: ghcr.io/Atlanwhite147/proximo-frontend:latest
     build:
       context: ./frontend
     restart: unless-stopped

@@ -84,10 +84,10 @@ cd "$SCRIPT_DIR"
 if [[ ! -f docker-compose.yml ]]; then
   warn "docker-compose.yml introuvable — clonage du dépôt…"
   if command -v git >/dev/null 2>&1; then
-    git clone --depth 1 https://github.com/bounette14701-oss/proximo.git .
+    git clone --depth 1 https://github.com/Atlanwhite147/proximo.git .
   else
     error "git n'est pas installé — impossible de récupérer le dépôt."
-    error "Clonez le dépôt manuellement : git clone https://github.com/bounette14701-oss/proximo.git"
+    error "Clonez le dépôt manuellement : git clone https://github.com/Atlanwhite147/proximo.git"
     exit 1
   fi
 fi

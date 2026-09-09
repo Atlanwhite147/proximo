@@ -188,7 +188,7 @@ export default function DiscoverPage() {
             </ul>
             <div className="mt-auto pt-5">
               <a
-                href="https://github.com/bounette14701-oss/proximo"
+                href="https://github.com/Atlanwhite147/proximo"
                 target="_blank"
                 rel="noreferrer"
                 className="btn-primary-sm inline-flex w-full items-center justify-center rounded-xl px-5"
@@ -244,7 +244,7 @@ export default function DiscoverPage() {
           les sujets de l&apos;immeuble. Le projet est{' '}
           <strong>open source</strong> : le code est public sur{' '}
           <a
-            href="https://github.com/bounette14701-oss/proximo"
+            href="https://github.com/Atlanwhite147/proximo"
             target="_blank"
             rel="noreferrer"
             className="font-medium text-brand-600 hover:underline"
