@@ -506,10 +506,14 @@ export class AuthService {
     });
 
     if (!record || record.usedAt) {
-      throw new BadRequestException("Ce lien de réinitialisation est invalide ou a déjà été utilisé");
+      throw new BadRequestException(
+        'Ce lien de réinitialisation est invalide ou a déjà été utilisé',
+      );
     }
     if (record.expiresAt < new Date()) {
-      throw new BadRequestException("Ce lien de réinitialisation a expiré. Veuillez en demander un nouveau.");
+      throw new BadRequestException(
+        'Ce lien de réinitialisation a expiré. Veuillez en demander un nouveau.',
+      );
     }
 
     const passwordHash = await argon2.hash(newPassword, {

@@ -144,7 +144,9 @@ export class UsersService {
     const [activeResidents, listingsCount, openIncidentsCount] = await Promise.all([
       this.prisma.user.count({ where: { residenceId, status: 'ACTIVE' } }),
       this.prisma.listing.count({ where: { residenceId } }),
-      this.prisma.incident.count({ where: { residenceId, status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+      this.prisma.incident.count({
+        where: { residenceId, status: { in: ['OPEN', 'IN_PROGRESS'] } },
+      }),
     ]);
     return { activeResidents, listingsCount, openIncidentsCount };
   }
