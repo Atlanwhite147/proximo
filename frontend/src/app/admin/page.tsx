@@ -63,6 +63,7 @@ export default function AdminPage() {
   const [invitations, setInvitations] = useState<Invitation[] | null>(null);
   const [invNeighborhood, setInvNeighborhood] = useState('');
   const [invHours, setInvHours] = useState(72);
+  const [invMultiUse, setInvMultiUse] = useState(false);
 
   // Réglages syndic
   const [settings, setSettings] = useState<SyndicSettings | null>(null);
@@ -235,10 +236,16 @@ export default function AdminPage() {
         body: JSON.stringify({
           ...(invNeighborhood.trim() ? { neighborhood: invNeighborhood.trim() } : {}),
           expiresInHours: invHours,
+          multiUse: invMultiUse,
         }),
       });
       setInvNeighborhood('');
-      setSuccess('Invitation créée : imprimez le QR code ou partagez le lien.');
+      setInvMultiUse(false);
+      setSuccess(
+        invMultiUse
+          ? "Invitation d'affiche créée : utilisable par tous jusqu'à expiration."
+          : 'Invitation créée : imprimez le QR code ou partagez le lien.',
+      );
       loadInvitations();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Création impossible');
@@ -733,19 +740,35 @@ export default function AdminPage() {
                   Pour identifier l&apos;invitation dans la liste (imprimé sur le QR).
                 </p>
               </div>
-              <div className="w-32">
+              <div className="w-40">
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Validité (h)
+                  Validité
                 </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={168}
+                <select
                   value={invHours}
                   onChange={(event) => setInvHours(Number(event.target.value))}
                   className="input-field h-11 "
-                />
+                >
+                  <option value={72}>3 jours</option>
+                  <option value={168}>7 jours</option>
+                  <option value={720}>30 jours</option>
+                  <option value={2160}>90 jours (3 mois)</option>
+                </select>
               </div>
+              <label className="flex items-center gap-2 pb-2.5 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={invMultiUse}
+                  onChange={(event) => setInvMultiUse(event.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-brand-600"
+                />
+                <span>
+                  Usage multiple (affiche QR)
+                  <span className="block text-[11px] text-slate-400">
+                    Tous les habitants peuvent l&apos;utiliser jusqu&apos;à expiration
+                  </span>
+                </span>
+              </label>
               <button
                 type="submit"
                 className="btn-primary-sm px-5"
@@ -768,16 +791,23 @@ export default function AdminPage() {
                     <div>
                       <p className="font-semibold text-slate-900">
                         {invitation.neighborhood || 'Invitation'}
-                        {invitation.usedAt && (
-                          <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                            Utilisée
+                        {invitation.multiUse ? (
+                          <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                            Multi-usage
                           </span>
+                        ) : (
+                          invitation.usedAt && (
+                            <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                              Utilisée
+                            </span>
+                          )
                         )}
                       </p>
                       <p className="text-xs text-slate-400">
                         Créée par {invitation.createdBy?.firstName}{' '}
                         {invitation.createdBy?.lastName} · expire le{' '}
                         {new Date(invitation.expiresAt).toLocaleDateString('fr-FR')}
+                        {invitation.multiUse && ' · utilisable par tous'}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">

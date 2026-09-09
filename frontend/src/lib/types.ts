@@ -142,6 +142,7 @@ export interface Invitation {
   expiresAt: string;
   createdAt?: string;
   usedAt?: string | null;
+  multiUse?: boolean;
   createdBy?: { firstName: string; lastName: string };
 }
 
