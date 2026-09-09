@@ -28,6 +28,7 @@ export class UsersService {
         role: true,
         status: true,
         totpEnabled: true,
+        showInDirectory: true,
         emailNotifications: true,
         createdAt: true,
         listings: {
@@ -78,6 +79,7 @@ export class UsersService {
     if (dto.building !== undefined) data.building = dto.building.trim() || null;
     if (dto.floor !== undefined) data.floor = dto.floor.trim() || null;
     if (dto.showDetails !== undefined) data.showDetails = dto.showDetails;
+    if (dto.showInDirectory !== undefined) data.showInDirectory = dto.showInDirectory;
     if (dto.emailNotifications !== undefined) data.emailNotifications = dto.emailNotifications;
 
     // Changement d'email : uniquement pour les comptes à mot de passe
@@ -149,6 +151,7 @@ export class UsersService {
 
   /**
    * Annuaire de la résidence : voisins ACTIVE (hors soi-même), sans email.
+   * Respecte le choix RGPD showInDirectory=false (habitant invisible).
    * Le bâtiment/étage n'est renvoyé que si le voisin a coché « afficher
    * mes détails » (showDetails). Tri par prénom.
    */
@@ -161,7 +164,12 @@ export class UsersService {
       return { neighbors: [] };
     }
     const neighbors = await this.prisma.user.findMany({
-      where: { residenceId: me.residenceId, status: 'ACTIVE', id: { not: userId } },
+      where: {
+        residenceId: me.residenceId,
+        status: 'ACTIVE',
+        id: { not: userId },
+        showInDirectory: true,
+      },
       select: {
         id: true,
         firstName: true,

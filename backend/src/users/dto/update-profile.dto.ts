@@ -34,6 +34,10 @@ export class UpdateProfileDto {
   showDetails?: boolean;
 
   @IsOptional()
+  @IsBoolean({ message: 'Visibilité invalide' })
+  showInDirectory?: boolean;
+
+  @IsOptional()
   @IsEmail({}, { message: 'Adresse email invalide' })
   @MaxLength(254, { message: 'Adresse email trop longue' })
   email?: string;

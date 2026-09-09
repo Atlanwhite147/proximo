@@ -14,6 +14,7 @@ export interface User {
   building: string | null;
   floor: string | null;
   showDetails: boolean;
+  showInDirectory: boolean;
   /** ID de la résidence de rattachement (multi-résidences). */
   residenceId: string | null;
   residenceName: string | null;

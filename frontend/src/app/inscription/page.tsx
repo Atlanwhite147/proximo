@@ -35,6 +35,7 @@ function InscriptionForm() {
   const [submitting, setSubmitting] = useState(false);
   const [pending, setPending] = useState(false);
   const [acceptCgu, setAcceptCgu] = useState(false);
+  const [showInDirectory, setShowInDirectory] = useState(true);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -63,6 +64,8 @@ function InscriptionForm() {
           building: building || undefined,
           floor: floor || undefined,
           invitationToken: invitationToken || undefined,
+          // Choix RGPD : visible dans l'annuaire des voisins (défaut : oui).
+          showInDirectory,
         }),
       });
       setUser(data.user);
@@ -243,6 +246,23 @@ function InscriptionForm() {
             Bâtiment et étage : facultatifs, pour aider vos voisins à vous trouver (cela peut être
             masqué sur vos publications depuis votre profil).
           </p>
+
+          <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+            <input
+              type="checkbox"
+              checked={showInDirectory}
+              onChange={(event) => setShowInDirectory(event.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              aria-label="Apparaître dans l'annuaire des voisins"
+            />
+            <span>
+              Apparaître dans l&apos;annuaire des voisins
+              <span className="block text-[11px] text-slate-400">
+                Les habitants de la résidence pourront vous voir et vous écrire. Vous
+                pourrez changer ce choix à tout moment depuis votre profil.
+              </span>
+            </span>
+          </label>
 
           <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
             <input

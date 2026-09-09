@@ -40,6 +40,7 @@ export interface PublicUser {
   building: string | null;
   floor: string | null;
   showDetails: boolean;
+  showInDirectory: boolean;
   residenceId: string | null;
   residenceName: string | null;
   role: string;
@@ -60,6 +61,7 @@ type PublicUserFields = Pick<
   | 'building'
   | 'floor'
   | 'showDetails'
+  | 'showInDirectory'
   | 'role'
   | 'status'
   | 'totpEnabled'
@@ -148,6 +150,10 @@ export class AuthService {
         residenceId,
         ...(dto.building !== undefined ? { building: dto.building.trim() || null } : {}),
         ...(dto.floor !== undefined ? { floor: dto.floor.trim() || null } : {}),
+        // Choix RGPD à l'inscription : apparaître dans l'annuaire des voisins.
+        ...(dto.showInDirectory !== undefined
+          ? { showInDirectory: dto.showInDirectory }
+          : { showInDirectory: true }),
         role: isAdmin ? ROLE_SUPERADMIN : ROLE_USER,
         // Les super-administrateurs déclarés sont actifs d'emblée ;
         // les autres comptes attendent la validation d'un admin.
@@ -352,6 +358,7 @@ export class AuthService {
       building: user.building,
       floor: user.floor,
       showDetails: user.showDetails,
+      showInDirectory: user.showInDirectory,
       residenceId: user.residenceId ?? null,
       residenceName: null,
       role: user.role,

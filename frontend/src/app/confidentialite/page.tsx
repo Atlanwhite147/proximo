@@ -23,6 +23,16 @@ export default function ConfidentialitePage() {
             étage (si renseignés par l&apos;utilisateur). L&apos;adresse exacte des
             résidences n&apos;est jamais publiée aux habitants.
           </p>
+          <p className="mt-2">
+            <strong>Annuaire des voisins</strong> : votre prénom, nom et bâtiment/étage
+            (si vous avez choisi de les afficher) peuvent être visibles des autres
+            habitants via l&apos;annuaire de la résidence. L&apos;apparition dans cet
+            annuaire est un <strong>choix</strong> : il est activé par défaut à
+            l&apos;inscription (case décochable), et vous pouvez l&apos;activer ou le
+            désactiver à tout moment depuis votre profil. Un habitant qui se retire
+            de l&apos;annuaire n&apos;est plus listé et ne peut plus être contacté
+            directement via celui-ci.
+          </p>
         </section>
 
         <section>

@@ -27,6 +27,7 @@ export default function ProfilPage() {
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [showDetails, setShowDetails] = useState(true);
+  const [showInDirectory, setShowInDirectory] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [listings, setListings] = useState<Listing[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export default function ProfilPage() {
     setBuilding(user.building ?? '');
     setFloor(user.floor ?? '');
     setShowDetails(user.showDetails ?? true);
+    setShowInDirectory(user.showInDirectory ?? true);
     setEmailNotifications(user.emailNotifications ?? true);
     setTotpEnabled(user.totpEnabled ?? false);
     api<{ listings: Listing[] }>('/listings/mine')
@@ -64,6 +66,7 @@ export default function ProfilPage() {
           building,
           floor,
           showDetails,
+          showInDirectory,
           emailNotifications,
         }),
       });
@@ -227,6 +230,21 @@ export default function ProfilPage() {
                 className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
               />
               Afficher mon bâtiment et mon étage sur mes publications
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={showInDirectory}
+                onChange={(event) => setShowInDirectory(event.target.checked)}
+                className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              <span>
+                Apparaître dans l&apos;annuaire des voisins
+                <span className="block text-xs text-slate-400">
+                  Décochez pour rester invisible dans l&apos;annuaire (les autres voisins
+                  ne pourront pas vous écrire directement).
+                </span>
+              </span>
             </label>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input

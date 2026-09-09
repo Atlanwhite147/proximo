@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 
 /**
  * Inscription. Validation stricte côté serveur (class-validator).
@@ -50,4 +50,9 @@ export class RegisterDto {
   @IsString({ message: 'Jeton d’invitation invalide' })
   @MaxLength(64, { message: 'Jeton d’invitation invalide' })
   invitationToken?: string;
+
+  /** Choix RGPD : apparaître dans l'annuaire des voisins (défaut : oui). */
+  @IsOptional()
+  @IsBoolean({ message: 'Visibilité invalide' })
+  showInDirectory?: boolean;
 }
