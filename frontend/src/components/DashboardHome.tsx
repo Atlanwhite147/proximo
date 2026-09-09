@@ -506,42 +506,54 @@ export function DashboardHome() {
             </Link>
           </div>
         ) : (
-          <ul className="ds-card divide-y divide-slate-100">
-            {neighbors.map((neighbor) => (
-              <li key={neighbor.id} className="flex items-center gap-3 px-4 py-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
-                  {neighbor.firstName.charAt(0).toUpperCase()}
-                  {neighbor.lastName?.charAt(0).toUpperCase() ?? ''}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold text-slate-800">
-                    {neighbor.firstName} {neighbor.lastName}
-                    {neighbor.role === 'ADMIN' && (
-                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                        Admin
-                      </span>
-                    )}
+          <>
+            <ul className="ds-card divide-y divide-slate-100">
+              {neighbors.slice(0, 6).map((neighbor) => (
+                <li key={neighbor.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
+                    {neighbor.firstName.charAt(0).toUpperCase()}
+                    {neighbor.lastName?.charAt(0).toUpperCase() ?? ''}
                   </span>
-                  <span className="block truncate text-xs text-slate-400">
-                    {neighbor.building && neighbor.floor
-                      ? `Bât. ${neighbor.building} · Étage ${neighbor.floor}`
-                      : neighbor.building
-                        ? `Bât. ${neighbor.building}`
-                        : neighbor.floor
-                          ? `Étage ${neighbor.floor}`
-                          : 'Voisin de la résidence'}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold text-slate-800">
+                      {neighbor.firstName} {neighbor.lastName}
+                      {neighbor.role === 'ADMIN' && (
+                        <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                          Admin
+                        </span>
+                      )}
+                    </span>
+                    <span className="block truncate text-xs text-slate-400">
+                      {neighbor.building && neighbor.floor
+                        ? `Bât. ${neighbor.building} · Étage ${neighbor.floor}`
+                        : neighbor.building
+                          ? `Bât. ${neighbor.building}`
+                          : neighbor.floor
+                            ? `Étage ${neighbor.floor}`
+                            : 'Voisin de la résidence'}
+                    </span>
                   </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void contact(neighbor)}
-                  className="shrink-0 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-100"
+                  <button
+                    type="button"
+                    onClick={() => void contact(neighbor)}
+                    className="shrink-0 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-100"
+                  >
+                    💬 Message
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {neighbors.length > 6 && (
+              <div className="mt-2 text-right">
+                <Link
+                  href="/voisins"
+                  className="text-sm font-semibold text-brand-600 hover:underline"
                 >
-                  💬 Message
-                </button>
-              </li>
-            ))}
-          </ul>
+                  Voir les {neighbors.length} voisins →
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </section>
 
