@@ -25,6 +25,8 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://proximo.147.ovh'),
+  applicationName: 'Proximo',
+  manifest: '/manifest.json',
   title: {
     default: 'Proximo · La vie de votre résidence',
     template: '%s · Proximo',
@@ -79,6 +81,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               '@context': 'https://schema.org',
               '@graph': [
                 {
+                  '@type': 'Organization',
+                  '@id': 'https://proximo.147.ovh/#organization',
+                  name: 'Proximo',
+                  url: 'https://proximo.147.ovh/',
+                  logo: {
+                    '@type': 'ImageObject',
+                    url: 'https://proximo.147.ovh/icon-512.png',
+                    width: 512,
+                    height: 512,
+                  },
+                  sameAs: ['https://github.com/Atlanwhite147/proximo'],
+                },
+                {
                   '@type': 'WebSite',
                   '@id': 'https://proximo.147.ovh/#website',
                   url: 'https://proximo.147.ovh/',
@@ -87,6 +102,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   description:
                     'Plateforme de vie de résidence : annonces entre voisins, signalements au syndic, invitations de voisinage.',
                   inLanguage: 'fr-FR',
+                  publisher: { '@id': 'https://proximo.147.ovh/#organization' },
                 },
                 {
                   '@type': 'SoftwareApplication',
