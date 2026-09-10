@@ -144,56 +144,43 @@ function InviteWidget() {
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void share()}
-            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50"
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <button
+          type="button"
+          onClick={() => void share()}
+          className="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50"
+        >
+          <Share2 className="h-4 w-4" aria-hidden />
+          Partager l&apos;invitation
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setQrOpen(true)}
+          className="flex items-center gap-1.5 text-sm font-medium text-white/85 underline-offset-4 transition hover:text-white hover:underline"
+        >
+          <QrCode className="h-4 w-4" aria-hidden />
+          QR code
+        </button>
+
+        {whatsappUrl && (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 text-sm font-medium text-white/85 underline-offset-4 transition hover:text-white hover:underline"
           >
-            <Share2 className="h-4 w-4" aria-hidden />
-            Partager l&apos;invitation
-          </button>
-          {whatsappUrl && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-            >
-              <MessageCircle className="h-4 w-4" aria-hidden />
-              WhatsApp
-            </a>
-          )}
-          <button
-            type="button"
-            onClick={() => setQrOpen(true)}
-            className="flex items-center gap-2 rounded-xl border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            <QrCode className="h-4 w-4" aria-hidden />
-            QR code
-          </button>
-          <button
-            type="button"
-            onClick={() => void copy()}
-            className="flex items-center gap-2 rounded-xl border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4" aria-hidden />
-                Lien copié
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4" aria-hidden />
-                Copier le lien
-              </>
-            )}
-          </button>
-        </div>
-        <p className="truncate font-mono text-xs text-white/70" title={shareUrl ?? invitation.url}>
-          {shareUrl ?? invitation.url}
-        </p>
+            <MessageCircle className="h-4 w-4" aria-hidden />
+            WhatsApp
+          </a>
+        )}
+
+        {copied && (
+          <span className="flex items-center gap-1.5 text-sm font-medium text-white">
+            <Check className="h-4 w-4" aria-hidden />
+            Lien copié
+          </span>
+        )}
       </div>
 
       {/* QR code plein écran : pratique pour faire scanner un voisin en face. */}
@@ -458,8 +445,8 @@ export function DashboardHome() {
           <div>
             <h2 className="text-lg font-bold">Inviter un voisin</h2>
             <p className="text-sm text-white/85">
-              Votre invitation est déjà prête : partagez-la en un tap, ou faites scanner le
-              QR code à un voisin pour qu&apos;il rejoigne <strong>{residenceName}</strong>.
+              Le lien rattache automatiquement votre voisin à{' '}
+              <strong>{residenceName}</strong>.
             </p>
           </div>
         </div>
