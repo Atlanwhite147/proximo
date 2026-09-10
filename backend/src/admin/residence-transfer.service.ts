@@ -14,7 +14,7 @@ import {
   randomBytes,
   randomUUID,
 } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
 import { basename, join } from 'path';
 import { gunzipSync, gzipSync } from 'zlib';
 import { EmailService } from '../email/email.service';
@@ -368,7 +368,26 @@ export class ResidenceTransferService {
     const result = await this.prisma.residenceExport.deleteMany({
       where: { id: { in: stale.map((row) => row.id) } },
     });
-    return result.count;
+
+    // Fichiers orphelins (ligne supprimée directement en base, incident) :
+    // un export ne doit jamais rester indéfiniment sur le disque.
+    let orphans = 0;
+    if (existsSync(exportsDir())) {
+      const vivants = new Set(
+        (await this.prisma.residenceExport.findMany({ select: { id: true } })).map((row) => row.id),
+      );
+      for (const file of readdirSync(exportsDir())) {
+        if (!vivants.has(file.replace(/\.proximo$/, ''))) {
+          unlinkSync(join(exportsDir(), file));
+          orphans += 1;
+        }
+      }
+    }
+    if (orphans > 0) {
+      this.logger.warn(`${orphans} fichier(s) d'export orphelin(s) supprimé(s)`);
+    }
+
+    return result.count + orphans;
   }
 
   /**
