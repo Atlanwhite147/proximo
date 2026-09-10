@@ -360,7 +360,8 @@ export class ResidenceTransferService {
       where: { OR: [{ expiresAt: { lt: new Date() } }, { downloadedAt: { not: null } }] },
       select: { id: true },
     });
-    if (stale.length === 0) return 0;
+    // Pas de sortie anticipée : la purge des orphelins ci-dessous doit
+    // s'exécuter même quand aucune ligne n'est expirée.
     for (const row of stale) {
       const path = join(exportsDir(), `${row.id}.proximo`);
       if (existsSync(path)) unlinkSync(path);
