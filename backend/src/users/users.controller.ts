@@ -8,6 +8,7 @@ import {
   NotFoundException,
   Param,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -59,6 +60,22 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, StatusGuard)
   async neighbors(@CurrentUser() user: { id: string }) {
     return this.usersService.getNeighbors(user.id);
+  }
+
+  /**
+   * Aperçu dashboard : 3 voisins au hasard parmi ceux connectés dans les
+   * dernières 24 h (`hours`/`limit` ajustables mais bornés).
+   */
+  @Get('neighbors/recent')
+  @UseGuards(JwtAuthGuard, StatusGuard)
+  async recentNeighbors(
+    @CurrentUser() user: { id: string },
+    @Query('hours') hours?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const h = Math.min(Math.max(Number(hours) || 24, 1), 720);
+    const n = Math.min(Math.max(Number(limit) || 3, 1), 12);
+    return this.usersService.getRecentNeighbors(user.id, h, n);
   }
 
   @Get(':id')

@@ -192,4 +192,60 @@ export class UsersService {
     }));
     return { neighbors: safe };
   }
+
+  /**
+   * Aperçu du dashboard : 3 voisins tirés au hasard parmi ceux qui se sont
+   * connectés dans les dernières 24 h (même résidence, visibles dans
+   * l'annuaire, hors utilisateur courant).
+   */
+  async getRecentNeighbors(userId: string, hours = 24, limit = 3) {
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { residenceId: true },
+    });
+    if (!me?.residenceId) {
+      return { neighbors: [], windowHours: hours };
+    }
+
+    const depuis = new Date(Date.now() - hours * 3600_000);
+    // On borne le vivier (50 derniers connectés) puis on tire au hasard :
+    // Prisma ne permet pas ORDER BY random(), cet échantillonnage suffit et
+    // garantit un affichage varié à chaque visite.
+    const recents = await this.prisma.user.findMany({
+      where: {
+        residenceId: me.residenceId,
+        status: 'ACTIVE',
+        id: { not: userId },
+        showInDirectory: true,
+        lastSeenAt: { gte: depuis },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        building: true,
+        floor: true,
+        showDetails: true,
+        role: true,
+        lastSeenAt: true,
+      },
+      orderBy: { lastSeenAt: 'desc' },
+      take: 50,
+    });
+
+    // Tirage aléatoire sans remise (Fisher-Yates partiel).
+    const melange = [...recents];
+    for (let i = melange.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [melange[i], melange[j]] = [melange[j], melange[i]];
+    }
+
+    const selection = melange.slice(0, limit).map(({ showDetails, building, floor, ...rest }) => ({
+      ...rest,
+      building: showDetails ? building : null,
+      floor: showDetails ? floor : null,
+    }));
+
+    return { neighbors: selection, windowHours: hours, totalRecent: recents.length };
+  }
 }

@@ -166,6 +166,7 @@ export function DashboardHome() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [neighbors, setNeighbors] = useState<Neighbor[]>([]);
+  const [recentCount, setRecentCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -175,14 +176,20 @@ export function DashboardHome() {
       api<{ items: Listing[] }>('/listings?limit=6'),
       api<{ incidents: Incident[] }>('/incidents'),
       api<{ conversations: Conversation[] }>('/messages'),
-      api<{ neighbors: Neighbor[] }>('/users/neighbors'),
+      // Aperçu : 3 voisins au hasard parmi ceux connectés ces dernières 24 h.
+      api<{ neighbors: Neighbor[]; totalRecent?: number }>(
+        '/users/neighbors/recent?hours=24&limit=3',
+      ),
     ]).then(([s, l, i, c, n]) => {
       if (cancelled) return;
       if (s.status === 'fulfilled') setStats(s.value);
       if (l.status === 'fulfilled') setListings(l.value.items);
       if (i.status === 'fulfilled') setIncidents(i.value.incidents);
       if (c.status === 'fulfilled') setConversations(c.value.conversations);
-      if (n.status === 'fulfilled') setNeighbors(n.value.neighbors);
+      if (n.status === 'fulfilled') {
+        setNeighbors(n.value.neighbors);
+        setRecentCount(n.value.totalRecent ?? n.value.neighbors.length);
+      }
       setLoading(false);
     });
     return () => {
@@ -484,7 +491,7 @@ export function DashboardHome() {
         </section>
       )}
 
-      {/* ─── Annuaire des voisins (messagerie directe) ──────── */}
+      {/* ─── Voisins connectés récemment (aperçu 3, au hasard) ──────── */}
       <section>
         <div className="mb-3 flex items-end justify-between">
           <div>
@@ -492,10 +499,14 @@ export function DashboardHome() {
               ● Annuaire de la résidence
             </p>
             <h2 className="mt-0.5 text-lg font-bold text-slate-900">Voisins</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Connectés dans les dernières 24 h
+            </p>
           </div>
-          {neighbors.length > 0 && (
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-              {neighbors.length} habitant{neighbors.length > 1 ? 's' : ''}
+          {recentCount > 0 && (
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {recentCount} connecté{recentCount > 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -504,27 +515,36 @@ export function DashboardHome() {
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
             <p className="text-2xl">👥</p>
             <p className="mt-2 text-sm font-medium text-slate-600">
-              L&apos;annuaire se remplira au fil des inscriptions
+              Aucun voisin connecté ces dernières 24 h
             </p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
-              Invitez vos voisins pour échanger en direct, ou contactez-les depuis
-              leurs annonces et signalements.
+              Consultez l&apos;annuaire complet pour retrouver tous les habitants de la
+              résidence, ou invitez vos voisins à rejoindre Proximo.
             </p>
-            <Link
-              href="/inviter"
-              className="mt-4 inline-block rounded-xl bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-white"
-            >
-              📲 Inviter un voisin
-            </Link>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link
+                href="/voisins"
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"
+              >
+                Voir l&apos;annuaire
+              </Link>
+              <Link
+                href="/inviter"
+                className="rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                📲 Inviter un voisin
+              </Link>
+            </div>
           </div>
         ) : (
           <>
             <ul className="ds-card divide-y divide-slate-100">
-              {neighbors.slice(0, 6).map((neighbor) => (
+              {neighbors.map((neighbor) => (
                 <li key={neighbor.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
+                  <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
                     {neighbor.firstName.charAt(0).toUpperCase()}
                     {neighbor.lastName?.charAt(0).toUpperCase() ?? ''}
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold text-slate-800">
@@ -555,16 +575,15 @@ export function DashboardHome() {
                 </li>
               ))}
             </ul>
-            {neighbors.length > 6 && (
-              <div className="mt-2 text-right">
-                <Link
-                  href="/voisins"
-                  className="text-sm font-semibold text-brand-600 hover:underline"
-                >
-                  Voir les {neighbors.length} voisins →
-                </Link>
-              </div>
-            )}
+            <div className="mt-2 text-right">
+              <Link
+                href="/voisins"
+                className="text-sm font-semibold text-brand-600 hover:underline"
+              >
+                Voir tous les habitants
+                {stats?.activeResidents ? ` (${stats.activeResidents})` : ''} →
+              </Link>
+            </div>
           </>
         )}
       </section>

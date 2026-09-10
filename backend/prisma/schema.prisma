@@ -57,6 +57,7 @@ model User {
   totpSecret         String? // secret TOTP chiffré côté application (2FA admin)
   totpEnabled        Boolean   @default(false)
   emailNotifications Boolean   @default(true)
+  lastSeenAt         DateTime? // dernière connexion (annuaire « voisins récents »)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

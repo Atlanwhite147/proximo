@@ -171,6 +171,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async me(@CurrentUser() user: { id: string }) {
+    // Session active repérée ici aussi (annuaire des voisins connectés).
+    await this.authService.touchLastSeen(user.id);
     return { user: await this.authService.toPublicUserOrThrow(user.id) };
   }
 }

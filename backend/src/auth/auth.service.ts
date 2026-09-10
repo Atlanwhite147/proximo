@@ -191,6 +191,23 @@ export class AuthService {
   }
 
   /**
+   * Enregistre la dernière connexion de l'utilisateur (annuaire « voisins
+   * connectés récemment »). Écriture limitée à une fois toutes les 5 minutes
+   * par utilisateur pour ne pas marteler la base à chaque rafraîchissement.
+   */
+  async touchLastSeen(userId: string): Promise<void> {
+    try {
+      const seuil = new Date(Date.now() - 5 * 60_000);
+      await this.prisma.user.updateMany({
+        where: { id: userId, OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: seuil } }] },
+        data: { lastSeenAt: new Date() },
+      });
+    } catch {
+      // Non bloquant : une connexion ne doit jamais échouer pour ce suivi.
+    }
+  }
+
+  /**
    * Crée une paire access/refresh, pose les cookies et révoque le refresh
    * précédent s'il est fourni (rotation lors du rafraîchissement).
    */
@@ -203,6 +220,9 @@ export class AuthService {
       previousRefreshTokenId?: string;
     } = {},
   ): Promise<void> {
+    // Session qui démarre : marque l'utilisateur comme connecté récemment.
+    await this.touchLastSeen(user.id);
+
     if (options.previousRefreshTokenId) {
       await this.prisma.refreshToken.update({
         where: { id: options.previousRefreshTokenId },
