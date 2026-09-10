@@ -113,6 +113,10 @@ function TransfertView({ token }: { token: string }) {
               Demandez un nouvel export depuis la console (Résidences → votre résidence →
               Exporter), puis utilisez le lien du nouvel email.
             </p>
+            <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              ⚠️ Les emails Proximo peuvent être classés en <strong>spam</strong> : pensez à
+              vérifier votre dossier de courriers indésirables.
+            </p>
             <Link href="/admin" className="btn-primary mt-4 inline-block">
               Retour à la console
             </Link>

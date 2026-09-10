@@ -99,6 +99,11 @@ export function ExportResidenceCard({ residenceId }: { residenceId: string }) {
         usage unique valable 24 h : il ne transite pas par ce navigateur et il est supprimé
         du serveur dès le téléchargement.
       </p>
+      <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        ⚠️ L&apos;email peut être classé dans votre dossier <strong>spam</strong> ou
+        <strong> courrier indésirable</strong> : vérifiez-y s&apos;il n&apos;apparaît pas dans
+        votre boîte de réception.
+      </p>
 
       {!open ? (
         <button
@@ -183,6 +188,10 @@ export function ExportResidenceCard({ residenceId }: { residenceId: string }) {
           ✅ {done}
           <br />
           Ouvrez cet email et suivez le lien pour récupérer le fichier (une seule fois).
+          <br />
+          <span className="font-medium">
+            Vous ne le voyez pas ? Regardez dans vos spams / courriers indésirables.
+          </span>
         </p>
       )}
     </div>
