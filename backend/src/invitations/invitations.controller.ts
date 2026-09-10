@@ -34,6 +34,19 @@ export class InvitationsController {
     return this.invitationsService.create(user.id, dto);
   }
 
+  /**
+   * Invitation prête à partager : renvoie celle du membre si elle est encore
+   * valable, sinon en crée une. Utilisée par le widget « Inviter un voisin »
+   * pour que le partage soit possible sans étape préalable.
+   */
+  @Post('mine')
+  @UseGuards(JwtAuthGuard, StatusGuard)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  async mine(@CurrentUser() user: { id: string }, @Body() dto: CreateInvitationDto) {
+    return this.invitationsService.getOrCreateMine(user.id, dto);
+  }
+
   /** État public du jeton (utilisé par la page /rejoindre). */
   @Get(':token')
   @Throttle({ default: { limit: 30, ttl: 60_000 } })

@@ -69,6 +69,15 @@ export class InvitationsService {
     });
 
     const url = `${APP_URL}/rejoindre?token=${token}`;
+    return this.serialize(invitation, token, url);
+  }
+
+  /** Forme de réponse commune (création et réutilisation). */
+  private serialize(
+    invitation: { id: string; neighborhood: string; expiresAt: Date; multiUse: boolean },
+    token: string,
+    url: string,
+  ) {
     return {
       id: invitation.id,
       token,
@@ -76,7 +85,42 @@ export class InvitationsService {
       qrUrl: `${process.env.API_URL ?? '/api'}/invitations/${token}/qr.png`,
       neighborhood: invitation.neighborhood,
       expiresAt: invitation.expiresAt,
+      multiUse: invitation.multiUse,
     };
+  }
+
+  /**
+   * Invitation prête à partager pour ce membre : réutilise la sienne encore
+   * valable (au moins 12 h restantes), sinon en crée une. Objectif : le
+   * partage doit être immédiat, sans étape « générer » préalable.
+   */
+  async getOrCreateMine(createdById: string, dto: CreateInvitationDto) {
+    const creator = await this.prisma.user.findUnique({
+      where: { id: createdById },
+      select: { residenceId: true },
+    });
+
+    // Marge de 12 h : on ne réutilise pas un lien sur le point d'expirer.
+    const marge = new Date(Date.now() + 12 * 3_600_000);
+    const existante = await this.prisma.invitation.findFirst({
+      where: {
+        createdById,
+        residenceId: creator?.residenceId ?? null,
+        expiresAt: { gt: marge },
+        OR: [{ multiUse: true }, { usedAt: null }],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existante) {
+      return this.serialize(
+        existante,
+        existante.token,
+        `${APP_URL}/rejoindre?token=${existante.token}`,
+      );
+    }
+
+    return this.create(createdById, { ...dto, expiresInHours: dto.expiresInHours ?? 72 });
   }
 
   /** État public d'une invitation (landing page avant inscription). */

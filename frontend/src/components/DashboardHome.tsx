@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { Check, Copy, MessageCircle, QrCode, Share2, X } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { Spinner } from '@/components/Feedback';
@@ -11,7 +12,7 @@ import { CATEGORY_LABELS, INCIDENT_CATEGORY_LABELS } from '@/lib/types';
 import { formatRelativeDate } from '@/lib/format';
 import { incidentCategoryVisual } from '@/lib/category';
 import { cn } from '@/lib/utils';
-import type { Conversation, Incident, Listing } from '@/lib/types';
+import type { Conversation, Incident, Invitation, Listing } from '@/lib/types';
 
 interface ResidenceStats {
   activeResidents: number;
@@ -38,40 +39,52 @@ const TYPE_VISUAL = {
 
 type Activity = { kind: keyof typeof TYPE_VISUAL; date: string; node: React.ReactNode; key: string };
 
-/** Widget « Inviter un voisin » : QR généré à la demande + partage WhatsApp. */
+/**
+ * Widget « Inviter un voisin » pensé pour le minimum de friction :
+ *  1. l'invitation est prête dès l'ouverture (réutilisée si elle existe) ;
+ *  2. un bouton principal ouvre la feuille de partage native (iOS/Android :
+ *     WhatsApp, Messages, Mail, AirDrop…) ;
+ *  3. WhatsApp, copie du lien et QR code plein écran restent à un seul tap.
+ */
 function InviteWidget() {
   const { user } = useAuth();
-  const [invitation, setInvitation] = useState<{ url: string; qrUrl?: string; token?: string } | null>(null);
+  const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [shortUrl, setShortUrl] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
-  const generate = async () => {
-    setBusy(true);
-    try {
-      const created = await api<{ url: string; qrUrl?: string; token?: string }>('/invitations', {
-        method: 'POST',
-        body: JSON.stringify({
-          neighborhood: user?.residenceName ?? user?.neighborhood ?? '',
-          expiresInHours: 72,
-        }),
+  const residenceName = user?.residenceName ?? user?.neighborhood ?? 'la résidence';
+
+  // Invitation disponible immédiatement : aucune étape « générer » à faire.
+  useEffect(() => {
+    let cancelled = false;
+    api<Invitation>('/invitations/mine', {
+      method: 'POST',
+      body: JSON.stringify({ neighborhood: residenceName, expiresInHours: 72 }),
+    })
+      .then((created) => {
+        if (cancelled) return;
+        setInvitation(created);
+        if (created.token) {
+          api<{ shortUrl: string }>(`/invitations/${created.token}/short-url`)
+            .then((data) => {
+              if (!cancelled) setShortUrl(data.shortUrl);
+            })
+            .catch(() => undefined);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
-      setInvitation(created);
-      // Lien court pour le partage (TinyURL) — silencieux si indisponible.
-      if (created.token) {
-        api<{ shortUrl: string }>(`/invitations/${created.token}/short-url`)
-          .then((data) => setShortUrl(data.shortUrl))
-          .catch(() => undefined);
-      }
-    } catch {
-      /* silencieux : le lien /inviter reste accessible */
-    } finally {
-      setBusy(false);
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [residenceName]);
 
-  /** Lien effectif : le court si dispo, sinon le lien complet. */
   const shareUrl = shortUrl ?? invitation?.url ?? null;
+  const shareText = `Rejoignez ${residenceName} sur Proximo`;
 
   const copy = async () => {
     if (!shareUrl) return;
@@ -80,73 +93,161 @@ function InviteWidget() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  /**
+   * Partage natif : ouvre la feuille de partage du système (un seul tap pour
+   * WhatsApp, Messages, Mail…). Annulation = silence ; si l'API n'existe pas
+   * (desktop ancien), on copie le lien pour ne jamais laisser l'utilisateur
+   * sans solution.
+   */
+  const share = async () => {
+    if (!shareUrl) return;
+    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+    if (typeof nav.share === 'function') {
+      try {
+        await nav.share({ title: 'Proximo', text: shareText, url: shareUrl });
+      } catch (error) {
+        if ((error as Error)?.name !== 'AbortError') await copy();
+      }
+      return;
+    }
+    await copy();
+  };
+
   const whatsappUrl = shareUrl
-    ? `https://wa.me/?text=${encodeURIComponent(`Rejoignez notre résidence sur Proximo : ${shareUrl}`)}`
+    ? `https://wa.me/?text=${encodeURIComponent(`${shareText} : ${shareUrl}`)}`
     : null;
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 text-sm font-medium text-white/85" role="status">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+        Préparation de votre invitation…
+      </div>
+    );
+  }
 
   if (!invitation) {
     return (
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-relaxed text-white/90">
-          Le lien d&apos;invitation est à usage unique et expire au bout de 72 h.
-          Générez-le, puis partagez-le par QR code (à imprimer) ou par message.
+          Retrouvez votre invitation et l&apos;affiche à imprimer sur la page dédiée.
         </p>
-        <button
-          type="button"
-          onClick={() => void generate()}
-          disabled={busy}
-          className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm hover:bg-primary-50 disabled:opacity-60"
+        <Link
+          href="/inviter"
+          className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm hover:bg-primary-50"
         >
-          {busy ? 'Génération…' : 'Générer le QR code'}
-        </button>
+          Ouvrir la page invitation →
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-      <Link href="/inviter" className="shrink-0" title="Voir en grand sur la page Inviter">
-        {invitation.qrUrl ? (
-          <img
-            src={invitation.qrUrl}
-            alt="QR code d'invitation"
-            width={104}
-            height={104}
-            className="rounded-xl border-2 border-white/30 bg-white p-1"
-          />
-        ) : null}
-      </Link>
-      <div className="min-w-0 flex-1">
-        <p className="break-all font-mono text-xs text-white/80">
-          {shareUrl ?? invitation.url}
-        </p>
-        <div className="mt-2.5 flex flex-wrap gap-2">
+    <>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void share()}
+            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50"
+          >
+            <Share2 className="h-4 w-4" aria-hidden />
+            Partager l&apos;invitation
+          </button>
           {whatsappUrl && (
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+              className="flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             >
-              Partager sur WhatsApp
+              <MessageCircle className="h-4 w-4" aria-hidden />
+              WhatsApp
             </a>
           )}
           <button
             type="button"
-            onClick={() => void copy()}
-            className="rounded-lg border border-white/40 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
+            onClick={() => setQrOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            {copied ? '✓ Copié !' : 'Copier le lien'}
+            <QrCode className="h-4 w-4" aria-hidden />
+            QR code
           </button>
-          <Link
-            href="/inviter"
-            className="rounded-lg border border-white/40 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
+          <button
+            type="button"
+            onClick={() => void copy()}
+            className="flex items-center gap-2 rounded-xl border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            Imprimer le QR →
-          </Link>
+            {copied ? (
+              <>
+                <Check className="h-4 w-4" aria-hidden />
+                Lien copié
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" aria-hidden />
+                Copier le lien
+              </>
+            )}
+          </button>
         </div>
+        <p className="truncate font-mono text-xs text-white/70" title={shareUrl ?? invitation.url}>
+          {shareUrl ?? invitation.url}
+        </p>
       </div>
-    </div>
+
+      {/* QR code plein écran : pratique pour faire scanner un voisin en face. */}
+      {qrOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="QR code d'invitation"
+          onClick={() => setQrOpen(false)}
+        >
+          <div
+            className="w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="font-mono text-[11px] font-medium uppercase tracking-badge text-slate-400">
+              ● Invitation
+            </p>
+            <h3 className="mt-1 text-lg font-bold text-slate-900">Rejoignez {residenceName}</h3>
+            {invitation.qrUrl && (
+              <img
+                src={invitation.qrUrl}
+                alt="QR code d'invitation à scanner"
+                width={260}
+                height={260}
+                className="mx-auto mt-4 h-[260px] w-[260px] rounded-2xl border border-slate-200 p-2"
+              />
+            )}
+            <p className="mt-3 text-sm text-slate-500">
+              Faites scanner ce code avec l&apos;appareil photo, ou partagez le lien :
+            </p>
+            <p className="mt-1 break-all font-mono text-xs text-slate-600">{shareUrl}</p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => void copy()}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+                {copied ? 'Copié' : 'Copier'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setQrOpen(false)}
+                className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" aria-hidden />
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -357,8 +458,8 @@ export function DashboardHome() {
           <div>
             <h2 className="text-lg font-bold">Inviter un voisin</h2>
             <p className="text-sm text-white/85">
-              Plus la résidence est complète, plus elle vit : partagez l&apos;accès à{' '}
-              <strong>{residenceName}</strong>.
+              Votre invitation est déjà prête : partagez-la en un tap, ou faites scanner le
+              QR code à un voisin pour qu&apos;il rejoigne <strong>{residenceName}</strong>.
             </p>
           </div>
         </div>
