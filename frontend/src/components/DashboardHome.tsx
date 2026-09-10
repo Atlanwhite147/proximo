@@ -166,7 +166,6 @@ export function DashboardHome() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [neighbors, setNeighbors] = useState<Neighbor[]>([]);
-  const [recentCount, setRecentCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -176,20 +175,15 @@ export function DashboardHome() {
       api<{ items: Listing[] }>('/listings?limit=6'),
       api<{ incidents: Incident[] }>('/incidents'),
       api<{ conversations: Conversation[] }>('/messages'),
-      // Aperçu : 3 voisins au hasard parmi ceux connectés ces dernières 24 h.
-      api<{ neighbors: Neighbor[]; totalRecent?: number }>(
-        '/users/neighbors/recent?hours=24&limit=3',
-      ),
+      // Aperçu : 3 voisins au hasard parmi ceux vus récemment (48 h glissantes).
+      api<{ neighbors: Neighbor[] }>('/users/neighbors/recent?hours=48&limit=3'),
     ]).then(([s, l, i, c, n]) => {
       if (cancelled) return;
       if (s.status === 'fulfilled') setStats(s.value);
       if (l.status === 'fulfilled') setListings(l.value.items);
       if (i.status === 'fulfilled') setIncidents(i.value.incidents);
       if (c.status === 'fulfilled') setConversations(c.value.conversations);
-      if (n.status === 'fulfilled') {
-        setNeighbors(n.value.neighbors);
-        setRecentCount(n.value.totalRecent ?? n.value.neighbors.length);
-      }
+      if (n.status === 'fulfilled') setNeighbors(n.value.neighbors);
       setLoading(false);
     });
     return () => {
@@ -499,23 +493,15 @@ export function DashboardHome() {
               ● Annuaire de la résidence
             </p>
             <h2 className="mt-0.5 text-lg font-bold text-slate-900">Voisins</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Connectés dans les dernières 24 h
-            </p>
+            <p className="mt-0.5 text-xs text-slate-500">Récemment</p>
           </div>
-          {recentCount > 0 && (
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {recentCount} connecté{recentCount > 1 ? 's' : ''}
-            </span>
-          )}
         </div>
 
         {neighbors.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
             <p className="text-2xl">👥</p>
             <p className="mt-2 text-sm font-medium text-slate-600">
-              Aucun voisin connecté ces dernières 24 h
+              Aucun voisin vu récemment
             </p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
               Consultez l&apos;annuaire complet pour retrouver tous les habitants de la
