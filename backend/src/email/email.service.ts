@@ -184,12 +184,27 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
    * Retour : 'sent' | 'queued' (quota Brevo atteint → file d'attente) |
    * 'logged' (mode journal) | 'failed'.
    */
+  /**
+   * L'instance est-elle la BÊTA ? Tous les emails sortants sont alors marqués,
+   * pour qu'un message de test ne puisse jamais être confondu avec un message
+   * de production (sujet identique = clic sur le mauvais lien).
+   */
+  private isBetaInstance(): boolean {
+    const appUrl = process.env.APP_URL ?? '';
+    return appUrl.includes('bproximo') || process.env.APP_ENV === 'beta';
+  }
+
   async sendMail(
     to: string,
     subject: string,
     html: string,
     attachments?: Array<{ filename: string; content: Buffer }>,
   ): Promise<'sent' | 'queued' | 'logged' | 'failed'> {
+    // Marquage bêta : sujet préfixé + bandeau en tête du message.
+    if (this.isBetaInstance()) {
+      subject = `[BÊTA] ${subject}`;
+      html = `<div style="margin:0 0 16px;padding:12px 16px;background:#FEF3C7;border-radius:10px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#92400E;"><strong>Instance de test (bêta)</strong> : ce message ne provient pas de la production.</div>${html}`;
+    }
     try {
       const config = await this.resolveConfig();
       if (config.mode === 'brevo' && config.brevoApiKey) {
