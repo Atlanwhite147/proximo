@@ -46,8 +46,10 @@ export const metadata: Metadata = {
       { url: '/icon-48.png', type: 'image/png', sizes: '48x48' },
       { url: '/icon-96.png', type: 'image/png', sizes: '96x96' },
       { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-256.png', type: 'image/png', sizes: '256x256' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
-    apple: [{ url: '/icon-192.png', sizes: '192x192' }],
+    apple: [{ url: '/icon-180.png', sizes: '180x180' }],
   },
   openGraph: {
     type: 'website',
