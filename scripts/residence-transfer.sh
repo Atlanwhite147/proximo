@@ -100,7 +100,7 @@ case "$mode" in
     cli_js > /tmp/proximo-cli.js
     docker cp /tmp/proximo-cli.js "$CONTAINER":/tmp/proximo-cli.js >/dev/null
     rm -f /tmp/proximo-cli.js
-    docker exec "$CONTAINER" node /tmp/proximo-cli.js export "$target" "$passphrase" 2>/tmp/proximo-export.err || {
+    docker exec -e NODE_PATH=/app/node_modules "$CONTAINER" node /tmp/proximo-cli.js export "$target" "$passphrase" 2>/tmp/proximo-export.err || {
       cat /tmp/proximo-export.err >&2; docker exec "$CONTAINER" rm -f /tmp/proximo-cli.js >/dev/null 2>&1 || true; exit 1;
     }
     filename=$(awk '/^OK /{print $2}' /tmp/proximo-export.err)
@@ -123,7 +123,7 @@ case "$mode" in
     docker cp /tmp/proximo-cli.js "$CONTAINER":/tmp/proximo-cli.js >/dev/null
     rm -f /tmp/proximo-cli.js
     docker cp "$file" "$CONTAINER":/tmp/transfer-in.proximo >/dev/null
-    docker exec "$CONTAINER" node /tmp/proximo-cli.js import /tmp/transfer-in.proximo "$passphrase" "$name" "$code"
+    docker exec -e NODE_PATH=/app/node_modules "$CONTAINER" node /tmp/proximo-cli.js import /tmp/transfer-in.proximo "$passphrase" "$name" "$code"
     status=$?
     docker exec "$CONTAINER" rm -f /tmp/transfer-in.proximo /tmp/proximo-cli.js >/dev/null 2>&1 || true
     exit $status

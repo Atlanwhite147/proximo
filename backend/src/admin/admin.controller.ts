@@ -627,6 +627,7 @@ export class AdminController {
    * les journaux d'accès du reverse-proxy.
    */
   @Post('residences/:id/export')
+  @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async exportResidence(
     @CurrentUser() user: { role: string; email: string },
