@@ -62,21 +62,17 @@ export function ExportResidenceCard({ residenceId }: { residenceId: string }) {
       if (!response.ok) {
         throw new Error(await readError(response));
       }
-      const blob = await response.blob();
-      const disposition = response.headers.get('Content-Disposition') ?? '';
-      const match = /filename="([^"]+)"/.exec(disposition);
-      const filename = match?.[1] ?? 'residence.proximo';
+      // Le fichier ne transite jamais par ce navigateur : un lien à usage
+      // unique part sur l'adresse du superadmin.
+      const data = (await response.json()) as {
+        email: string;
+        expiresInHours: number;
+        sizeBytes: number;
+      };
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-
-      setDone(`${filename} · ${(blob.size / 1024).toFixed(0)} Ko`);
+      setDone(
+        `Email envoyé à ${data.email} (${(data.sizeBytes / 1024).toFixed(0)} Ko) · lien valable ${data.expiresInHours} h`,
+      );
       setPassphrase('');
       setConfirm('');
       setOpen(false);
@@ -95,8 +91,13 @@ export function ExportResidenceCard({ residenceId }: { residenceId: string }) {
       <h3 className="mt-1 font-display text-lg">Exporter cette résidence</h3>
       <p className="mt-1 text-sm text-slate-500">
         Un seul fichier chiffré : habitants, annonces, signalements et photos,
-        commentaires, conversations, invitations. Restaurable sur ce serveur ou sur
-        une autre instance.
+        commentaires, conversations, invitations — restaurable sur ce serveur ou sur une
+        autre instance.
+      </p>
+      <p className="mt-1 text-sm text-slate-500">
+        Le fichier vous est envoyé <strong>par email</strong>, sous la forme d&apos;un lien à
+        usage unique valable 24 h : il ne transite pas par ce navigateur et il est supprimé
+        du serveur dès le téléchargement.
       </p>
 
       {!open ? (
@@ -179,7 +180,9 @@ export function ExportResidenceCard({ residenceId }: { residenceId: string }) {
 
       {done && (
         <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          ✅ Export téléchargé : {done}
+          ✅ {done}
+          <br />
+          Ouvrez cet email et suivez le lien pour récupérer le fichier (une seule fois).
         </p>
       )}
     </div>

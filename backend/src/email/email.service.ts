@@ -510,6 +510,36 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
 
   // ─── Emails transactionnels ─────────────────────────────────
 
+  /** Export de résidence : lien de téléchargement à usage unique. */
+  async sendResidenceExport(
+    to: string,
+    firstName: string | undefined,
+    residenceName: string,
+    link: string,
+    expiresHours: number,
+  ): Promise<void> {
+    await this.sendMail(
+      to,
+      `Export Proximo · ${residenceName}`,
+      emailLayout({
+        recipientFirstName: firstName,
+        heading: 'Votre export de résidence est prêt',
+        body: `
+          <p>L&apos;export chiffré de la résidence <strong>${escapeHtml(residenceName)}</strong>
+          (habitants, annonces, signalements et photos, commentaires, conversations,
+          invitations) vient d&apos;être généré à votre demande.</p>
+          <p><strong>Ce lien est à usage unique</strong> et expire dans ${expiresHours} heures.
+          Le fichier est supprimé du serveur dès le premier téléchargement.</p>
+          <p>Il est protégé par la phrase de passe que vous avez choisie : conservez-la
+          séparément, car sans elle l&apos;export est définitivement illisible.</p>`,
+        ctaUrl: link,
+        ctaLabel: "Télécharger l'export",
+        footer:
+          "Si vous n'êtes pas à l'origine de cette demande, changez votre mot de passe et contactez-nous.",
+      }),
+    );
+  }
+
   async sendWelcome(to: string, firstName: string): Promise<void> {
     await this.sendMail(
       to,

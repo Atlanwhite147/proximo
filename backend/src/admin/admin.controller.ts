@@ -623,17 +623,19 @@ export class AdminController {
   /**
    * Export chiffré d'UNE résidence : habitants, annonces, signalements et
    * photos, commentaires, conversations, invitations.
-   * POST (et non GET) pour que la phrase de passe ne se retrouve jamais dans
-   * les journaux d'accès du reverse-proxy.
+   *
+   * Le fichier n'est PAS renvoyé au navigateur : il reste sur le serveur et un
+   * email part vers l'adresse du superadmin avec un lien à usage unique
+   * (valable 24 h). POST (et non GET) pour que la phrase de passe ne se
+   * retrouve jamais dans les journaux d'accès du reverse-proxy.
    */
   @Post('residences/:id/export')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async exportResidence(
-    @CurrentUser() user: { role: string; email: string },
+    @CurrentUser() user: { id: string; role: string; email: string; firstName?: string },
     @Param('id') id: string,
     @Body() dto: { passphrase?: string },
-    @Res() response: Response,
   ) {
     if (user.role !== 'SUPERADMIN') {
       throw new ForbiddenException('Réservé au superadmin');
@@ -641,11 +643,34 @@ export class AdminController {
     if (!dto?.passphrase) {
       throw new BadRequestException("Une phrase de passe est requise pour chiffrer l'export.");
     }
-    const { buffer, filename } = await this.residenceTransfer.exportResidence(
-      id,
-      dto.passphrase,
-      user.email,
-    );
+    return this.residenceTransfer.requestExport(id, dto.passphrase, user);
+  }
+
+  /** État d'un export (page de téléchargement) — ne consomme pas le lien. */
+  @Get('residences/exports/:token')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  async exportInfo(
+    @CurrentUser() user: { id: string; role: string },
+    @Param('token') token: string,
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    return this.residenceTransfer.exportInfo(token, user.id);
+  }
+
+  /** Téléchargement à usage unique du fichier d'export. */
+  @Get('residences/exports/:token/download')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async downloadExport(
+    @CurrentUser() user: { id: string; role: string },
+    @Param('token') token: string,
+    @Res() response: Response,
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    const { buffer, filename } = await this.residenceTransfer.downloadExport(token, user.id);
     response.setHeader('Content-Type', 'application/octet-stream');
     response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     response.setHeader('Cache-Control', 'no-store');

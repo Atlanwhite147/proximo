@@ -1,4 +1,11 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  GoneException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   createCipheriv,
   createDecipheriv,
@@ -7,9 +14,10 @@ import {
   randomBytes,
   randomUUID,
 } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { basename, join } from 'path';
 import { gunzipSync, gzipSync } from 'zlib';
+import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { uploadsDir } from '../incidents/incidents.service';
 
@@ -39,8 +47,20 @@ const PBKDF2_ITERATIONS = 600_000;
 export const TRANSFER_FORMAT = 'proximo-residence';
 export const TRANSFER_VERSION = 1;
 export const MIN_PASSPHRASE = 12;
+/** Durée de vie du lien de téléchargement envoyé par email. */
+export const EXPORT_LINK_HOURS = 24;
 /** Garde-fou mémoire : au-delà, l'export dépasserait la RAM de la VM. */
 const MAX_EXPORT_BYTES = 300 * 1024 * 1024;
+
+/**
+ * Dossier des exports en attente de téléchargement : dans le volume persistant
+ * (survit aux redéploiements) mais dans un sous-dossier que RIEN ne sert en
+ * statique — les pièces jointes sont servies par identifiant, jamais par
+ * chemin arbitraire.
+ */
+function exportsDir(): string {
+  return join(uploadsDir(), '_exports');
+}
 
 type Collection =
   | 'users'
@@ -102,7 +122,10 @@ export interface ImportReport {
 export class ResidenceTransferService {
   private readonly logger = new Logger(ResidenceTransferService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly email: EmailService,
+  ) {}
 
   // ─────────────────────────────────────────────────────────────
   // EXPORT
@@ -112,7 +135,12 @@ export class ResidenceTransferService {
     residenceId: string,
     passphrase: string,
     exportedBy: string,
-  ): Promise<{ buffer: Buffer; filename: string; summary: Record<string, number> }> {
+  ): Promise<{
+    buffer: Buffer;
+    filename: string;
+    residenceName: string;
+    summary: Record<string, number>;
+  }> {
     if (passphrase.length < MIN_PASSPHRASE) {
       throw new BadRequestException(
         `La phrase de passe doit contenir au moins ${MIN_PASSPHRASE} caractères.`,
@@ -304,6 +332,7 @@ export class ResidenceTransferService {
     return {
       buffer,
       filename,
+      residenceName: residence.name,
       summary: {
         habitants: users.length,
         annonces: listings.length,
@@ -315,6 +344,150 @@ export class ResidenceTransferService {
         octets: buffer.length,
       },
     };
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // EXPORT PAR EMAIL (lien à usage unique)
+  // ─────────────────────────────────────────────────────────────
+
+  private tokenHash(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  /** Supprime les exports expirés ou déjà servis (fichiers + lignes). */
+  async purgeExpiredExports(): Promise<number> {
+    const stale = await this.prisma.residenceExport.findMany({
+      where: { OR: [{ expiresAt: { lt: new Date() } }, { downloadedAt: { not: null } }] },
+      select: { id: true },
+    });
+    if (stale.length === 0) return 0;
+    for (const row of stale) {
+      const path = join(exportsDir(), `${row.id}.proximo`);
+      if (existsSync(path)) unlinkSync(path);
+    }
+    const result = await this.prisma.residenceExport.deleteMany({
+      where: { id: { in: stale.map((row) => row.id) } },
+    });
+    return result.count;
+  }
+
+  /**
+   * Export envoyé par EMAIL : le fichier ne transite jamais par le navigateur,
+   * il reste sur le serveur et seul un lien à usage unique (valable
+   * EXPORT_LINK_HOURS) part vers l'adresse du superadmin demandeur.
+   */
+  async requestExport(
+    residenceId: string,
+    passphrase: string,
+    user: { id: string; email: string; firstName?: string },
+  ): Promise<{
+    email: string;
+    expiresAt: Date;
+    expiresInHours: number;
+    sizeBytes: number;
+    filename: string;
+  }> {
+    const { buffer, filename, residenceName } = await this.exportResidence(
+      residenceId,
+      passphrase,
+      user.email,
+    );
+
+    await this.purgeExpiredExports();
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + EXPORT_LINK_HOURS * 3_600_000);
+    const record = await this.prisma.residenceExport.create({
+      data: {
+        tokenHash: this.tokenHash(token),
+        residenceId,
+        residenceName,
+        filename,
+        sizeBytes: buffer.length,
+        createdById: user.id,
+        createdByEmail: user.email,
+        expiresAt,
+      },
+    });
+
+    mkdirSync(exportsDir(), { recursive: true });
+    writeFileSync(join(exportsDir(), `${record.id}.proximo`), buffer);
+
+    const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
+    await this.email.sendResidenceExport(
+      user.email,
+      user.firstName,
+      residenceName,
+      `${appUrl}/transfert/${token}`,
+      EXPORT_LINK_HOURS,
+    );
+
+    this.logger.log(
+      `Export « ${residenceName} » (${(buffer.length / 1024).toFixed(0)} Ko) envoyé à ${user.email} (lien ${EXPORT_LINK_HOURS} h)`,
+    );
+
+    return {
+      email: user.email,
+      expiresAt,
+      expiresInHours: EXPORT_LINK_HOURS,
+      sizeBytes: buffer.length,
+      filename,
+    };
+  }
+
+  /** État d'un export pour la page de téléchargement (ne consomme pas le lien). */
+  async exportInfo(token: string, userId: string) {
+    const record = await this.prisma.residenceExport.findUnique({
+      where: { tokenHash: this.tokenHash(token) },
+    });
+    if (!record) throw new NotFoundException('Lien invalide.');
+    if (record.createdById !== userId) {
+      throw new ForbiddenException('Ce lien ne correspond pas à votre compte.');
+    }
+    return {
+      residenceName: record.residenceName,
+      filename: record.filename,
+      sizeBytes: record.sizeBytes,
+      expiresAt: record.expiresAt,
+      downloadedAt: record.downloadedAt,
+      expired: record.expiresAt.getTime() < Date.now(),
+      used: record.downloadedAt !== null,
+    };
+  }
+
+  /**
+   * Téléchargement : usage unique. Le fichier est supprimé du serveur
+   * immédiatement après avoir été servi.
+   */
+  async downloadExport(
+    token: string,
+    userId: string,
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    const record = await this.prisma.residenceExport.findUnique({
+      where: { tokenHash: this.tokenHash(token) },
+    });
+    if (!record) throw new NotFoundException('Lien invalide.');
+    if (record.createdById !== userId) {
+      throw new ForbiddenException('Ce lien ne correspond pas à votre compte.');
+    }
+    if (record.downloadedAt) {
+      throw new GoneException('Ce lien a déjà été utilisé (usage unique).');
+    }
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new GoneException('Ce lien a expiré. Demandez un nouvel export.');
+    }
+    const path = join(exportsDir(), `${record.id}.proximo`);
+    if (!existsSync(path)) {
+      throw new NotFoundException('Fichier introuvable : demandez un nouvel export.');
+    }
+    const buffer = readFileSync(path);
+    await this.prisma.residenceExport.update({
+      where: { id: record.id },
+      data: { downloadedAt: new Date(), deletedAt: new Date() },
+    });
+    unlinkSync(path);
+    this.logger.log(`Export « ${record.residenceName} » téléchargé par ${record.createdByEmail}`);
+    return { buffer, filename: record.filename };
   }
 
   // ─────────────────────────────────────────────────────────────

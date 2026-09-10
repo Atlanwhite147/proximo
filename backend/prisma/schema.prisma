@@ -39,6 +39,24 @@ model Residence {
   invitations Invitation[]
 }
 
+// ─── Export de résidence (fichier chiffré envoyé par email) ───
+model ResidenceExport {
+  id             String    @id @default(uuid())
+  tokenHash      String    @unique // SHA-256 du jeton envoyé par email
+  residenceId    String? // pas de contrainte : l'export survit à la suppression
+  residenceName  String
+  filename       String
+  sizeBytes      Int
+  createdById    String
+  createdByEmail String
+  expiresAt      DateTime
+  downloadedAt   DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
 // ─── Utilisateur ──────────────────────────────────────────────
 model User {
   id                 String    @id @default(uuid())
