@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { SectionLabel } from '@/components/ui/section-label';
 import { cn } from '@/lib/utils';
+import { ExportResidenceCard, ImportResidenceButton } from './ResidenceTransferSection';
 import {
   INCIDENT_CATEGORY_LABELS,
   INCIDENT_STATUS_LABELS,
@@ -294,6 +295,9 @@ export function AdminResidences() {
           {creating ? 'Création…' : 'Créer la résidence'}
         </button>
       </form>
+
+      {/* Restauration : créer une résidence depuis un fichier chiffré */}
+      <ImportResidenceButton onImported={() => void load()} />
     </section>
   );
 }
@@ -580,6 +584,11 @@ function ResidenceDetail({
         ) : (
           <InvitationsList invitations={invitations} />
         )}
+      </div>
+
+      {/* Sauvegarde / export chiffré de CETTE résidence */}
+      <div className="mt-6">
+        <ExportResidenceCard residenceId={residence.id} />
       </div>
     </section>
   );

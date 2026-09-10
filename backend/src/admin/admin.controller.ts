@@ -13,9 +13,14 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -24,6 +29,7 @@ import { InvitationsService } from '../invitations/invitations.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateIncidentStatusDto } from '../incidents/dto/update-incident-status.dto';
 import { EmailService } from '../email/email.service';
+import { ResidenceTransferService } from './residence-transfer.service';
 import { UpdateEmailSettingsDto } from './dto/update-email-settings.dto';
 import { UpdateSyndicSettingsDto } from './dto/update-syndic-settings.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
@@ -40,6 +46,7 @@ export class AdminController {
     private readonly incidentsService: IncidentsService,
     private readonly invitationsService: InvitationsService,
     private readonly emailService: EmailService,
+    private readonly residenceTransfer: ResidenceTransferService,
   ) {}
 
   // ─── Utilisateurs ────────────────────────────────────────────
@@ -609,5 +616,74 @@ export class AdminController {
       );
     }
     await this.prisma.residence.delete({ where: { id } });
+  }
+
+  // ─── Transfert de résidence (export / import chiffré, SUPERADMIN) ───
+
+  /**
+   * Export chiffré d'UNE résidence : habitants, annonces, signalements et
+   * photos, commentaires, conversations, invitations.
+   * POST (et non GET) pour que la phrase de passe ne se retrouve jamais dans
+   * les journaux d'accès du reverse-proxy.
+   */
+  @Post('residences/:id/export')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async exportResidence(
+    @CurrentUser() user: { role: string; email: string },
+    @Param('id') id: string,
+    @Body() dto: { passphrase?: string },
+    @Res() response: Response,
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    if (!dto?.passphrase) {
+      throw new BadRequestException("Une phrase de passe est requise pour chiffrer l'export.");
+    }
+    const { buffer, filename } = await this.residenceTransfer.exportResidence(
+      id,
+      dto.passphrase,
+      user.email,
+    );
+    response.setHeader('Content-Type', 'application/octet-stream');
+    response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    response.setHeader('Cache-Control', 'no-store');
+    response.send(buffer);
+  }
+
+  /**
+   * Import d'un fichier d'export : crée une NOUVELLE résidence avec tout son
+   * contenu (aucune donnée existante n'est écrasée).
+   */
+  @Post('residences/import')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 300 * 1024 * 1024 } }))
+  async importResidence(
+    @CurrentUser() user: { role: string },
+    @UploadedFile() file: { buffer: Buffer } | undefined,
+    @Body()
+    body: {
+      passphrase?: string;
+      residenceName?: string;
+      residenceCode?: string;
+      emailConflict?: string;
+    },
+  ) {
+    if (user.role !== 'SUPERADMIN') {
+      throw new ForbiddenException('Réservé au superadmin');
+    }
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Fichier de sauvegarde manquant.');
+    }
+    if (!body?.passphrase) {
+      throw new BadRequestException('Phrase de passe requise.');
+    }
+    return this.residenceTransfer.importResidence(file.buffer, {
+      passphrase: body.passphrase,
+      residenceName: body.residenceName?.trim() || undefined,
+      residenceCode: body.residenceCode?.trim() || undefined,
+      emailConflict: body.emailConflict === 'skip' ? 'skip' : 'rename',
+    });
   }
 }
