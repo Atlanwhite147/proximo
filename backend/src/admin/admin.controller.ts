@@ -49,6 +49,22 @@ export class AdminController {
     private readonly residenceTransfer: ResidenceTransferService,
   ) {}
 
+  // ─── Portée résidence ────────────────────────────────────────
+
+  /**
+   * Résidence que cet administrateur a le droit de gérer, ou `null` pour un
+   * SUPERADMIN (toutes les résidences). Un admin local sans résidence
+   * rattachée ne peut rien modifier : on refuse explicitement plutôt que de
+   * le laisser agir à l'aveugle.
+   */
+  private residenceScope(user: { role: string; residenceId?: string | null }): string | null {
+    if (user.role === 'SUPERADMIN') return null;
+    if (!user.residenceId) {
+      throw new ForbiddenException('Aucune résidence rattachée à ce compte');
+    }
+    return user.residenceId;
+  }
+
   // ─── Utilisateurs ────────────────────────────────────────────
 
   @Get('users')
@@ -99,11 +115,17 @@ export class AdminController {
   async updateUser(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserAdminDto,
-    @CurrentUser() admin: { id: string; role: string },
+    @CurrentUser() admin: { id: string; role: string; residenceId?: string | null },
   ) {
     const target = await this.prisma.user.findUnique({ where: { id } });
     if (!target) {
       throw new BadRequestException('Utilisateur introuvable');
+    }
+
+    // Un admin local ne gère que les membres de SA résidence.
+    const scope = this.residenceScope(admin);
+    if (scope && target.residenceId !== scope) {
+      throw new ForbiddenException('Ce membre appartient à une autre résidence');
     }
 
     // Garde-fous : un admin ne peut ni se suspendre ni se déclasser lui-même.
@@ -131,13 +153,20 @@ export class AdminController {
 
   @Delete('users/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteUser(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() admin: { id: string }) {
+  async deleteUser(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() admin: { id: string; role: string; residenceId?: string | null },
+  ) {
     if (id === admin.id) {
       throw new ForbiddenException('Impossible de supprimer votre propre compte');
     }
     const target = await this.prisma.user.findUnique({ where: { id } });
     if (!target) {
       throw new BadRequestException('Utilisateur introuvable');
+    }
+    const scope = this.residenceScope(admin);
+    if (scope && target.residenceId !== scope) {
+      throw new ForbiddenException('Ce membre appartient à une autre résidence');
     }
     await this.prisma.user.delete({ where: { id } });
   }
@@ -161,9 +190,40 @@ export class AdminController {
   async updateIncident(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateIncidentStatusDto,
+    @CurrentUser() user: { role: string; residenceId?: string | null },
   ) {
+    await this.assertSameResidence('incident', id, user);
     const incident = await this.incidentsService.updateStatus(id, dto.status);
     return { incident };
+  }
+
+  /**
+   * Vérifie que la ressource visée appartient à la résidence de l'admin
+   * (sans effet pour un SUPERADMIN). Un admin local ne peut donc pas
+   * modifier ni supprimer le contenu d'une autre résidence.
+   */
+  private async assertSameResidence(
+    model: 'incident' | 'listing' | 'invitation',
+    id: string,
+    user: { role: string; residenceId?: string | null },
+  ): Promise<void> {
+    const scope = this.residenceScope(user);
+    if (!scope) return;
+    const row =
+      model === 'incident'
+        ? await this.prisma.incident.findUnique({ where: { id }, select: { residenceId: true } })
+        : model === 'listing'
+          ? await this.prisma.listing.findUnique({ where: { id }, select: { residenceId: true } })
+          : await this.prisma.invitation.findUnique({
+              where: { id },
+              select: { residenceId: true },
+            });
+    if (!row) {
+      throw new BadRequestException('Élément introuvable');
+    }
+    if (row.residenceId !== scope) {
+      throw new ForbiddenException('Cet élément appartient à une autre résidence');
+    }
   }
 
   // ─── Annonces (modération) ─────────────────────────────────
@@ -192,11 +252,15 @@ export class AdminController {
 
   @Delete('listings/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteListing(@Param('id', ParseUUIDPipe) id: string) {
+  async deleteListing(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { role: string; residenceId?: string | null },
+  ) {
     const listing = await this.prisma.listing.findUnique({ where: { id } });
     if (!listing) {
       throw new BadRequestException('Annonce introuvable');
     }
+    await this.assertSameResidence('listing', id, user);
     await this.prisma.listing.delete({ where: { id } });
   }
 
@@ -427,7 +491,11 @@ export class AdminController {
 
   @Delete('incidents/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteIncident(@Param('id', ParseUUIDPipe) id: string) {
+  async deleteIncident(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { role: string; residenceId?: string | null },
+  ) {
+    await this.assertSameResidence('incident', id, user);
     await this.incidentsService.adminRemove(id);
   }
 
@@ -447,7 +515,11 @@ export class AdminController {
   /** Supprime une invitation (lien + QR invalidés). */
   @Delete('invitations/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteInvitation(@Param('id', ParseUUIDPipe) id: string) {
+  async deleteInvitation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { role: string; residenceId?: string | null },
+  ) {
+    await this.assertSameResidence('invitation', id, user);
     await this.invitationsService.remove(id);
   }
 
