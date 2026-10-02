@@ -219,7 +219,7 @@ export default function HomePage() {
                 },
                 {
                   q: 'Proximo remplace-t-il le groupe WhatsApp de l’immeuble ?',
-                  a: 'Proximo organise ce que WhatsApp ne fait pas : des annonces structurées (prêt, don, service), des fils de discussion par sujet et des signalements suivis — sans mélanger vie privée et vie d’immeuble.',
+                  a: 'Proximo organise ce que WhatsApp ne fait pas : des annonces structurées (prêt, don, service), des fils de discussion par sujet et des signalements suivis, sans mélanger vie privée et vie d’immeuble.',
                 },
               ].map((item) => (
                 <div key={item.q} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5">

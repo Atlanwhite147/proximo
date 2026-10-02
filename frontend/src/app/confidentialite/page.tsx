@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Politique de confidentialité — Proximo',
+  title: 'Politique de confidentialité · Proximo',
   description: 'Politique de confidentialité du service Proximo (RGPD).',
 };
 

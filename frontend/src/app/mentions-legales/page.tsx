@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Mentions légales — Proximo',
+  title: 'Mentions légales · Proximo',
   description: 'Mentions légales du service Proximo (éditeur, hébergement, propriété intellectuelle).',
 };
 
@@ -33,7 +33,7 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="font-semibold text-slate-900">Directeur de la publication</h2>
           <p className="mt-2">
-            Alban Ciclet —{' '}
+            Alban Ciclet ·{' '}
             <a href="mailto:proximo@147.ovh" className="text-brand-600 hover:underline">
               proximo@147.ovh
             </a>

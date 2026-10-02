@@ -959,7 +959,7 @@ export default function AdminPage() {
                   maxLength={120}
                   value={invNeighborhood}
                   onChange={(event) => setInvNeighborhood(event.target.value)}
-                  placeholder="Ex. Famille Martin — Bât. B"
+                  placeholder="Ex. Famille Martin (Bât. B)"
                   className="input-field h-11 "
                 />
                 <p className="mt-1 text-xs text-slate-400">

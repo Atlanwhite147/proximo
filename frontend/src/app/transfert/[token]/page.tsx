@@ -143,7 +143,7 @@ function TransfertView({ token }: { token: string }) {
             <SectionLabel color="blue">Export de résidence</SectionLabel>
             <h1 className="mt-2 font-display text-xl">{info.residenceName}</h1>
             <p className="mt-2 text-sm text-slate-600">
-              Votre export chiffré est prêt : {formatSize(info.sizeBytes)} — habitants, annonces,
+              Votre export chiffré est prêt : {formatSize(info.sizeBytes)}, avec les habitants, annonces,
               signalements et photos, commentaires, conversations, invitations.
             </p>
             <p className="mt-2 text-sm text-amber-700">
