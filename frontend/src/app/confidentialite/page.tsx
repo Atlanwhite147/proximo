@@ -105,8 +105,30 @@ export default function ConfidentialitePage() {
         <section>
           <h2 className="font-semibold text-slate-900">8. Cookies</h2>
           <p className="mt-2">
-            Proximo n’utilise aucun cookie publicitaire ni de suivi. Seuls des cookies
-            techniques de session (authentification) sont déposés.
+            Proximo n’utilise aucun cookie publicitaire, aucun cookie de mesure
+            d’audience et aucun traceur tiers (réseaux sociaux, régies, outils
+            d’analyse). Seuls deux cookies techniques sont déposés, et uniquement
+            si vous vous connectez :
+          </p>
+          <ul className="mt-2 list-disc pl-5">
+            <li>
+              <strong>access_token</strong> : maintient votre session ouverte
+              pendant votre navigation (15 minutes, renouvelé automatiquement tant
+              que vous utilisez le service).
+            </li>
+            <li>
+              <strong>refresh_token</strong> : vous évite de ressaisir votre mot de
+              passe à chaque visite (30 jours, ou jusqu’à votre déconnexion).
+            </li>
+          </ul>
+          <p className="mt-2">
+            Ces deux cookies sont strictement nécessaires au fonctionnement du
+            service : sans eux, aucune connexion n’est possible. À ce titre, la
+            réglementation (article 82 de la loi Informatique et Libertés) les
+            dispense de consentement préalable, et c’est pourquoi aucun bandeau de
+            cookies ne s’affiche sur Proximo. Vous pouvez les effacer à tout moment
+            en vous déconnectant ou depuis les réglages de votre navigateur, ce qui
+            met fin à votre session.
           </p>
         </section>
       </div>
