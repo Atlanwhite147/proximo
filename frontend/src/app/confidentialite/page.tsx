@@ -71,7 +71,7 @@ export default function ConfidentialitePage() {
         <section>
           <h2 className="font-semibold text-slate-900">5. Sous-traitants</h2>
           <p className="mt-2">
-            Les données sont hébergées en Europe par Oracle Cloud Infrastructure.
+            Les données sont hébergées en France par OVHcloud (OVH SAS, Roubaix).
             Les emails transactionnels sont envoyés via Brevo (données limitées à
             l’adresse email). Le trafic transite par Cloudflare. Aucun de ces
             prestataires n’utilise vos données à ses propres fins.

@@ -43,11 +43,12 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="font-semibold text-slate-900">Hébergement</h2>
           <p className="mt-2">
-            Le service est hébergé par <strong>Oracle Cloud Infrastructure</strong> (Oracle
-            Corporation), datacenter situé à Paris (Île-de-France), en France
-            (Union européenne), et distribué via <strong>Cloudflare, Inc.</strong>{' '}
-            (réseau de diffusion et de protection), dont le siège est aux
-            États-Unis. Les données sont traitées dans l&apos;Union européenne.
+            Le service est hébergé par <strong>OVHcloud</strong> (OVH SAS, 2 rue
+            Kellermann, 59100 Roubaix, France), dans un centre de données situé à
+            Gravelines (Hauts-de-France), en France. Il est distribué via{' '}
+            <strong>Cloudflare, Inc.</strong> (réseau de diffusion et de
+            protection), dont le siège est aux États-Unis. Les données sont
+            hébergées et traitées en France (Union européenne).
           </p>
         </section>
 

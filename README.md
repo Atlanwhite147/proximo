@@ -167,7 +167,14 @@ docker compose up -d --build
 
 Ouvrez **http://localhost:8080** → redirection automatique vers `/install`.
 
-## ☁️ Déploiement sur Oracle Cloud Always Free (gratuit)
+## ☁️ Hébergement
+
+L'instance publique de Proximo (`proximo.147.ovh`) est hébergée en France chez
+**OVHcloud** (OVH SAS, centre de données de Gravelines), derrière Cloudflare.
+N'importe quel VPS avec Docker convient pour héberger votre propre résidence :
+voir le `docker-compose.yml` et le `.env.example` de ce dépôt.
+
+### Option gratuite : Oracle Cloud Always Free
 
 Le script [`scripts/deploy-oracle.sh`](scripts/deploy-oracle.sh) déploie Proximo
 sur une VM **Oracle Cloud Always Free** (2 VM 1 OCPU/1 Go RAM gratuites pour

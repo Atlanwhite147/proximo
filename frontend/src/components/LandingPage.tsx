@@ -53,7 +53,7 @@ const FEATURES = [
   {
     icon: '🌿',
     title: 'Sobre et fiable',
-    text: 'Hébergé en Europe, mises à jour automatiques, support par email sous 24 h.',
+    text: 'Hébergé en France, mises à jour automatiques, support par email sous 24 h.',
   },
 ];
 
@@ -72,7 +72,7 @@ const FAQ = [
   },
   {
     q: 'Quelles sont les données des habitants ?',
-    a: 'Adresse exacte, email et téléphone ne sont jamais affichés aux autres habitants. Les données restent en Europe et ne sont jamais revendues.',
+    a: 'Adresse exacte, email et téléphone ne sont jamais affichés aux autres habitants. Les données restent en France et ne sont jamais revendues.',
   },
 ];
 
