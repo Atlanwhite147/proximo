@@ -12,9 +12,9 @@ import type { Announcement } from '@/lib/types';
  * Section « Messages prioritaires » du tableau de bord.
  *
  * Canal officiel de la résidence : tout le monde voit et commente, seuls les
- * administrateurs (syndic, agence, bureau) publient. Le tableau de bord n'en
- * montre qu'un aperçu — la lecture complète et les commentaires vivent sur
- * /messages-syndic.
+ * administrateurs de la résidence publient. Le tableau de bord n'en montre
+ * qu'un aperçu — la lecture complète et les commentaires vivent sur
+ * /annonces-officielles.
  */
 export function AnnouncementsHighlight() {
   const { user } = useAuth();
@@ -74,14 +74,14 @@ export function AnnouncementsHighlight() {
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="font-mono text-[11px] font-medium uppercase tracking-badge text-slate-400">
-            ● Messages du syndic
+            ● Informations
           </p>
-          <h2 className="mt-0.5 text-lg font-bold text-slate-900">Messages prioritaires</h2>
+          <h2 className="mt-0.5 text-lg font-bold text-slate-900">Annonces officielles</h2>
         </div>
         <div className="flex items-center gap-3">
           {announcements.length > 0 && (
             <Link
-              href="/messages-syndic"
+              href="/annonces-officielles"
               className="text-sm font-semibold text-brand-600 hover:underline"
             >
               Tout voir et commenter →
@@ -146,18 +146,18 @@ export function AnnouncementsHighlight() {
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center">
           <Megaphone className="mx-auto h-6 w-6 text-slate-300" aria-hidden />
           <p className="mt-2 text-sm font-medium text-slate-600">
-            Aucun message du syndic pour le moment
+            Aucune annonce pour le moment
           </p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
-            Cet espace est réservé aux annonces officielles (travaux, coupures, réunions).
-            Vous serez prévenu ici.
+            Cet espace est réservé aux informations officielles de la résidence
+            (travaux, coupures, réunions). Vous serez prévenu ici.
           </p>
         </div>
       ) : (
         <ul className="ds-card divide-y divide-slate-100">
           {announcements.map((announcement) => (
             <li key={announcement.id} className="px-4 py-3">
-              <Link href="/messages-syndic" className="block">
+              <Link href="/annonces-officielles" className="block">
                 <div className="flex flex-wrap items-center gap-2">
                   <Megaphone className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
                   <span className="font-semibold text-slate-800">{announcement.title}</span>
