@@ -62,7 +62,7 @@ export function AnnouncementsHighlight() {
               href="/annonces-officielles"
               className="text-sm font-semibold text-brand-600 hover:underline"
             >
-              Tout voir et commenter →
+              Voir plus →
             </Link>
           )}
           {isAdmin && (
