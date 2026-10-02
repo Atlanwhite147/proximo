@@ -72,7 +72,7 @@ export default function VoisinsPage() {
               Les habitants de {user?.residenceName ?? 'la résidence'}
             </h1>
             <p className="text-sm text-slate-500">
-              {neighbors.length} habitant{neighbors.length > 1 ? 's' : ''} — écrivez-leur
+              {neighbors.length} habitant{neighbors.length > 1 ? 's' : ''} : écrivez-leur
               directement ou répondez à leurs annonces.
             </p>
           </div>

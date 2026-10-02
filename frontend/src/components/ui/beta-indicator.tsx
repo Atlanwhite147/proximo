@@ -30,7 +30,7 @@ export function BetaIndicator({ className }: { className?: string }) {
 
   return (
     <span
-      title="Instance bêta de test — les données peuvent être réinitialisées"
+      title="Instance bêta de test : les données peuvent être réinitialisées"
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-badge text-amber-600',
         className,

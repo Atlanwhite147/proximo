@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Conditions Générales d’Utilisation — Proximo',
+  title: 'Conditions Générales d’Utilisation · Proximo',
   description:
     'Conditions générales d’utilisation du service Proximo : comptes, règles d’usage, responsabilités, suspension et droit applicable.',
 };
@@ -18,7 +18,7 @@ export default function CguPage() {
         Conditions Générales d&apos;Utilisation
       </h1>
       <p className="mt-2 text-sm text-slate-500">
-        Dernière mise à jour : septembre 2026 — Service Proximo
+        Dernière mise à jour : septembre 2026 · Service Proximo
       </p>
 
       <div className="mt-6 space-y-6 text-sm leading-relaxed text-slate-700">

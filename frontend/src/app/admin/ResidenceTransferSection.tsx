@@ -91,7 +91,7 @@ export function ExportResidenceCard({ residenceId }: { residenceId: string }) {
       <h3 className="mt-1 font-display text-lg">Exporter cette résidence</h3>
       <p className="mt-1 text-sm text-slate-500">
         Un seul fichier chiffré : habitants, annonces, signalements et photos,
-        commentaires, conversations, invitations — restaurable sur ce serveur ou sur une
+        commentaires, conversations, invitations. Restaurable sur ce serveur ou sur une
         autre instance.
       </p>
       <p className="mt-1 text-sm text-slate-500">
