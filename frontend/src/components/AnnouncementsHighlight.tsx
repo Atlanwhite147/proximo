@@ -2,29 +2,27 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Megaphone, MessageCircle, Plus, Send } from 'lucide-react';
+import { Megaphone, MessageCircle, Pencil, Plus } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
-import { formatRelativeDate } from '@/lib/format';
+import { AnnouncementFormModal } from '@/components/AnnouncementFormModal';
+import { formatRelativeDate, isAnnouncementEdited } from '@/lib/format';
 import type { Announcement } from '@/lib/types';
 
 /**
- * Section « Messages prioritaires » du tableau de bord.
+ * Section « Annonces officielles » du tableau de bord.
  *
- * Canal officiel de la résidence : tout le monde voit et commente, seuls les
- * administrateurs de la résidence publient. Le tableau de bord n'en montre
- * qu'un aperçu — la lecture complète et les commentaires vivent sur
- * /annonces-officielles.
+ * Tout le monde voit et commente, seuls les administrateurs de la résidence
+ * publient. Le tableau de bord n'en montre qu'un aperçu : la lecture complète
+ * et les commentaires vivent sur /annonces-officielles. La saisie se fait dans
+ * une fenêtre dédiée (AnnouncementFormModal), jamais dans la liste.
  */
 export function AnnouncementsHighlight() {
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Announcement | null>(null);
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
 
@@ -43,28 +41,8 @@ export function AnnouncementsHighlight() {
     void load();
   }, [load]);
 
-  const publish = async () => {
-    if (!title.trim() || !body.trim()) {
-      setError('Titre et message sont requis.');
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await api('/announcements', {
-        method: 'POST',
-        body: JSON.stringify({ title: title.trim(), body: body.trim() }),
-      });
-      setTitle('');
-      setBody('');
-      setOpen(false);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Publication impossible');
-    } finally {
-      setBusy(false);
-    }
-  };
+  const canEdit = (announcement: Announcement) =>
+    isAdmin || announcement.author?.id === user?.id;
 
   if (loading) return null;
   if (announcements.length === 0 && !isAdmin) return null;
@@ -90,7 +68,10 @@ export function AnnouncementsHighlight() {
           {isAdmin && (
             <button
               type="button"
-              onClick={() => setOpen((value) => !value)}
+              onClick={() => {
+                setEditing(null);
+                setModalOpen(true);
+              }}
               className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
               <Plus className="h-4 w-4" aria-hidden />
@@ -99,48 +80,6 @@ export function AnnouncementsHighlight() {
           )}
         </div>
       </div>
-
-      {open && isAdmin && (
-        <div className="ds-card mb-3 space-y-3 p-4">
-          <input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Objet (ex. Coupure d'eau mardi matin)"
-            maxLength={120}
-            className="input-field"
-          />
-          <textarea
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            placeholder="Votre annonce aux habitants…"
-            rows={4}
-            maxLength={4000}
-            className="input-field"
-          />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => void publish()}
-              disabled={busy}
-              className="btn-primary-sm h-11 shrink-0 px-5 disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" aria-hidden />
-              {busy ? 'Publication…' : 'Publier l&apos;annonce'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setError(null);
-              }}
-              className="h-11 shrink-0 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
 
       {announcements.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center">
@@ -156,20 +95,20 @@ export function AnnouncementsHighlight() {
       ) : (
         <ul className="ds-card divide-y divide-slate-100">
           {announcements.map((announcement) => (
-            <li key={announcement.id} className="px-4 py-3">
-              <Link href="/annonces-officielles" className="block">
+            <li key={announcement.id} className="flex items-start gap-2 px-4 py-3">
+              <Link href="/annonces-officielles" className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Megaphone className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
                   <span className="font-semibold text-slate-800">{announcement.title}</span>
-                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700">
-                    Officiel
-                  </span>
                 </div>
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">{announcement.body}</p>
                 <p className="mt-1.5 flex flex-wrap items-center gap-x-3 text-xs text-slate-400">
-                  {/* Le nom du publieur n'est JAMAIS affiche sur ce canal (choix produit) :
-                      l'API renvoie toujours author, il sert aux droits, pas a l'affichage. */}
+                  {/* Le nom du publieur n'est jamais affiché sur ce canal (choix produit) :
+                      l'API renvoie toujours author, il sert aux droits, pas à l'affichage. */}
                   <span>{formatRelativeDate(announcement.createdAt)}</span>
+                  {isAnnouncementEdited(announcement.createdAt, announcement.updatedAt) && (
+                    <span>modifiée</span>
+                  )}
                   <span className="inline-flex items-center gap-1">
                     <MessageCircle className="h-3.5 w-3.5" aria-hidden />
                     {announcement._count?.comments ?? 0} commentaire
@@ -177,9 +116,31 @@ export function AnnouncementsHighlight() {
                   </span>
                 </p>
               </Link>
+              {canEdit(announcement) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(announcement);
+                    setModalOpen(true);
+                  }}
+                  title="Modifier l'annonce"
+                  aria-label="Modifier l'annonce"
+                  className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                </button>
+              )}
             </li>
           ))}
         </ul>
+      )}
+
+      {modalOpen && (
+        <AnnouncementFormModal
+          announcement={editing}
+          onClose={() => setModalOpen(false)}
+          onSaved={load}
+        />
       )}
     </section>
   );

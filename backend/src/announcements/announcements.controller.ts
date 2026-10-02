@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { StatusGuard } from '../common/guards/status.guard';
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto, CreateAnnouncementCommentDto } from './dto/create-announcement.dto';
+import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 
 type RequestUser = { id: string; role: string; residenceId?: string | null };
 
@@ -39,6 +41,17 @@ export class AnnouncementsController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async create(@CurrentUser() user: RequestUser, @Body() dto: CreateAnnouncementDto) {
     return this.announcementsService.create(user, dto);
+  }
+
+  /** Modification a posteriori (auteur ou administrateur). */
+  @Patch(':id')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  async update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateAnnouncementDto,
+  ) {
+    return this.announcementsService.update(id, user, dto);
   }
 
   @Delete(':id')

@@ -1,21 +1,23 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Megaphone, MessageCircle, Plus, Send, Trash2 } from 'lucide-react';
+import { Megaphone, MessageCircle, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { RequireAccount } from '@/components/RequireAccount';
+import { AnnouncementFormModal } from '@/components/AnnouncementFormModal';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Spinner } from '@/components/Feedback';
-import { formatRelativeDate } from '@/lib/format';
+import { formatRelativeDate, isAnnouncementEdited } from '@/lib/format';
 import type { Announcement, AnnouncementComment } from '@/lib/types';
 
 /**
  * Annonces officielles de la résidence.
  *
- * Lecture et commentaires ouverts à TOUS les habitants ; la publication est
- * réservée aux rôles ADMIN / SUPERADMIN (contrôlé côté serveur, l'interface
- * ne fait que masquer le formulaire).
+ * Lecture et commentaires ouverts à TOUS les habitants ; la publication et la
+ * modification sont réservées aux rôles ADMIN / SUPERADMIN ou à l'auteur de
+ * l'annonce (contrôlé côté serveur, l'interface ne fait que masquer les
+ * boutons). Le nom du publieur n'est jamais affiché sur ce canal.
  */
 function AnnoncesOfficiellesView() {
   const { user } = useAuth();
@@ -28,10 +30,9 @@ function AnnoncesOfficiellesView() {
   const [sending, setSending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [publishing, setPublishing] = useState(false);
+  // Fenêtre de rédaction : `null` = création, une annonce = modification.
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Announcement | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -61,29 +62,6 @@ function AnnoncesOfficiellesView() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const publish = async () => {
-    if (!title.trim() || !body.trim()) {
-      setError('Titre et message sont requis.');
-      return;
-    }
-    setPublishing(true);
-    setError(null);
-    try {
-      await api('/announcements', {
-        method: 'POST',
-        body: JSON.stringify({ title: title.trim(), body: body.trim() }),
-      });
-      setTitle('');
-      setBody('');
-      setFormOpen(false);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Publication impossible');
-    } finally {
-      setPublishing(false);
-    }
-  };
 
   const comment = async (announcementId: string) => {
     const content = (drafts[announcementId] ?? '').trim();
@@ -116,7 +94,10 @@ function AnnoncesOfficiellesView() {
     }
   };
 
-  if (loading) return <Spinner label="Chargement des messages…" />;
+  const canEdit = (announcement: Announcement) =>
+    isAdmin || announcement.author?.id === user?.id;
+
+  if (loading) return <Spinner label="Chargement des annonces…" />;
 
   return (
     <section className="mx-auto max-w-3xl">
@@ -132,8 +113,11 @@ function AnnoncesOfficiellesView() {
         {isAdmin && (
           <button
             type="button"
-            onClick={() => setFormOpen((value) => !value)}
-            className="btn-primary inline-flex items-center gap-2"
+            onClick={() => {
+              setEditing(null);
+              setModalOpen(true);
+            }}
+            className="btn-primary-sm h-11 shrink-0 px-4"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Publier une annonce
@@ -142,44 +126,6 @@ function AnnoncesOfficiellesView() {
       </div>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-
-      {formOpen && isAdmin && (
-        <div className="ds-card mt-4 space-y-3 p-4">
-          <input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Objet (ex. Réunion des habitants le 12 octobre)"
-            maxLength={120}
-            className="input-field"
-          />
-          <textarea
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            placeholder="Votre annonce aux habitants…"
-            rows={5}
-            maxLength={4000}
-            className="input-field"
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => void publish()}
-              disabled={publishing}
-              className="btn-primary inline-flex items-center gap-2 disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" aria-hidden />
-              {publishing ? 'Publication…' : 'Publier'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormOpen(false)}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
 
       {announcements.length === 0 ? (
         <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
@@ -204,27 +150,42 @@ function AnnoncesOfficiellesView() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Megaphone className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
                       <h2 className="text-base font-bold text-slate-900">{announcement.title}</h2>
-                      <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700">
-                        {announcement.author.role === 'SUPERADMIN'
-                          ? 'Plateforme'
-                          : 'Officiel'}
-                      </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-400">
                       {/* Publication anonyme sur ce canal : pas de nom du publieur. */}
                       {formatRelativeDate(announcement.createdAt)}
+                      {isAnnouncementEdited(announcement.createdAt, announcement.updatedAt) && (
+                        <span className="ml-2 italic">modifiée</span>
+                      )}
                     </p>
                   </div>
-                  {(isAdmin || announcement.author.id === user?.id) && (
-                    <button
-                      type="button"
-                      onClick={() => void remove(announcement.id)}
-                      title="Supprimer ce message"
-                      className="shrink-0 rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  )}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {canEdit(announcement) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditing(announcement);
+                          setModalOpen(true);
+                        }}
+                        title="Modifier l'annonce"
+                        aria-label="Modifier l'annonce"
+                        className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                      >
+                        <Pencil className="h-4 w-4" aria-hidden />
+                      </button>
+                    )}
+                    {canEdit(announcement) && (
+                      <button
+                        type="button"
+                        onClick={() => void remove(announcement.id)}
+                        title="Supprimer cette annonce"
+                        aria-label="Supprimer cette annonce"
+                        className="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
@@ -269,7 +230,7 @@ function AnnoncesOfficiellesView() {
                       type="button"
                       onClick={() => void comment(announcement.id)}
                       disabled={sending === announcement.id || !(drafts[announcement.id] ?? '').trim()}
-                      className="btn-primary-sm h-12 shrink-0 px-4 disabled:opacity-50"
+                      className="btn-primary-sm h-12 shrink-0 px-4"
                     >
                       <Send className="h-4 w-4" aria-hidden />
                       <span className="hidden sm:inline">Envoyer</span>
@@ -280,6 +241,14 @@ function AnnoncesOfficiellesView() {
             );
           })}
         </ul>
+      )}
+
+      {modalOpen && (
+        <AnnouncementFormModal
+          announcement={editing}
+          onClose={() => setModalOpen(false)}
+          onSaved={load}
+        />
       )}
     </section>
   );

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAnnouncementDto, CreateAnnouncementCommentDto } from './dto/create-announcement.dto';
+import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 
 /** Auteur d'un message tel qu'exposé aux habitants. */
 const AUTHOR_SELECT = {
@@ -110,6 +111,45 @@ export class AnnouncementsService {
       throw new ForbiddenException('Vous ne pouvez pas supprimer ce message');
     }
     await this.prisma.announcement.delete({ where: { id } });
+  }
+
+  /**
+   * Modification a posteriori : auteur du message ou administrateur.
+   * `updatedAt` (@updatedAt Prisma) est mis à jour automatiquement, ce qui
+   * permet d'afficher une mention « modifiée » sans colonne supplémentaire.
+   */
+  async update(id: string, user: User, dto: UpdateAnnouncementDto) {
+    const announcement = await this.ownedOrFail(id, user.residenceId);
+    const isAuthor = announcement.authorId === user.id;
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPERADMIN';
+    if (!isAuthor && !isAdmin) {
+      throw new ForbiddenException('Vous ne pouvez pas modifier ce message');
+    }
+
+    const title = dto.title?.trim();
+    const body = dto.body?.trim();
+    if (title === undefined && body === undefined) {
+      throw new BadRequestException('Aucune modification transmise');
+    }
+    if (title !== undefined && !title) {
+      throw new BadRequestException('Le titre ne peut pas être vide');
+    }
+    if (body !== undefined && !body) {
+      throw new BadRequestException('Le message ne peut pas être vide');
+    }
+
+    const updated = await this.prisma.announcement.update({
+      where: { id },
+      data: {
+        ...(title !== undefined ? { title } : {}),
+        ...(body !== undefined ? { body } : {}),
+      },
+      include: {
+        author: { select: AUTHOR_SELECT },
+        _count: { select: { comments: true } },
+      },
+    });
+    return { announcement: updated };
   }
 
   /** Commentaires d'un message prioritaire (chronologique). */

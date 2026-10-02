@@ -248,6 +248,8 @@ export interface Announcement {
   title: string;
   body: string;
   createdAt: string;
+  /** Renseigné par Prisma ; sert à signaler une annonce modifiée. */
+  updatedAt?: string;
   author: { id: string; firstName: string; lastName: string; role: string };
   _count?: { comments: number };
 }
