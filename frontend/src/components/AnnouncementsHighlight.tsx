@@ -112,7 +112,7 @@ export function AnnouncementsHighlight() {
           <textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            placeholder="Votre message aux habitants…"
+            placeholder="Votre annonce aux habitants…"
             rows={4}
             maxLength={4000}
             className="input-field"
@@ -123,10 +123,10 @@ export function AnnouncementsHighlight() {
               type="button"
               onClick={() => void publish()}
               disabled={busy}
-              className="btn-primary inline-flex items-center gap-2 disabled:opacity-50"
+              className="btn-primary-sm h-11 shrink-0 px-5 disabled:opacity-50"
             >
               <Send className="h-4 w-4" aria-hidden />
-              {busy ? 'Publication…' : 'Publier le message'}
+              {busy ? 'Publication…' : 'Publier l&apos;annonce'}
             </button>
             <button
               type="button"
@@ -134,7 +134,7 @@ export function AnnouncementsHighlight() {
                 setOpen(false);
                 setError(null);
               }}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+              className="h-11 shrink-0 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700"
             >
               Annuler
             </button>

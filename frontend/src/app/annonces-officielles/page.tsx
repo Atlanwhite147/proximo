@@ -122,7 +122,7 @@ function AnnoncesOfficiellesView() {
     <section className="mx-auto max-w-3xl">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <SectionLabel color="blue">Canal officiel</SectionLabel>
+          <SectionLabel color="blue">Informations</SectionLabel>
           <h1 className="mt-1 font-display text-xl">Annonces officielles</h1>
           <p className="mt-1 text-sm text-slate-500">
             Les informations importantes de votre résidence : travaux, coupures,
@@ -263,13 +263,13 @@ function AnnoncesOfficiellesView() {
                       }}
                       placeholder="Écrire un commentaire…"
                       maxLength={1000}
-                      className="input-field flex-1"
+                      className="input-field min-w-0 flex-1"
                     />
                     <button
                       type="button"
                       onClick={() => void comment(announcement.id)}
                       disabled={sending === announcement.id || !(drafts[announcement.id] ?? '').trim()}
-                      className="btn-primary inline-flex items-center gap-1.5 disabled:opacity-50"
+                      className="btn-primary-sm h-12 shrink-0 px-4 disabled:opacity-50"
                     >
                       <Send className="h-4 w-4" aria-hidden />
                       <span className="hidden sm:inline">Envoyer</span>
