@@ -33,10 +33,11 @@ model Residence {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users       User[]
-  listings    Listing[]
-  incidents   Incident[]
-  invitations Invitation[]
+  users         User[]
+  listings      Listing[]
+  incidents     Incident[]
+  invitations   Invitation[]
+  announcements Announcement[]
 }
 
 // ─── Export de résidence (fichier chiffré envoyé par email) ───
@@ -91,6 +92,7 @@ model User {
   incidents     Incident[]
   invitations   Invitation[]
   comments      Comment[]
+  announcements Announcement[]
 
   @@index([residenceId])
 }
@@ -325,18 +327,40 @@ model Provision {
 // les habitants de la résidence. Polymorphe : un seul des deux champs
 // (listingId / incidentId) est renseigné.
 model Comment {
-  id          String    @id @default(uuid())
-  content     String
-  listingId   String?
-  listing     Listing?  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  incidentId  String?
-  incident    Incident? @relation(fields: [incidentId], references: [id], onDelete: Cascade)
-  authorId    String
-  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String        @id @default(uuid())
+  content        String
+  listingId      String?
+  listing        Listing?      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  incidentId     String?
+  incident       Incident?     @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  announcementId String?
+  announcement   Announcement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([listingId, createdAt])
   @@index([incidentId, createdAt])
+  @@index([announcementId, createdAt])
+  @@index([authorId])
+}
+
+// ─── Message prioritaire (réservé aux admins / syndic) ────────
+// Visible et commentable par tous les habitants de la résidence, mais seul un
+// ADMIN (ou SUPERADMIN) peut en publier : c'est le canal « officiel ».
+model Announcement {
+  id          String     @id @default(uuid())
+  title       String
+  body        String
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  residenceId String?
+  residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([residenceId, createdAt])
   @@index([authorId])
 }

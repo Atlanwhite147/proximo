@@ -241,3 +241,29 @@ export const USER_STATUS_LABELS: Record<UserStatus, string> = {
   ACTIVE: '✅ Actif',
   SUSPENDED: '🚫 Suspendu',
 };
+
+/** Message prioritaire : publié par un administrateur de la résidence. */
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: string;
+  author: { id: string; firstName: string; lastName: string; role: string };
+  _count?: { comments: number };
+}
+
+/** Commentaire d'un message prioritaire (ouvert à tous les habitants). */
+export interface AnnouncementComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    showDetails?: boolean;
+    building?: string | null;
+    floor?: string | null;
+  };
+}

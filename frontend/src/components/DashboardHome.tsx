@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { Spinner } from '@/components/Feedback';
 import { ListingCard } from '@/components/ListingCard';
+import { AnnouncementsHighlight } from '@/components/AnnouncementsHighlight';
 import { CATEGORY_LABELS, INCIDENT_CATEGORY_LABELS } from '@/lib/types';
 import { formatRelativeDate } from '@/lib/format';
 import { incidentCategoryVisual } from '@/lib/category';
@@ -437,6 +438,9 @@ export function DashboardHome() {
           </Link>
         </div>
       </section>
+
+      {/* ─── Messages prioritaires (canal officiel du syndic) ── */}
+      <AnnouncementsHighlight />
 
       {/* ─── Inviter un voisin (moteur de croissance, mis en avant) ── */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-[#4D7CFF] p-5 text-white shadow-lg sm:p-6">

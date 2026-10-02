@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AdminModule } from './admin/admin.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommerceModule } from './commerce/commerce.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module';
     CommerceModule,
     CommentsModule,
     AdminModule,
+    AnnouncementsModule,
     SetupModule,
   ],
   providers: [
