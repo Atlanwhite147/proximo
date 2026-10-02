@@ -20,18 +20,18 @@ datasource db {
 // Chaque résidence a son code d'accès (prérequis inscription),
 // son agence/syndic (email destinataire des signalements) et son nom.
 model Residence {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  code        String?  @unique // requis pour créer un compte (vide = inscription libre)
-  agencyName  String?
-  syndicEmail String? // email de l'agence / du syndic (alertes signalements)
+  id                        String   @id @default(uuid())
+  name                      String   @unique
+  code                      String?  @unique // requis pour créer un compte (vide = inscription libre)
+  agencyName                String?
+  syndicEmail               String? // email de l'agence / du syndic (alertes signalements)
   // Notifications par email (gérées par l'admin de la résidence) :
   // signalement → email à l'agence ; signalement / annonce → email aux habitants
-  notifyAgencyOnIncident    Boolean @default(true)
-  notifyResidentsOnIncident Boolean @default(true)
-  notifyResidentsOnListing  Boolean @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  notifyAgencyOnIncident    Boolean  @default(true)
+  notifyResidentsOnIncident Boolean  @default(true)
+  notifyResidentsOnListing  Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   users         User[]
   listings      Listing[]
@@ -83,38 +83,38 @@ model User {
   residenceId String?
   residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: SetNull)
 
-  listings      Listing[]
-  conversationsA Conversation[] @relation("convA")
-  conversationsB Conversation[] @relation("convB")
-  sentMessages  Message[]      @relation("msgSender")
-  refreshTokens RefreshToken[]
+  listings            Listing[]
+  conversationsA      Conversation[]       @relation("convA")
+  conversationsB      Conversation[]       @relation("convB")
+  sentMessages        Message[]            @relation("msgSender")
+  refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
-  incidents     Incident[]
-  invitations   Invitation[]
-  comments      Comment[]
-  announcements Announcement[]
+  incidents           Incident[]
+  invitations         Invitation[]
+  comments            Comment[]
+  announcements       Announcement[]
 
   @@index([residenceId])
 }
 
 // ─── Annonce d'entraide ───────────────────────────────────────
 model Listing {
-  id          String   @id @default(uuid())
-  title       String
-  description String
-  category    String // TOOL | SERVICE | DONATION | OTHER
-  status      String  @default("OPEN") // OPEN | RESERVED | CLOSED
-  lat         Float // coordonnées approximatives — JAMAIS exposées par l'API
-  lng         Float
-  address     String // adresse saisie — masquée dans les réponses API
+  id           String     @id @default(uuid())
+  title        String
+  description  String
+  category     String // TOOL | SERVICE | DONATION | OTHER
+  status       String     @default("OPEN") // OPEN | RESERVED | CLOSED
+  lat          Float // coordonnées approximatives — JAMAIS exposées par l'API
+  lng          Float
+  address      String // adresse saisie — masquée dans les réponses API
   neighborhood String // quartier/ville affiché (ex. "Lyon 7e")
-  ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  comments    Comment[]
-  residenceId String?
-  residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  ownerId      String
+  owner        User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  comments     Comment[]
+  residenceId  String?
+  residence    Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([ownerId])
   @@index([category, status])
@@ -178,19 +178,19 @@ model Message {
 
 // ─── Signalement d'incident (syndic) ──────────────────────────
 model Incident {
-  id          String   @id @default(uuid())
+  id          String               @id @default(uuid())
   title       String
   category    String // WATER_LEAK | ELEVATOR | DAMAGE | OTHER
   description String
-  status      String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  status      String               @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   attachments IncidentAttachment[]
   comments    Comment[]
   residenceId String?
-  residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  residence   Residence?           @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -211,6 +211,22 @@ model IncidentAttachment {
   @@index([incidentId])
 }
 
+// ─── Pièces jointes des annonces officielles ──────────────────
+// Le fichier vit sur le disque (volume Docker /data/uploads) ; la base ne
+// conserve que les métadonnées, comme pour les signalements.
+model AnnouncementAttachment {
+  id             String       @id @default(uuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  filename       String
+  mimeType       String
+  size           Int
+  path           String // nom unique sur disque (jamais le nom d'origine)
+  createdAt      DateTime     @default(now())
+
+  @@index([announcementId])
+}
+
 // ─── Réglages syndic / agence (singleton id=1) ────────────────
 model SyndicSettings {
   id            Int      @id @default(1) // singleton
@@ -227,19 +243,19 @@ model SyndicSettings {
 // Les notifications par email aux habitants / à l'agence sont, elles,
 // configurables PAR RÉSIDENCE (colonnes notify* de Residence).
 model EmailSettings {
-  id            Int      @id @default(1) // singleton
-  mode          String   @default("brevo")
-  fromName      String   @default("Proximo")
-  fromEmail     String   @default("no-reply@proximo.local")
+  id          Int      @id @default(1) // singleton
+  mode        String   @default("brevo")
+  fromName    String   @default("Proximo")
+  fromEmail   String   @default("no-reply@proximo.local")
   // Brevo
-  brevoApiKey   String?
+  brevoApiKey String?
   // SMTP générique
-  smtpHost      String?
-  smtpPort      Int?     @default(587)
-  smtpSecure    Boolean  @default(false)
-  smtpUser      String?
-  smtpPass      String?
-  updatedAt     DateTime @updatedAt
+  smtpHost    String?
+  smtpPort    Int?     @default(587)
+  smtpSecure  Boolean  @default(false)
+  smtpUser    String?
+  smtpPass    String?
+  updatedAt   DateTime @updatedAt
 }
 
 // ─── File d'attente d'emails (quota Brevo dépassé) ───────────
@@ -248,32 +264,32 @@ model EmailSettings {
 // prochaine réinitialisation du compteur. `attachments` : JSON
 // [{ "filename": ..., "path": ... }] — chemins relatifs au volume uploads.
 model EmailOutbox {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   to          String
   subject     String
-  html        String   @db.Text
-  attachments String?  @db.Text
-  attempts    Int      @default(0)
+  html        String    @db.Text
+  attachments String?   @db.Text
+  attempts    Int       @default(0)
   lastError   String?
   sentAt      DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([sentAt, createdAt])
 }
 
 // ─── Invitation (QR code / lien à usage unique) ───────────────
 model Invitation {
-  id           String    @id @default(uuid())
-  token        String    @unique
+  id           String     @id @default(uuid())
+  token        String     @unique
   neighborhood String // quartier / résidence ciblé par l'invitation
   createdById  String
-  createdBy    User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy    User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
   residenceId  String?
   residence    Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   expiresAt    DateTime
   usedAt       DateTime?
-  multiUse     Boolean   @default(false) // affiche QR : usage illimité jusqu'à expiration
-  createdAt    DateTime  @default(now())
+  multiUse     Boolean    @default(false) // affiche QR : usage illimité jusqu'à expiration
+  createdAt    DateTime   @default(now())
 
   @@index([createdById])
   @@index([residenceId])
@@ -285,7 +301,7 @@ model Invitation {
 // `requesterRole` : HABITANT | CONSEIL_SYNDICAL | SYNDIC | GESTIONNAIRE
 // `status` : NEW | PENDING_PAYMENT | PAID | CONTACTED | WON | LOST
 model Lead {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   name            String
   email           String
   residenceName   String
@@ -293,10 +309,10 @@ model Lead {
   unitCount       String
   requesterRole   String
   message         String?
-  stripeSessionId String?   @unique
-  status          String    @default("NEW")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  stripeSessionId String?  @unique
+  status          String   @default("NEW")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   provision Provision?
 
@@ -308,16 +324,16 @@ model Lead {
 // `status` : PENDING | PROVISIONING | ACTIVE | FAILED
 // `slug` : sous-domaine de l'instance (ex. <slug>.147.ovh)
 model Provision {
-  id        String   @id @default(uuid())
-  leadId    String   @unique
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  slug      String   @unique
-  status    String   @default("PENDING")
-  domain    String?
+  id         String   @id @default(uuid())
+  leadId     String   @unique
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  slug       String   @unique
+  status     String   @default("PENDING")
+  domain     String?
   adminEmail String
-  error     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  error      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([status])
 }
@@ -350,16 +366,17 @@ model Comment {
 // Visible et commentable par tous les habitants de la résidence, mais seul un
 // ADMIN (ou SUPERADMIN) peut en publier : c'est le canal « officiel ».
 model Announcement {
-  id          String     @id @default(uuid())
+  id          String                   @id @default(uuid())
   title       String
   body        String
   authorId    String
-  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author      User                     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   residenceId String?
-  residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  residence   Residence?               @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   comments    Comment[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  attachments AnnouncementAttachment[]
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
 
   @@index([residenceId, createdAt])
   @@index([authorId])

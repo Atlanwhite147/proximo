@@ -243,14 +243,23 @@ export const USER_STATUS_LABELS: Record<UserStatus, string> = {
 };
 
 /** Message prioritaire : publié par un administrateur de la résidence. */
+/** Pièce jointe d'une annonce officielle (image ou PDF, servie par l'API). */
+export interface AnnouncementAttachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+}
+
 export interface Announcement {
   id: string;
   title: string;
   body: string;
   createdAt: string;
-  /** Renseigné par Prisma ; sert à signaler une annonce modifiée. */
   updatedAt?: string;
   author: { id: string; firstName: string; lastName: string; role: string };
+  attachments?: AnnouncementAttachment[];
   _count?: { comments: number };
 }
 

@@ -49,3 +49,10 @@ export function formatLocation(
       : null;
   return details ? `${base} (${details})` : base;
 }
+
+/** Taille de fichier lisible (Ko / Mo), pour les pièces jointes. */
+export function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 Ko';
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo`;
+}

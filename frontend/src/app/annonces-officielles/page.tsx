@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { RequireAccount } from '@/components/RequireAccount';
 import { AnnouncementFormModal } from '@/components/AnnouncementFormModal';
+import { AnnouncementAttachments } from '@/components/AnnouncementAttachments';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Spinner } from '@/components/Feedback';
 import { formatRelativeDate } from '@/lib/format';
@@ -188,6 +189,11 @@ function AnnoncesOfficiellesView() {
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                   {announcement.body}
                 </p>
+
+                <AnnouncementAttachments
+                  announcementId={announcement.id}
+                  attachments={announcement.attachments}
+                />
 
                 <div className="mt-4 border-t border-slate-100 pt-3">
                   <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">

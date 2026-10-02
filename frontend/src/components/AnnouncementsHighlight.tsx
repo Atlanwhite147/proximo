@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Megaphone, MessageCircle, Pencil, Plus } from 'lucide-react';
+import { Megaphone, MessageCircle, Paperclip, Pencil, Plus } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { AnnouncementFormModal } from '@/components/AnnouncementFormModal';
@@ -111,6 +111,14 @@ export function AnnouncementsHighlight() {
                     {announcement._count?.comments ?? 0} commentaire
                     {(announcement._count?.comments ?? 0) > 1 ? 's' : ''}
                   </span>
+                  {(announcement.attachments?.length ?? 0) > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <Paperclip className="h-3.5 w-3.5" aria-hidden />
+                      {announcement.attachments?.length} pièce
+                      {(announcement.attachments?.length ?? 0) > 1 ? 's' : ''} jointe
+                      {(announcement.attachments?.length ?? 0) > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </p>
               </Link>
               {canEdit(announcement) && (
