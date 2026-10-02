@@ -211,7 +211,7 @@ function AnnoncesOfficiellesView() {
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-400">
-                      {announcement.author.firstName} {announcement.author.lastName} ·{' '}
+                      {/* Publication anonyme sur ce canal : pas de nom du publieur. */}
                       {formatRelativeDate(announcement.createdAt)}
                     </p>
                   </div>

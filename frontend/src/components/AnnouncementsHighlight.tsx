@@ -167,9 +167,8 @@ export function AnnouncementsHighlight() {
                 </div>
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">{announcement.body}</p>
                 <p className="mt-1.5 flex flex-wrap items-center gap-x-3 text-xs text-slate-400">
-                  <span>
-                    {announcement.author.firstName} {announcement.author.lastName}
-                  </span>
+                  {/* Le nom du publieur n'est JAMAIS affiche sur ce canal (choix produit) :
+                      l'API renvoie toujours author, il sert aux droits, pas a l'affichage. */}
                   <span>{formatRelativeDate(announcement.createdAt)}</span>
                   <span className="inline-flex items-center gap-1">
                     <MessageCircle className="h-3.5 w-3.5" aria-hidden />
