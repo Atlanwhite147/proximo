@@ -6,7 +6,7 @@ import { Megaphone, MessageCircle, Pencil, Plus } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { AnnouncementFormModal } from '@/components/AnnouncementFormModal';
-import { formatRelativeDate, isAnnouncementEdited } from '@/lib/format';
+import { formatRelativeDate } from '@/lib/format';
 import type { Announcement } from '@/lib/types';
 
 /**
@@ -106,9 +106,6 @@ export function AnnouncementsHighlight() {
                   {/* Le nom du publieur n'est jamais affiché sur ce canal (choix produit) :
                       l'API renvoie toujours author, il sert aux droits, pas à l'affichage. */}
                   <span>{formatRelativeDate(announcement.createdAt)}</span>
-                  {isAnnouncementEdited(announcement.createdAt, announcement.updatedAt) && (
-                    <span>modifiée</span>
-                  )}
                   <span className="inline-flex items-center gap-1">
                     <MessageCircle className="h-3.5 w-3.5" aria-hidden />
                     {announcement._count?.comments ?? 0} commentaire

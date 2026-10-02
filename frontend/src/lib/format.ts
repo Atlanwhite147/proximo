@@ -49,13 +49,3 @@ export function formatLocation(
       : null;
   return details ? `${base} (${details})` : base;
 }
-
-/**
- * Annonce officielle retouchée après publication.
- * Tolérance d'une minute : à la création, createdAt et updatedAt diffèrent de
- * quelques millisecondes et ne doivent pas déclencher la mention « modifiée ».
- */
-export function isAnnouncementEdited(createdAt: string, updatedAt?: string | null): boolean {
-  if (!updatedAt) return false;
-  return new Date(updatedAt).getTime() - new Date(createdAt).getTime() > 60_000;
-}

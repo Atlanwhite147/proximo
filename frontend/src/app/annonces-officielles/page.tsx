@@ -8,7 +8,7 @@ import { RequireAccount } from '@/components/RequireAccount';
 import { AnnouncementFormModal } from '@/components/AnnouncementFormModal';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Spinner } from '@/components/Feedback';
-import { formatRelativeDate, isAnnouncementEdited } from '@/lib/format';
+import { formatRelativeDate } from '@/lib/format';
 import type { Announcement, AnnouncementComment } from '@/lib/types';
 
 /**
@@ -154,9 +154,6 @@ function AnnoncesOfficiellesView() {
                     <p className="mt-1 text-xs text-slate-400">
                       {/* Publication anonyme sur ce canal : pas de nom du publieur. */}
                       {formatRelativeDate(announcement.createdAt)}
-                      {isAnnouncementEdited(announcement.createdAt, announcement.updatedAt) && (
-                        <span className="ml-2 italic">modifiée</span>
-                      )}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

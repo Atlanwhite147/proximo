@@ -80,7 +80,7 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
               </h2>
               <p className="text-xs text-slate-500">
                 {editing
-                  ? 'La mention « modifiée » sera ajoutée à côté de la date.'
+                  ? 'Les corrections sont visibles immédiatement par tous les habitants.'
                   : 'Visible par tous les habitants de la résidence.'}
               </p>
             </div>
