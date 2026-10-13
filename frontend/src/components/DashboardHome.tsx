@@ -282,15 +282,12 @@ export function DashboardHome() {
 
   const residenceName = user?.residenceName ?? 'votre résidence';
 
-  /** Démarre (ou retrouve) une conversation avec un voisin, puis l'ouvre. */
+  /** Ouvre (ou retrouve) la conversation avec un voisin, sans envoyer de message. */
   const contact = async (neighbor: Neighbor) => {
     try {
-      const data = await api<{ conversationId: string }>('/messages', {
+      const data = await api<{ conversationId: string }>('/messages/conversations', {
         method: 'POST',
-        body: JSON.stringify({
-          recipientId: neighbor.id,
-          content: `Bonjour ${neighbor.firstName}, je vous contacte depuis l'annuaire de la résidence.`,
-        }),
+        body: JSON.stringify({ recipientId: neighbor.id }),
       });
       router.push(`/messages/${data.conversationId}`);
     } catch {

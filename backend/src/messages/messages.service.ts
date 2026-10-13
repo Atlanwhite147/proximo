@@ -8,6 +8,7 @@ import { Conversation, Message } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { OpenConversationDto } from './dto/open-conversation.dto';
 
 /**
  * Messagerie simple entre voisins : conversations 1-1, pagination,
@@ -22,6 +23,21 @@ export class MessagesService {
     private readonly emailService: EmailService,
   ) {}
 
+  /**
+   * Ouvre (ou crée) la conversation avec un voisin, SANS envoyer de message :
+   * le bouton « Message » de l'annuaire ouvre le fil, l'utilisateur écrit
+   * ensuite son propre message. Une conversation encore vide n'apparaît pas
+   * dans la messagerie (cf. listConversations).
+   */
+  async openConversation(
+    senderId: string,
+    dto: OpenConversationDto,
+  ): Promise<{ conversationId: string }> {
+    await this.assertCanMessage(senderId, dto.recipientId);
+    const conversation = await this.ensureConversation(senderId, dto.recipientId);
+    return { conversationId: conversation.id };
+  }
+
   /** Envoie un message : crée la conversation si elle n'existe pas. */
   async send(
     senderId: string,
@@ -30,35 +46,11 @@ export class MessagesService {
     conversationId: string;
     message: Message;
   }> {
-    if (dto.recipientId === senderId) {
-      throw new BadRequestException('Vous ne pouvez pas vous écrire à vous-même');
-    }
+    await this.assertCanMessage(senderId, dto.recipientId);
 
     // Anti-spam : aucun lien externe dans les messages.
     if (/https?:\/\//i.test(dto.content)) {
       throw new BadRequestException('Les liens ne sont pas autorisés dans les messages');
-    }
-
-    const recipient = await this.prisma.user.findUnique({
-      where: { id: dto.recipientId },
-      select: { id: true, residenceId: true },
-    });
-    if (!recipient) {
-      throw new NotFoundException('Destinataire introuvable');
-    }
-
-    // Isolation multi-résidences : on n'écrit qu'aux habitants de SA résidence
-    // (le SUPERADMIN reste libre pour la gestion de la plateforme).
-    const sender = await this.prisma.user.findUnique({
-      where: { id: senderId },
-      select: { residenceId: true, role: true },
-    });
-    const sameResidence =
-      !!sender?.residenceId &&
-      !!recipient.residenceId &&
-      sender.residenceId === recipient.residenceId;
-    if (!sameResidence && sender?.role !== 'SUPERADMIN') {
-      throw new NotFoundException('Destinataire introuvable');
     }
 
     const conversation = await this.ensureConversation(senderId, dto.recipientId);
@@ -80,6 +72,38 @@ export class MessagesService {
     await this.notifyRecipient(senderId, dto.recipientId, message.content);
 
     return { conversationId: conversation.id, message };
+  }
+
+  /**
+   * Vérifie que l'expéditeur peut écrire au destinataire : pas soi-même,
+   * destinataire existant, même résidence (le SUPERADMIN reste libre).
+   */
+  private async assertCanMessage(senderId: string, recipientId: string): Promise<void> {
+    if (recipientId === senderId) {
+      throw new BadRequestException('Vous ne pouvez pas vous écrire à vous-même');
+    }
+
+    const recipient = await this.prisma.user.findUnique({
+      where: { id: recipientId },
+      select: { id: true, residenceId: true },
+    });
+    if (!recipient) {
+      throw new NotFoundException('Destinataire introuvable');
+    }
+
+    // Isolation multi-résidences : on n'écrit qu'aux habitants de SA résidence
+    // (le SUPERADMIN reste libre pour la gestion de la plateforme).
+    const sender = await this.prisma.user.findUnique({
+      where: { id: senderId },
+      select: { residenceId: true, role: true },
+    });
+    const sameResidence =
+      !!sender?.residenceId &&
+      !!recipient.residenceId &&
+      sender.residenceId === recipient.residenceId;
+    if (!sameResidence && sender?.role !== 'SUPERADMIN') {
+      throw new NotFoundException('Destinataire introuvable');
+    }
   }
 
   /** Envoie un email de notification au destinataire (réglage utilisateur). */
@@ -106,7 +130,13 @@ export class MessagesService {
   /** Liste les conversations de l'utilisateur (avec dernier message et non-lus). */
   async listConversations(userId: string) {
     const conversations = await this.prisma.conversation.findMany({
-      where: { OR: [{ userAId: userId }, { userBId: userId }] },
+      where: {
+        OR: [{ userAId: userId }, { userBId: userId }],
+        // Une conversation ouverte depuis l'annuaire mais encore vide (aucun
+        // message envoyé) reste invisible dans la messagerie, ni chez soi ni
+        // chez le voisin : elle se matérialise au premier message.
+        messages: { some: {} },
+      },
       orderBy: { updatedAt: 'desc' },
       include: {
         userA: { select: { id: true, firstName: true, neighborhood: true } },

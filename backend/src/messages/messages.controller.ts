@@ -15,6 +15,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { StatusGuard } from '../common/guards/status.guard';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { OpenConversationDto } from './dto/open-conversation.dto';
 import { MessagesService } from './messages.service';
 
 /**
@@ -30,6 +31,17 @@ export class MessagesController {
   @HttpCode(HttpStatus.CREATED)
   async send(@CurrentUser() user: { id: string }, @Body() dto: CreateMessageDto) {
     return this.messagesService.send(user.id, dto);
+  }
+
+  /**
+   * Ouvre (ou crée) la conversation avec un voisin SANS envoyer de message.
+   * Déclaré avant les routes à paramètre (`:id`) pour ne pas être intercepté.
+   */
+  @Post('conversations')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  async openConversation(@CurrentUser() user: { id: string }, @Body() dto: OpenConversationDto) {
+    return this.messagesService.openConversation(user.id, dto);
   }
 
   @Get()
