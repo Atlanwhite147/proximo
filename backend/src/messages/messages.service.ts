@@ -176,7 +176,21 @@ export class MessagesService {
       take: limit,
     });
 
-    return { conversationId: conversation.id, messages: messages.reverse() };
+    // L'interlocuteur est renvoyé avec le fil : la page de conversation n'a
+    // plus besoin de le retrouver dans la liste des conversations (une
+    // conversation encore vide n'y figure pas, cf. listConversations).
+    const otherUserId =
+      conversation.userAId === userId ? conversation.userBId : conversation.userAId;
+    const otherUser = await this.prisma.user.findUnique({
+      where: { id: otherUserId },
+      select: { id: true, firstName: true, neighborhood: true },
+    });
+
+    return {
+      conversationId: conversation.id,
+      messages: messages.reverse(),
+      otherUser,
+    };
   }
 
   /** Marque tous les messages reçus d'une conversation comme lus. */

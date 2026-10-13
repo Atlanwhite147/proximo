@@ -30,14 +30,15 @@ export default function ConversationPage() {
 
   const loadMessages = useCallback(async () => {
     try {
-      const data = await api<{ conversationId: string; messages: Message[] }>(
-        `/messages/${id}`,
-      );
+      const data = await api<{
+        conversationId: string;
+        messages: Message[];
+        otherUser: Conversation['otherUser'] | null;
+      }>(`/messages/${id}`);
       setMessages(data.messages);
-      // Marque comme lus (fait par l'API) — met à jour l'aperçu.
-      const conversations = await api<{ conversations: Conversation[] }>('/messages');
-      const conversation = conversations.conversations.find((c) => c.id === id);
-      if (conversation) setOtherUser(conversation.otherUser);
+      // L'interlocuteur vient directement du fil (l'API marque les messages
+      // reçus comme lus au passage).
+      if (data.otherUser) setOtherUser(data.otherUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversation inaccessible');
     } finally {
