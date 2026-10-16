@@ -105,6 +105,39 @@ export default function DiscoverPage() {
         </div>
       </section>
 
+      {/* ─── Vidéo de présentation ─────────────────────────── */}
+      <section>
+        <div className="text-center">
+          <SectionLabel color="blue">En vidéo</SectionLabel>
+          <h2 className="mt-2 font-display text-3xl font-normal text-slate-900">
+            Proximo en une minute
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
+            La visite complète, écran par écran : annonces entre voisins,
+            signalements suivis jusqu’à leur résolution, notifications par mail,
+            invitation des voisins par QR code. Sous-titrée, à regarder même sans
+            le son.
+          </p>
+        </div>
+        <div className="mt-8 overflow-hidden rounded-3xl border border-slate-200 bg-slate-900 shadow-lg">
+          <video
+            className="block h-auto w-full"
+            controls
+            preload="metadata"
+            playsInline
+            poster="/videos/proximo-presentation-poster.jpg"
+          >
+            <source src="/videos/proximo-presentation.mp4" type="video/mp4" />
+            Votre navigateur ne prend pas en charge la lecture vidéo. Vous pouvez
+            {' '}
+            <a href="/videos/proximo-presentation.mp4" className="underline">
+              télécharger la présentation
+            </a>
+            .
+          </video>
+        </div>
+      </section>
+
       {/* ─── Fonctionnalités ───────────────────────────────── */}
       <section>
         <div className="text-center">
