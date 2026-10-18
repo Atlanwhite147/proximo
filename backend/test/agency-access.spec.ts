@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { IncidentsService } from '../src/incidents/incidents.service';
+import { AnnouncementsService } from '../src/announcements/announcements.service';
 import { CommentsService } from '../src/comments/comments.service';
 import { AgenciesService } from '../src/agencies/agencies.service';
 
@@ -369,5 +370,75 @@ describe('Export CSV du dossier', () => {
     expect(prisma.incidentEvent.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ type: 'EXPORTED', actorType: 'AGENCE' }),
     });
+  });
+});
+
+describe('Annonce publiée par une agence', () => {
+  it('publie dans une résidence de son périmètre, lue en base et non depuis le jeton', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'ag1',
+          role: 'AGENCE',
+          status: 'ACTIVE',
+          agencyId: 'a1',
+        }),
+      },
+      agencyResidence: {
+        findMany: jest.fn().mockResolvedValue([{ residenceId: 'r1' }]),
+      },
+      residence: { findUnique: jest.fn().mockResolvedValue({ id: 'r1' }) },
+      announcement: {
+        create: jest.fn().mockResolvedValue({ id: 'an1' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'an1',
+          author: {
+            id: 'ag1',
+            firstName: 'Claire',
+            lastName: 'Roux',
+            role: 'AGENCE',
+            agency: { name: 'Agence Test' },
+          },
+        }),
+      },
+      announcementAttachment: { create: jest.fn() },
+    };
+    const service = new AnnouncementsService(prisma as never);
+    // Le jeton ne porte pas agencyId : le service doit le relire en base.
+    const user = { id: 'ag1', role: 'AGENCE', residenceId: null } as never;
+    const result = await service.create(
+      user,
+      { title: 'Travaux de test', body: 'Message de test', residenceId: 'r1' } as never,
+      [],
+    );
+    expect(prisma.announcement.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ residenceId: 'r1', authorId: 'ag1' }),
+    });
+    expect(result.announcement).toMatchObject({ id: 'an1' });
+  });
+
+  it('refuse une résidence hors de son périmètre', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'ag1',
+          role: 'AGENCE',
+          status: 'ACTIVE',
+          agencyId: 'a1',
+        }),
+      },
+      agencyResidence: { findMany: jest.fn().mockResolvedValue([{ residenceId: 'r1' }]) },
+      residence: { findUnique: jest.fn().mockResolvedValue({ id: 'r-neuf' }) },
+      announcement: { create: jest.fn() },
+    };
+    const service = new AnnouncementsService(prisma as never);
+    await expect(
+      service.create(
+        { id: 'ag1', role: 'AGENCE', residenceId: null } as never,
+        { title: 'Travaux', body: 'Message', residenceId: 'r-neuf' } as never,
+        [],
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.announcement.create).not.toHaveBeenCalled();
   });
 });

@@ -71,9 +71,15 @@ export class AnnouncementsService {
    * son agence, lues en base à chaque appel.
    */
   private async agencyScope(user: User): Promise<string[]> {
-    if (user.role !== 'AGENCE' || !user.agencyId) return [];
+    if (user.role !== 'AGENCE') return [];
+    // L'agence est RELUE en base : le jeton d'accès ne porte pas agencyId.
+    const account = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true, status: true, agencyId: true },
+    });
+    if (!account || account.role !== 'AGENCE' || !account.agencyId) return [];
     const links = await this.prisma.agencyResidence.findMany({
-      where: { agencyId: user.agencyId },
+      where: { agencyId: account.agencyId },
       select: { residenceId: true },
     });
     return links.map((link) => link.residenceId);
