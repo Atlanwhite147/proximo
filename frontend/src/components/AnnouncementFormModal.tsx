@@ -1,11 +1,19 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { FileText, Loader2, Megaphone, Paperclip, Send, Trash2, X } from 'lucide-react';
-import api from '@/lib/api';
-import { formatFileSize } from '@/lib/format';
-import type { Announcement, AnnouncementAttachment } from '@/lib/types';
-import { attachmentUrl } from '@/components/AnnouncementAttachments';
+import { useEffect, useRef, useState } from "react";
+import {
+  FileText,
+  Loader2,
+  Megaphone,
+  Paperclip,
+  Send,
+  Trash2,
+  X,
+} from "lucide-react";
+import api from "@/lib/api";
+import { formatFileSize } from "@/lib/format";
+import type { Announcement, AnnouncementAttachment } from "@/lib/types";
+import { attachmentUrl } from "@/components/AnnouncementAttachments";
 
 type Props = {
   /** Annonce à modifier ; `null`/absente = nouvelle annonce. */
@@ -13,9 +21,19 @@ type Props = {
   onClose: () => void;
   /** Recharge la liste après enregistrement. */
   onSaved: () => void | Promise<void>;
+  /**
+   * Résidences proposées à la publication. Fourni pour un compte agence, qui
+   * gère plusieurs résidences et doit désigner la destinataire.
+   */
+  residences?: Array<{ id: string; name: string }>;
 };
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mo par fichier
 
@@ -27,10 +45,15 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mo par fichier
  * fenêtre dédiée plutôt qu'un formulaire intercalé dans la liste. Fermeture par
  * Échap, par le bouton, ou par un clic sur le fond.
  */
-export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props) {
+export function AnnouncementFormModal({
+  announcement,
+  onClose,
+  onSaved,
+  residences,
+}: Props) {
   const editing = Boolean(announcement);
-  const [title, setTitle] = useState(announcement?.title ?? '');
-  const [body, setBody] = useState(announcement?.body ?? '');
+  const [title, setTitle] = useState(announcement?.title ?? "");
+  const [body, setBody] = useState(announcement?.body ?? "");
   const [files, setFiles] = useState<File[]>([]);
   const [existing, setExisting] = useState<AnnouncementAttachment[]>(
     announcement?.attachments ?? [],
@@ -38,14 +61,15 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [residenceId, setResidenceId] = useState(residences?.[0]?.id ?? "");
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   const totalFiles = existing.length + files.length;
@@ -66,26 +90,27 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
     }
     const room = Math.max(0, MAX_FILES - totalFiles);
     const kept = accepted.slice(0, room);
-    if (accepted.length > kept.length) refused.push(`maximum ${MAX_FILES} pièces jointes`);
+    if (accepted.length > kept.length)
+      refused.push(`maximum ${MAX_FILES} pièces jointes`);
     if (kept.length > 0) setFiles((prev) => [...prev, ...kept]);
-    setError(refused.length > 0 ? `Non ajouté : ${refused.join(', ')}` : null);
+    setError(refused.length > 0 ? `Non ajouté : ${refused.join(", ")}` : null);
   };
 
   /** Retire une pièce jointe déjà en ligne (immédiat, avec confirmation). */
   const removeExisting = async (attachmentId: string) => {
     if (!announcement) return;
-    if (!window.confirm('Retirer cette pièce jointe ?')) return;
+    if (!window.confirm("Retirer cette pièce jointe ?")) return;
     setRemovingId(attachmentId);
     setError(null);
     try {
       const result = await api<{ announcement: Announcement }>(
         `/announcements/${announcement.id}/attachments/${attachmentId}`,
-        { method: 'DELETE' },
+        { method: "DELETE" },
       );
       setExisting(result.announcement.attachments ?? []);
       await onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Retrait impossible');
+      setError(err instanceof Error ? err.message : "Retrait impossible");
     } finally {
       setRemovingId(null);
     }
@@ -93,7 +118,7 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
 
   const save = async () => {
     if (!title.trim() || !body.trim()) {
-      setError('Titre et message sont requis.');
+      setError("Titre et message sont requis.");
       return;
     }
     setBusy(true);
@@ -102,28 +127,37 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
       if (editing && announcement) {
         // Texte puis fichiers : deux appels, le texte reste modifiable seul.
         await api(`/announcements/${announcement.id}`, {
-          method: 'PATCH',
+          method: "PATCH",
           body: JSON.stringify({ title: title.trim(), body: body.trim() }),
         });
         if (files.length > 0) {
           const form = new FormData();
-          for (const file of files) form.append('files', file);
+          for (const file of files) form.append("files", file);
           await api(`/announcements/${announcement.id}/attachments`, {
-            method: 'POST',
+            method: "POST",
             body: form,
           });
         }
       } else {
+        if (residences && residences.length > 0 && !residenceId) {
+          setError("Choisissez la résidence destinataire de l’annonce.");
+          setBusy(false);
+          return;
+        }
         const form = new FormData();
-        form.append('title', title.trim());
-        form.append('body', body.trim());
-        for (const file of files) form.append('files', file);
-        await api('/announcements', { method: 'POST', body: form });
+        form.append("title", title.trim());
+        form.append("body", body.trim());
+        if (residences && residences.length > 0)
+          form.append("residenceId", residenceId);
+        for (const file of files) form.append("files", file);
+        await api("/announcements", { method: "POST", body: form });
       }
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Enregistrement impossible');
+      setError(
+        err instanceof Error ? err.message : "Enregistrement impossible",
+      );
     } finally {
       setBusy(false);
     }
@@ -134,7 +168,9 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
       className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 backdrop-blur-[2px] sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={editing ? "Modifier l'annonce" : 'Nouvelle annonce officielle'}
+      aria-label={
+        editing ? "Modifier l'annonce" : "Nouvelle annonce officielle"
+      }
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -147,12 +183,12 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
             </span>
             <div>
               <h2 className="font-display text-lg leading-tight text-slate-900">
-                {editing ? "Modifier l'annonce" : 'Nouvelle annonce'}
+                {editing ? "Modifier l'annonce" : "Nouvelle annonce"}
               </h2>
               <p className="text-xs text-slate-500">
                 {editing
-                  ? 'Les corrections sont visibles immédiatement par tous les habitants.'
-                  : 'Visible par tous les habitants de la résidence.'}
+                  ? "Les corrections sont visibles immédiatement par tous les habitants."
+                  : "Visible par tous les habitants de la résidence."}
               </p>
             </div>
           </div>
@@ -167,6 +203,28 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
         </div>
 
         <div className="mt-4 space-y-3">
+          {residences && residences.length > 0 && !editing && (
+            <div>
+              <label
+                htmlFor="announcement-residence"
+                className="mb-1 block text-xs font-semibold text-slate-600"
+              >
+                Résidence destinataire
+              </label>
+              <select
+                id="announcement-residence"
+                value={residenceId}
+                onChange={(event) => setResidenceId(event.target.value)}
+                className="input-field"
+              >
+                {residences.map((residence) => (
+                  <option key={residence.id} value={residence.id}>
+                    {residence.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label
               htmlFor="announcement-title"
@@ -231,7 +289,7 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
                 className="hidden"
                 onChange={(event) => {
                   addFiles(event.target.files);
-                  event.target.value = '';
+                  event.target.value = "";
                 }}
               />
             </div>
@@ -246,13 +304,23 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
                     key={file.id}
                     className="flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5"
                   >
-                    {file.mimeType === 'application/pdf' ? (
-                      <FileText className="h-4 w-4 shrink-0 text-red-500" aria-hidden />
+                    {file.mimeType === "application/pdf" ? (
+                      <FileText
+                        className="h-4 w-4 shrink-0 text-red-500"
+                        aria-hidden
+                      />
                     ) : (
-                      <Paperclip className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+                      <Paperclip
+                        className="h-4 w-4 shrink-0 text-slate-500"
+                        aria-hidden
+                      />
                     )}
                     <a
-                      href={announcement ? attachmentUrl(announcement.id, file.id) : '#'}
+                      href={
+                        announcement
+                          ? attachmentUrl(announcement.id, file.id)
+                          : "#"
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700 hover:underline"
@@ -270,7 +338,10 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
                       className="shrink-0 rounded-md p-1 text-red-600 transition hover:bg-red-50 disabled:opacity-40"
                     >
                       {removingId === file.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                        <Loader2
+                          className="h-3.5 w-3.5 animate-spin"
+                          aria-hidden
+                        />
                       ) : (
                         <Trash2 className="h-3.5 w-3.5" aria-hidden />
                       )}
@@ -287,10 +358,16 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
                     key={`${file.name}-${index}`}
                     className="flex items-center gap-2 rounded-lg bg-brand-50/60 px-2.5 py-1.5"
                   >
-                    {file.type === 'application/pdf' ? (
-                      <FileText className="h-4 w-4 shrink-0 text-red-500" aria-hidden />
+                    {file.type === "application/pdf" ? (
+                      <FileText
+                        className="h-4 w-4 shrink-0 text-red-500"
+                        aria-hidden
+                      />
                     ) : (
-                      <Paperclip className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+                      <Paperclip
+                        className="h-4 w-4 shrink-0 text-brand-600"
+                        aria-hidden
+                      />
                     )}
                     <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700">
                       {file.name}
@@ -300,7 +377,9 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
                     </span>
                     <button
                       type="button"
-                      onClick={() => setFiles((prev) => prev.filter((_, i) => i !== index))}
+                      onClick={() =>
+                        setFiles((prev) => prev.filter((_, i) => i !== index))
+                      }
                       aria-label={`Retirer ${file.name}`}
                       className="shrink-0 rounded-md p-1 text-slate-500 transition hover:bg-white"
                     >
@@ -333,7 +412,7 @@ export function AnnouncementFormModal({ announcement, onClose, onSaved }: Props)
               ) : (
                 <Send className="h-4 w-4" aria-hidden />
               )}
-              {busy ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Publier'}
+              {busy ? "Enregistrement…" : editing ? "Enregistrer" : "Publier"}
             </button>
           </div>
         </div>

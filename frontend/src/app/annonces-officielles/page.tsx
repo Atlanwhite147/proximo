@@ -31,6 +31,12 @@ import type { Announcement, AnnouncementComment } from "@/lib/types";
 function AnnoncesOfficiellesView() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+  /** Une agence gestionnaire publie dans une de ses résidences, avec badge. */
+  const isAgency = user?.role === "AGENCE";
+  const canPublish = isAdmin || isAgency;
+  const [agencyResidences, setAgencyResidences] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +77,14 @@ function AnnoncesOfficiellesView() {
       setLoading(false);
     }
   }, []);
+
+  // Périmètre d'une agence : ses résidences, pour choisir la destinataire.
+  useEffect(() => {
+    if (!isAgency) return;
+    api<{ residences: Array<{ id: string; name: string }> }>("/agency/me")
+      .then((data) => setAgencyResidences(data.residences))
+      .catch(() => setAgencyResidences([]));
+  }, [isAgency]);
 
   useEffect(() => {
     void load();
@@ -124,7 +138,7 @@ function AnnoncesOfficiellesView() {
             réunions, sécurité. Tout le monde peut lire et commenter.
           </p>
         </div>
-        {isAdmin && (
+        {canPublish && (
           <button
             type="button"
             onClick={() => {
@@ -148,7 +162,7 @@ function AnnoncesOfficiellesView() {
             Aucune annonce pour le moment
           </p>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
-            {isAdmin
+            {canPublish
               ? "Publiez une première annonce : elle apparaîtra sur le tableau de bord de tous les habitants, qui pourront la commenter."
               : "Cet espace accueillera les informations officielles de votre résidence."}
           </p>
@@ -291,6 +305,7 @@ function AnnoncesOfficiellesView() {
           announcement={editing}
           onClose={() => setModalOpen(false)}
           onSaved={load}
+          residences={isAgency ? agencyResidences : undefined}
         />
       )}
     </section>
