@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/components/AuthProvider';
-import { ErrorMessage, Spinner } from '@/components/Feedback';
-import api from '@/lib/api';
-import { formatRelativeDate } from '@/lib/format';
-import type { Comment } from '@/lib/types';
+import { useCallback, useEffect, useState } from "react";
+import { AuthorBadge } from "@/components/AuthorBadge";
+import { useAuth } from "@/components/AuthProvider";
+import { ErrorMessage, Spinner } from "@/components/Feedback";
+import api from "@/lib/api";
+import { formatRelativeDate } from "@/lib/format";
+import type { Comment } from "@/lib/types";
 
 /**
  * Fil de discussion public attaché à une annonce ou un signalement.
@@ -16,12 +17,12 @@ export function Comments({
   type,
   targetId,
 }: {
-  type: 'listing' | 'incident';
+  type: "listing" | "incident";
   targetId: string;
 }) {
   const { user, isAdmin } = useAuth();
   const [comments, setComments] = useState<Comment[] | null>(null);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
@@ -42,29 +43,33 @@ export function Comments({
     setSending(true);
     setError(null);
     try {
-      const data = await api<{ comment: Comment }>('/comments', {
-        method: 'POST',
+      const data = await api<{ comment: Comment }>("/comments", {
+        method: "POST",
         body: JSON.stringify({
-          ...(type === 'listing' ? { listingId: targetId } : { incidentId: targetId }),
+          ...(type === "listing"
+            ? { listingId: targetId }
+            : { incidentId: targetId }),
           content: content.trim(),
         }),
       });
       setComments((current) => [...(current ?? []), data.comment]);
-      setContent('');
+      setContent("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Publication impossible');
+      setError(err instanceof Error ? err.message : "Publication impossible");
     } finally {
       setSending(false);
     }
   };
 
   const remove = async (commentId: string) => {
-    if (!window.confirm('Supprimer ce commentaire ?')) return;
+    if (!window.confirm("Supprimer ce commentaire ?")) return;
     try {
-      await api(`/comments/${commentId}`, { method: 'DELETE' });
-      setComments((current) => (current ?? []).filter((c) => c.id !== commentId));
+      await api(`/comments/${commentId}`, { method: "DELETE" });
+      setComments((current) =>
+        (current ?? []).filter((c) => c.id !== commentId),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Suppression impossible');
+      setError(err instanceof Error ? err.message : "Suppression impossible");
     }
   };
 
@@ -86,6 +91,10 @@ export function Comments({
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-semibold text-slate-800">
                   {comment.author.firstName} {comment.author.lastName}
+                  <AuthorBadge
+                    role={comment.author.role}
+                    agencyName={comment.author.agency?.name}
+                  />
                   <span className="ml-2 text-xs font-normal text-slate-400">
                     {formatRelativeDate(comment.createdAt)}
                   </span>
@@ -101,7 +110,9 @@ export function Comments({
                   </button>
                 )}
               </div>
-              <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{comment.content}</p>
+              <p className="mt-1 whitespace-pre-line text-sm text-slate-700">
+                {comment.content}
+              </p>
             </li>
           ))}
           {comments.length === 0 && (
@@ -130,7 +141,7 @@ export function Comments({
               disabled={sending || !content.trim()}
               className="btn-primary-sm"
             >
-              {sending ? 'Envoi…' : 'Commenter'}
+              {sending ? "Envoi…" : "Commenter"}
             </button>
           </div>
         </form>

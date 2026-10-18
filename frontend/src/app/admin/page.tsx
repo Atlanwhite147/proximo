@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { ErrorMessage, Spinner } from "@/components/Feedback";
 import api, { ApiError } from "@/lib/api";
+import { AdminAgencies } from "./AdminAgencies";
 import { AdminResidences } from "./AdminResidences";
 import {
   INCIDENT_CATEGORY_LABELS,
@@ -22,7 +23,13 @@ import {
 } from "@/lib/types";
 
 type Tab =
-  "stats" | "users" | "listings" | "incidents" | "invitations" | "settings";
+  | "stats"
+  | "users"
+  | "listings"
+  | "incidents"
+  | "invitations"
+  | "settings"
+  | "agencies";
 
 /** Statistiques globales du back-office. */
 interface AdminStats {
@@ -525,6 +532,15 @@ export default function AdminPage() {
         >
           📲 Invitations
         </button>
+        {isSuperAdmin && (
+          <button
+            type="button"
+            className={tabClass("agencies")}
+            onClick={() => setTab("agencies")}
+          >
+            🏢 Agences
+          </button>
+        )}
         <button
           type="button"
           className={tabClass("settings")}
@@ -1086,6 +1102,13 @@ export default function AdminPage() {
               )}
             </ul>
           )}
+        </section>
+      )}
+
+      {/* ─── Agences (superadministrateur) ───────────────────── */}
+      {tab === "agencies" && isSuperAdmin && (
+        <section className="mt-6">
+          <AdminAgencies />
         </section>
       )}
 

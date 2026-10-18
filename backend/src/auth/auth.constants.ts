@@ -18,6 +18,8 @@ export const TWO_FACTOR_TOKEN_TTL = 300; // 5 minutes
 export const ROLE_USER = 'USER';
 export const ROLE_ADMIN = 'ADMIN';
 export const ROLE_SUPERADMIN = 'SUPERADMIN';
+/** Compte agence ou syndic gestionnaire : email et mot de passe, périmètre multi-résidences. */
+export const ROLE_AGENCE = 'AGENCE';
 export const STATUS_PENDING = 'PENDING';
 export const STATUS_ACTIVE = 'ACTIVE';
 export const STATUS_SUSPENDED = 'SUSPENDED';

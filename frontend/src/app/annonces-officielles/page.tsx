@@ -1,16 +1,24 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import { Megaphone, MessageCircle, Pencil, Plus, Send, Trash2 } from 'lucide-react';
-import api from '@/lib/api';
-import { useAuth } from '@/components/AuthProvider';
-import { RequireAccount } from '@/components/RequireAccount';
-import { AnnouncementFormModal } from '@/components/AnnouncementFormModal';
-import { AnnouncementAttachments } from '@/components/AnnouncementAttachments';
-import { SectionLabel } from '@/components/ui/section-label';
-import { Spinner } from '@/components/Feedback';
-import { formatRelativeDate } from '@/lib/format';
-import type { Announcement, AnnouncementComment } from '@/lib/types';
+import { useCallback, useEffect, useState } from "react";
+import {
+  Megaphone,
+  MessageCircle,
+  Pencil,
+  Plus,
+  Send,
+  Trash2,
+} from "lucide-react";
+import api from "@/lib/api";
+import { useAuth } from "@/components/AuthProvider";
+import { RequireAccount } from "@/components/RequireAccount";
+import { AnnouncementFormModal } from "@/components/AnnouncementFormModal";
+import { AnnouncementAttachments } from "@/components/AnnouncementAttachments";
+import { AuthorBadge } from "@/components/AuthorBadge";
+import { SectionLabel } from "@/components/ui/section-label";
+import { Spinner } from "@/components/Feedback";
+import { formatRelativeDate } from "@/lib/format";
+import type { Announcement, AnnouncementComment } from "@/lib/types";
 
 /**
  * Annonces officielles de la résidence.
@@ -22,11 +30,13 @@ import type { Announcement, AnnouncementComment } from '@/lib/types';
  */
 function AnnoncesOfficiellesView() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [comments, setComments] = useState<Record<string, AnnouncementComment[]>>({});
+  const [comments, setComments] = useState<
+    Record<string, AnnouncementComment[]>
+  >({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +47,9 @@ function AnnoncesOfficiellesView() {
 
   const load = useCallback(async () => {
     try {
-      const data = await api<{ announcements: Announcement[] }>('/announcements');
+      const data = await api<{ announcements: Announcement[] }>(
+        "/announcements",
+      );
       setAnnouncements(data.announcements);
       // Commentaires du ou des messages (dépliés d'office : c'est le cœur de la page).
       const entries = await Promise.all(
@@ -54,7 +66,7 @@ function AnnoncesOfficiellesView() {
       );
       setComments(Object.fromEntries(entries));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Chargement impossible');
+      setError(err instanceof Error ? err.message : "Chargement impossible");
     } finally {
       setLoading(false);
     }
@@ -65,33 +77,34 @@ function AnnoncesOfficiellesView() {
   }, [load]);
 
   const comment = async (announcementId: string) => {
-    const content = (drafts[announcementId] ?? '').trim();
+    const content = (drafts[announcementId] ?? "").trim();
     if (!content) return;
     setSending(announcementId);
     try {
       const result = await api<{ comment: AnnouncementComment }>(
         `/announcements/${announcementId}/comments`,
-        { method: 'POST', body: JSON.stringify({ content }) },
+        { method: "POST", body: JSON.stringify({ content }) },
       );
       setComments((prev) => ({
         ...prev,
         [announcementId]: [...(prev[announcementId] ?? []), result.comment],
       }));
-      setDrafts((prev) => ({ ...prev, [announcementId]: '' }));
+      setDrafts((prev) => ({ ...prev, [announcementId]: "" }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Commentaire impossible');
+      setError(err instanceof Error ? err.message : "Commentaire impossible");
     } finally {
       setSending(null);
     }
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm('Supprimer cette annonce et ses commentaires ?')) return;
+    if (!window.confirm("Supprimer cette annonce et ses commentaires ?"))
+      return;
     try {
-      await api(`/announcements/${id}`, { method: 'DELETE' });
+      await api(`/announcements/${id}`, { method: "DELETE" });
       setAnnouncements((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Suppression impossible');
+      setError(err instanceof Error ? err.message : "Suppression impossible");
     }
   };
 
@@ -136,8 +149,8 @@ function AnnoncesOfficiellesView() {
           </p>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
             {isAdmin
-              ? 'Publiez une première annonce : elle apparaîtra sur le tableau de bord de tous les habitants, qui pourront la commenter.'
-              : 'Cet espace accueillera les informations officielles de votre résidence.'}
+              ? "Publiez une première annonce : elle apparaîtra sur le tableau de bord de tous les habitants, qui pourront la commenter."
+              : "Cet espace accueillera les informations officielles de votre résidence."}
           </p>
         </div>
       ) : (
@@ -149,8 +162,19 @@ function AnnoncesOfficiellesView() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Megaphone className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
-                      <h2 className="text-base font-bold text-slate-900">{announcement.title}</h2>
+                      <Megaphone
+                        className="h-4 w-4 shrink-0 text-brand-600"
+                        aria-hidden
+                      />
+                      <h2 className="text-base font-bold text-slate-900">
+                        {announcement.title}
+                      </h2>
+                      {/* Le publieur n'est pas nommé sur ce canal : la pastille
+                          indique seulement qu'il s'agit de l'agence. */}
+                      <AuthorBadge
+                        role={announcement.author?.role}
+                        agencyName={announcement.author?.agency?.name}
+                      />
                     </div>
                     <p className="mt-1 text-xs text-slate-400">
                       {/* Publication anonyme sur ce canal : pas de nom du publieur. */}
@@ -198,19 +222,28 @@ function AnnoncesOfficiellesView() {
                 <div className="mt-4 border-t border-slate-100 pt-3">
                   <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
                     <MessageCircle className="h-3.5 w-3.5" aria-hidden />
-                    {list.length} commentaire{list.length > 1 ? 's' : ''}
+                    {list.length} commentaire{list.length > 1 ? "s" : ""}
                   </p>
 
                   {list.length > 0 && (
                     <ul className="mt-2 space-y-2">
                       {list.map((item) => (
-                        <li key={item.id} className="rounded-xl bg-slate-50 px-3 py-2">
+                        <li
+                          key={item.id}
+                          className="rounded-xl bg-slate-50 px-3 py-2"
+                        >
                           <p className="text-xs font-medium text-slate-500">
                             {item.author.firstName} {item.author.lastName}
-                            {' · '}
+                            <AuthorBadge
+                              role={item.author.role}
+                              agencyName={item.author.agency?.name}
+                            />
+                            {" · "}
                             {formatRelativeDate(item.createdAt)}
                           </p>
-                          <p className="mt-0.5 text-sm text-slate-700">{item.content}</p>
+                          <p className="mt-0.5 text-sm text-slate-700">
+                            {item.content}
+                          </p>
                         </li>
                       ))}
                     </ul>
@@ -218,12 +251,16 @@ function AnnoncesOfficiellesView() {
 
                   <div className="mt-3 flex gap-2">
                     <input
-                      value={drafts[announcement.id] ?? ''}
+                      value={drafts[announcement.id] ?? ""}
                       onChange={(event) =>
-                        setDrafts((prev) => ({ ...prev, [announcement.id]: event.target.value }))
+                        setDrafts((prev) => ({
+                          ...prev,
+                          [announcement.id]: event.target.value,
+                        }))
                       }
                       onKeyDown={(event) => {
-                        if (event.key === 'Enter') void comment(announcement.id);
+                        if (event.key === "Enter")
+                          void comment(announcement.id);
                       }}
                       placeholder="Écrire un commentaire…"
                       maxLength={1000}
@@ -232,7 +269,10 @@ function AnnoncesOfficiellesView() {
                     <button
                       type="button"
                       onClick={() => void comment(announcement.id)}
-                      disabled={sending === announcement.id || !(drafts[announcement.id] ?? '').trim()}
+                      disabled={
+                        sending === announcement.id ||
+                        !(drafts[announcement.id] ?? "").trim()
+                      }
                       className="btn-primary-sm h-12 shrink-0 px-4"
                     >
                       <Send className="h-4 w-4" aria-hidden />

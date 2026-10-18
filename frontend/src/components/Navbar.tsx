@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import {
+  Building2,
   Home,
   LogOut,
   MessageCircle,
@@ -12,12 +13,12 @@ import {
   Settings,
   User,
   type LucideIcon,
-} from 'lucide-react';
-import api from '@/lib/api';
-import type { Conversation } from '@/lib/types';
-import type { User as AppUser } from '@/lib/types';
-import { useAuth } from './AuthProvider';
-import { BetaIndicator } from './ui/beta-indicator';
+} from "lucide-react";
+import api from "@/lib/api";
+import type { Conversation } from "@/lib/types";
+import type { User as AppUser } from "@/lib/types";
+import { useAuth } from "./AuthProvider";
+import { BetaIndicator } from "./ui/beta-indicator";
 
 /**
  * Navigation « app de résidence » :
@@ -27,14 +28,14 @@ import { BetaIndicator } from './ui/beta-indicator';
  */
 
 const TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: '/', label: 'Accueil', icon: Home },
-  { href: '/annonces', label: 'Annonces', icon: Package },
-  { href: '/messages', label: 'Messages', icon: MessageCircle },
-  { href: '/profil', label: 'Profil', icon: User },
+  { href: "/", label: "Accueil", icon: Home },
+  { href: "/annonces", label: "Annonces", icon: Package },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/profil", label: "Profil", icon: User },
 ];
 
 /** Onglets du header desktop : Profil remplacé par le menu avatar. */
-const DESKTOP_TABS = TABS.filter((tab) => tab.href !== '/profil');
+const DESKTOP_TABS = TABS.filter((tab) => tab.href !== "/profil");
 
 function useUnreadCount(user: unknown, pathname: string): number {
   const [unread, setUnread] = useState(0);
@@ -44,10 +45,12 @@ function useUnreadCount(user: unknown, pathname: string): number {
       return;
     }
     let active = true;
-    api<{ conversations: Conversation[] }>('/messages')
+    api<{ conversations: Conversation[] }>("/messages")
       .then((data) => {
         if (active) {
-          setUnread(data.conversations.reduce((sum, c) => sum + c.unreadCount, 0));
+          setUnread(
+            data.conversations.reduce((sum, c) => sum + c.unreadCount, 0),
+          );
         }
       })
       .catch(() => {
@@ -64,10 +67,12 @@ function useUnreadCount(user: unknown, pathname: string): number {
 function UserMenu({
   user,
   isAdmin,
+  isAgency,
   onLogout,
 }: {
   user: AppUser;
   isAdmin: boolean;
+  isAgency: boolean;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -84,11 +89,11 @@ function UserMenu({
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const initial = (user.firstName ?? 'U').charAt(0).toUpperCase();
+  const initial = (user.firstName ?? "U").charAt(0).toUpperCase();
 
   return (
     <div ref={menuRef} className="relative">
@@ -121,6 +126,19 @@ function UserMenu({
             <User className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
             Mon profil
           </Link>
+          {isAgency && (
+            <Link
+              href="/agence"
+              role="menuitem"
+              className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <Building2
+                className="h-4 w-4 text-slate-400"
+                strokeWidth={1.75}
+              />
+              Espace agence
+            </Link>
+          )}
           {isAdmin && (
             <Link
               href="/admin"
@@ -147,26 +165,29 @@ function UserMenu({
 }
 
 export function Navbar() {
-  const { user, loading, logout, isAdmin } = useAuth();
+  const { user, loading, logout, isAdmin, isAgency } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const unread = useUnreadCount(user, pathname);
 
   const handleLogout = async () => {
     await logout();
-    router.push('/');
+    router.push("/");
     router.refresh();
   };
 
   const isTabActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <>
       {/* ─── Header (desktop + mobile) ─────────────────────── */}
       <header className="sticky top-0 z-20 border-b border-border bg-white/95 backdrop-blur">
         <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="flex items-center gap-2 text-lg font-bold text-foreground">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-lg font-bold text-foreground"
+          >
             <span
               aria-hidden
               className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gradient text-base text-white"
@@ -184,29 +205,36 @@ export function Navbar() {
 
           {/* Liens desktop */}
           <div className="hidden items-center gap-1 md:flex">
-            {DESKTOP_TABS.filter((tab) => tab.href !== '/messages' || user).map((tab) => (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isTabActive(tab.href)
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                {tab.label}
-                {tab.href === '/messages' && unread > 0 && (
-                  <span className="ml-1 rounded-full bg-brand-gradient px-2 py-0.5 text-xs font-semibold text-white">
-                    {unread}
-                  </span>
-                )}
-              </Link>
-            ))}
+            {DESKTOP_TABS.filter((tab) => tab.href !== "/messages" || user).map(
+              (tab) => (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isTabActive(tab.href)
+                      ? "bg-primary-50 text-primary-700"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  {tab.label}
+                  {tab.href === "/messages" && unread > 0 && (
+                    <span className="ml-1 rounded-full bg-brand-gradient px-2 py-0.5 text-xs font-semibold text-white">
+                      {unread}
+                    </span>
+                  )}
+                </Link>
+              ),
+            )}
           </div>
 
           <div className="flex items-center gap-2">
             {loading ? null : user ? (
-              <UserMenu isAdmin={isAdmin} onLogout={() => void handleLogout()} user={user} />
+              <UserMenu
+                isAdmin={isAdmin}
+                isAgency={isAgency}
+                onLogout={() => void handleLogout()}
+                user={user}
+              />
             ) : (
               <>
                 <Link
@@ -215,10 +243,7 @@ export function Navbar() {
                 >
                   Connexion
                 </Link>
-                <Link
-                  href="/inscription"
-                  className="btn-primary-sm px-3"
-                >
+                <Link href="/inscription" className="btn-primary-sm px-3">
                   Rejoindre
                 </Link>
               </>
@@ -233,16 +258,19 @@ export function Navbar() {
           {TABS.map((tab) => {
             // Non connecté : l'onglet Profil devient un accès Connexion
             // (sinon l'utilisateur atterrit sur /profil → redirigé).
-            const isProfile = tab.href === '/profil';
-            const effectiveHref = !user && isProfile ? '/connexion' : tab.href;
-            const effectiveLabel = !user && isProfile ? 'Connexion' : tab.label;
+            const isProfile = tab.href === "/profil";
+            const effectiveHref = !user && isProfile ? "/connexion" : tab.href;
+            const effectiveLabel = !user && isProfile ? "Connexion" : tab.label;
             const active = isTabActive(effectiveHref);
             const Icon = tab.icon;
             // Bouton « + » central : inséré entre Annonces et Messages.
-            if (tab.href === '/messages') {
-              const fab = user?.status === 'ACTIVE';
+            if (tab.href === "/messages") {
+              const fab = user?.status === "ACTIVE";
               return (
-                <div key="group-center" className="flex flex-1 items-stretch justify-around">
+                <div
+                  key="group-center"
+                  className="flex flex-1 items-stretch justify-around"
+                >
                   {fab && (
                     <Link
                       href="/annonces/nouvelle"
@@ -259,12 +287,12 @@ export function Navbar() {
                     key={tab.href}
                     href={effectiveHref}
                     className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
-                      active ? 'text-brand-700' : 'text-slate-400'
+                      active ? "text-brand-700" : "text-slate-400"
                     }`}
                   >
                     <Icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
                     {effectiveLabel}
-                    {tab.href === '/messages' && unread > 0 && (
+                    {tab.href === "/messages" && unread > 0 && (
                       <span className="absolute right-1/2 top-1 translate-x-3 rounded-full bg-brand-600 px-1.5 text-[10px] font-bold text-white">
                         {unread}
                       </span>
@@ -281,7 +309,7 @@ export function Navbar() {
                 key={tab.href}
                 href={effectiveHref}
                 className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
-                  active ? 'text-brand-700' : 'text-slate-400'
+                  active ? "text-brand-700" : "text-slate-400"
                 }`}
               >
                 <Icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
@@ -297,12 +325,12 @@ export function Navbar() {
             <Link
               href="/admin"
               className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
-                isTabActive('/admin') ? 'text-brand-700' : 'text-slate-400'
+                isTabActive("/admin") ? "text-brand-700" : "text-slate-400"
               }`}
             >
-                <Settings className="h-[22px] w-[22px]" strokeWidth={1.75} />
-                Admin
-              {isTabActive('/admin') && (
+              <Settings className="h-[22px] w-[22px]" strokeWidth={1.75} />
+              Admin
+              {isTabActive("/admin") && (
                 <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-brand-600" />
               )}
             </Link>

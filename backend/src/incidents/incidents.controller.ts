@@ -26,6 +26,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { StatusGuard } from '../common/guards/status.guard';
 import { CreateIncidentDto } from './dto/create-incident.dto';
+import { UpdateIncidentStatusDto } from './dto/update-incident-status.dto';
 import { IncidentsService, uploadsDir } from './incidents.service';
 
 /** Types MIME autorisés pour les pièces jointes (validés APRÈS multer). */
@@ -94,41 +95,113 @@ export class IncidentsController {
   }
 
   @Get()
-  async all(@CurrentUser() user: { residenceId?: string | null }) {
+  async all(@CurrentUser() user: { id: string; role: string; residenceId?: string | null }) {
     // Les habitants voient les signalements de LEUR résidence, SANS l'email
     // des auteurs (l'admin a son propre endpoint /admin/incidents).
-    const incidents = await this.incidentsService.listPublic(user.residenceId ?? null);
+    // La résidence est relue en base dans le service, jamais reprise du jeton.
+    const incidents = await this.incidentsService.listPublic({
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
     return { incidents };
   }
 
   @Patch(':id/resolve')
   @HttpCode(HttpStatus.OK)
-  async resolve(@Param('id', ParseUUIDPipe) id: string) {
-    const incident = await this.incidentsService.resolve(id);
+  async resolve(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+  ) {
+    const incident = await this.incidentsService.resolve(id, {
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
     return { incident };
   }
 
   /** Rouvre un signalement marqué « traité » par erreur (résidents ACTIVE). */
   @Patch(':id/reopen')
   @HttpCode(HttpStatus.OK)
-  async reopen(@Param('id', ParseUUIDPipe) id: string) {
-    const incident = await this.incidentsService.reopen(id);
+  async reopen(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+  ) {
+    const incident = await this.incidentsService.reopen(id, {
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
     return { incident };
   }
 
   /** Détail public d'un signalement (visible par tous les habitants ACTIVE). */
   @Get(':id/public')
-  async publicDetail(@Param('id', ParseUUIDPipe) id: string) {
-    const incident = await this.incidentsService.findPublic(id);
+  async publicDetail(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+  ) {
+    const incident = await this.incidentsService.findPublic(id, {
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
     return { incident };
+  }
+
+  /**
+   * Export CSV du dossier (métadonnées, historique, pièces jointes). Accessible
+   * à l'auteur, aux habitants de la résidence et à l'agence gestionnaire : le
+   * contrôle d'appartenance est appliqué dans le service.
+   */
+  /**
+   * Changement d'état par un acteur légitime (agence gestionnaire, habitant de
+   * la résidence, administrateur). Le contrôle d'appartenance est fait dans le
+   * service, et le changement est attribué dans l'historique du dossier.
+   */
+  @Patch(':id/status')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  async changeStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateIncidentStatusDto,
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+  ) {
+    const incident = await this.incidentsService.updateStatus(
+      id,
+      dto.status,
+      { id: user.id, role: user.role, residenceId: user.residenceId ?? null },
+      dto.adminNote ?? null,
+    );
+    return { incident };
+  }
+
+  @Get(':id/export')
+  async export(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+    @Res() response: Response,
+  ) {
+    const csv = await this.incidentsService.exportCsv(id, {
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader('Content-Disposition', `attachment; filename="signalement-${id}.csv"`);
+    response.send(csv);
   }
 
   @Get(':id')
   async detail(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { id: string; role: string },
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
   ) {
-    const incident = await this.incidentsService.findForUser(id, user.id, user.role === 'ADMIN');
+    const incident = await this.incidentsService.findForUser(id, {
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
     return { incident };
   }
 
@@ -137,15 +210,16 @@ export class IncidentsController {
   async download(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
-    @CurrentUser() user: { id: string; role: string },
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
     @Res() response: Response,
   ) {
-    // Habitants : le détail public autorise tout compte ACTIVE (pas d'email
-    // exposé). Auteur/admin : accès complet via findForUser.
-    const incident =
-      user.role === 'ADMIN'
-        ? await this.incidentsService.findForUser(id, user.id, true)
-        : await this.incidentsService.findPublic(id);
+    // Le détail public autorise les comptes ACTIVE de la même résidence (sans
+    // exposer l'email), et le service contrôle l'appartenance en base.
+    const incident = await this.incidentsService.findPublic(id, {
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
     const attachment = (incident.attachments as IncidentAttachment[]).find(
       (a) => a.id === attachmentId,
     );

@@ -38,6 +38,7 @@ model Residence {
   incidents     Incident[]
   invitations   Invitation[]
   announcements Announcement[]
+  agencies      AgencyResidence[]
 }
 
 // ─── Export de résidence (fichier chiffré envoyé par email) ───
@@ -82,6 +83,10 @@ model User {
 
   residenceId String?
   residence   Residence? @relation(fields: [residenceId], references: [id], onDelete: SetNull)
+
+  // Compte de type agence : rattaché à une agence et à ses résidences (rôle AGENCE).
+  agencyId String?
+  agency   Agency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
 
   listings            Listing[]
   conversationsA      Conversation[]       @relation("convA")
@@ -189,8 +194,10 @@ model Incident {
   comments    Comment[]
   residenceId String?
   residence   Residence?           @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  reference   String?              @unique // référence lisible, ex. PROX-GER-2026-00042
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
+  events      IncidentEvent[]
 
   @@index([userId])
   @@index([status])
@@ -380,4 +387,49 @@ model Announcement {
 
   @@index([residenceId, createdAt])
   @@index([authorId])
+}
+
+
+/// Agence ou syndic gestionnaire : regroupe des résidences et des comptes de
+/// rôle AGENCE. Un compte agence voit les signalements de toutes ses résidences.
+model Agency {
+  id           String   @id @default(uuid())
+  name         String
+  contactEmail String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  residences AgencyResidence[]
+  members    User[]
+}
+
+/// Périmètre d'une agence : les résidences qu'elle gère.
+model AgencyResidence {
+  id          String   @id @default(uuid())
+  agencyId    String
+  agency      Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  residenceId String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([agencyId, residenceId])
+  @@index([residenceId])
+}
+
+/// Journal des événements d'un signalement : historique attribué et piste d'audit.
+model IncidentEvent {
+  id         String   @id @default(uuid())
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  type       String // CREATED | STATUS_CHANGED | COMMENTED | ATTACHMENT_ADDED | EXPORTED | PURGED
+  actorType  String // RESIDENT | AGENCE | ADMIN | SUPERADMIN | SYSTEME
+  actorId    String?
+  actorLabel String?
+  fromStatus String?
+  toStatus   String?
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([incidentId, createdAt])
 }

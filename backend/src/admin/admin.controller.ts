@@ -499,6 +499,48 @@ export class AdminController {
     await this.incidentsService.adminRemove(id);
   }
 
+  /**
+   * Dossier complet d'un signalement en CSV (métadonnées, commentaires,
+   * pièces jointes), pour l'agence ou l'assureur. C'est l'export exigé avant
+   * toute suppression : on ne détruit jamais une preuve sans trace écrite.
+   */
+  @Get('incidents/:id/export')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  async exportIncident(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+    @Res() response: Response,
+  ) {
+    await this.assertSameResidence('incident', id, user);
+    const csv = await this.incidentsService.exportCsv(id, {
+      id: user.id,
+      role: user.role,
+      residenceId: user.residenceId ?? null,
+    });
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader('Content-Disposition', `attachment; filename="signalement-${id}.csv"`);
+    response.send(csv);
+  }
+
+  /**
+   * Purge des dossiers clos, sous contrôle humain. Sans `confirm`, la réponse
+   * se contente de compter les dossiers éligibles. Avec `confirm`, une archive
+   * CSV est écrite sur le disque AVANT toute suppression.
+   * Remplace la purge automatique à 48 h, qui détruisait la preuve du syndic.
+   */
+  @Post('incidents/purge')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async purgeIncidents(
+    @CurrentUser() user: { id: string; role: string; residenceId?: string | null },
+    @Body() body: { olderThanDays?: number; confirm?: boolean },
+  ) {
+    return this.incidentsService.purgeResolvedIncidents(
+      { id: user.id, role: user.role, residenceId: user.residenceId ?? null },
+      { olderThanDays: body?.olderThanDays, confirm: body?.confirm === true },
+    );
+  }
+
   // ─── Invitations ─────────────────────────────────────────────
 
   @Get('invitations')

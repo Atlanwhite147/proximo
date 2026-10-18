@@ -14,6 +14,8 @@ interface AuthContextValue {
   isAdmin: boolean;
   /** SUPERADMIN : gère toutes les résidences (plateforme). */
   isSuperAdmin: boolean;
+  /** AGENCE : compte d'agence ou de syndic gestionnaire, périmètre multi-résidences. */
+  isAgency: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -97,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser,
         isAdmin: user?.role === 'ADMIN' || user?.role === 'SUPERADMIN',
         isSuperAdmin: user?.role === 'SUPERADMIN',
+        isAgency: user?.role === 'AGENCE',
       }}
     >
       {children}

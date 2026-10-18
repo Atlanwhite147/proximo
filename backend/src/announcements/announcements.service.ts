@@ -17,6 +17,7 @@ const AUTHOR_SELECT = {
   firstName: true,
   lastName: true,
   role: true,
+  agency: { select: { name: true } },
 } as const;
 
 /** Métadonnées d'une pièce jointe (le chemin sur disque n'est jamais exposé). */
@@ -49,7 +50,12 @@ const COMMENT_INCLUDE = {
   },
 } as const;
 
-type User = { id: string; role: string; residenceId?: string | null };
+type User = {
+  id: string;
+  role: string;
+  residenceId?: string | null;
+  agencyId?: string | null;
+};
 
 /**
  * Annonces officielles de la résidence : tout le monde les lit et les
@@ -60,19 +66,46 @@ type User = { id: string; role: string; residenceId?: string | null };
 export class AnnouncementsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Annonce appartenant à la résidence de l'habitant. */
-  private async ownedOrFail(id: string, residenceId: string | null | undefined) {
+  /**
+   * Périmètre de résidences d'un compte agence : les résidences rattachées à
+   * son agence, lues en base à chaque appel.
+   */
+  private async agencyScope(user: User): Promise<string[]> {
+    if (user.role !== 'AGENCE' || !user.agencyId) return [];
+    const links = await this.prisma.agencyResidence.findMany({
+      where: { agencyId: user.agencyId },
+      select: { residenceId: true },
+    });
+    return links.map((link) => link.residenceId);
+  }
+
+  /**
+   * Annonce accessible à cet acteur : sa propre résidence, une résidence gérée
+   * par son agence pour un compte AGENCE, ou n'importe laquelle pour le
+   * superadministrateur. Un refus renvoie « introuvable ».
+   */
+  private async ownedOrFail(id: string, user: User) {
     const announcement = await this.prisma.announcement.findUnique({ where: { id } });
-    if (!announcement || announcement.residenceId !== residenceId) {
+    if (!announcement) {
       throw new NotFoundException('Annonce introuvable');
     }
-    return announcement;
+    if (user.role === 'SUPERADMIN') return announcement;
+    if (announcement.residenceId && announcement.residenceId === user.residenceId) {
+      return announcement;
+    }
+    if (user.role === 'AGENCE') {
+      const scope = await this.agencyScope(user);
+      if (announcement.residenceId && scope.includes(announcement.residenceId)) {
+        return announcement;
+      }
+    }
+    throw new NotFoundException('Annonce introuvable');
   }
 
   private assertPublisher(user: User): void {
-    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN' && user.role !== 'AGENCE') {
       throw new ForbiddenException(
-        'Seuls les administrateurs de la résidence peuvent publier une annonce.',
+        'Seuls les administrateurs de la résidence ou l’agence gestionnaire peuvent publier une annonce.',
       );
     }
   }
@@ -127,6 +160,19 @@ export class AnnouncementsService {
 
   /** Liste les annonces (les plus récentes d'abord). */
   async list(user: User, limit?: number) {
+    // Compte agence : les annonces de toutes les résidences gérées.
+    if (user.role === 'AGENCE') {
+      const scope = await this.agencyScope(user);
+      if (scope.length === 0) return { announcements: [] };
+      const scoped = await this.prisma.announcement.findMany({
+        where: { residenceId: { in: scope } },
+        orderBy: { createdAt: 'desc' },
+        ...(limit && limit > 0 ? { take: Math.min(limit, 50) } : {}),
+        include: ANNOUNCEMENT_INCLUDE,
+      });
+      return { announcements: scoped };
+    }
+
     const residenceId = user.residenceId ?? null;
     if (!residenceId) return { announcements: [] };
 
@@ -148,12 +194,23 @@ export class AnnouncementsService {
       throw new BadRequestException('Titre et message requis.');
     }
 
-    // Un SUPERADMIN peut viser une autre résidence ; un ADMIN reste chez lui.
+    // Un SUPERADMIN peut viser une autre résidence ; une agence publie dans une
+    // résidence de son périmètre, qu'elle doit désigner ; un ADMIN reste chez lui.
     let residenceId = user.residenceId ?? null;
     if (user.role === 'SUPERADMIN' && dto.residenceId) {
       const target = await this.prisma.residence.findUnique({ where: { id: dto.residenceId } });
       if (!target) throw new NotFoundException('Résidence introuvable');
       residenceId = target.id;
+    }
+    if (user.role === 'AGENCE') {
+      if (!dto.residenceId) {
+        throw new BadRequestException('Précisez la résidence destinataire de l’annonce.');
+      }
+      const scope = await this.agencyScope(user);
+      if (!scope.includes(dto.residenceId)) {
+        throw new NotFoundException('Résidence introuvable');
+      }
+      residenceId = dto.residenceId;
     }
 
     const created = await this.prisma.announcement.create({
@@ -172,7 +229,7 @@ export class AnnouncementsService {
    * `updatedAt` est mis à jour par Prisma, sans aucune mention à l'écran.
    */
   async update(id: string, user: User, dto: UpdateAnnouncementDto) {
-    const announcement = await this.ownedOrFail(id, user.residenceId);
+    const announcement = await this.ownedOrFail(id, user);
     this.assertCanManage(announcement, user);
 
     const title = dto.title?.trim();
@@ -200,7 +257,7 @@ export class AnnouncementsService {
 
   /** Suppression : auteur de l'annonce ou administrateur (+ fichiers). */
   async remove(id: string, user: User): Promise<void> {
-    const announcement = await this.ownedOrFail(id, user.residenceId);
+    const announcement = await this.ownedOrFail(id, user);
     this.assertCanManage(announcement, user);
 
     // Récupérer les chemins AVANT la suppression en cascade.
@@ -214,7 +271,7 @@ export class AnnouncementsService {
 
   /** Ajoute des pièces jointes à une annonce existante. */
   async addAttachments(id: string, user: User, files: Express.Multer.File[]) {
-    const announcement = await this.ownedOrFail(id, user.residenceId);
+    const announcement = await this.ownedOrFail(id, user);
     this.assertCanManage(announcement, user);
     if (files.length === 0) {
       throw new BadRequestException('Aucun fichier reçu');
@@ -227,7 +284,7 @@ export class AnnouncementsService {
 
   /** Retire une pièce jointe (ligne en base + fichier sur disque). */
   async removeAttachment(id: string, attachmentId: string, user: User) {
-    const announcement = await this.ownedOrFail(id, user.residenceId);
+    const announcement = await this.ownedOrFail(id, user);
     this.assertCanManage(announcement, user);
 
     const attachment = await this.prisma.announcementAttachment.findFirst({
@@ -244,7 +301,7 @@ export class AnnouncementsService {
 
   /** Pièce jointe à servir (vérifie l'appartenance à la résidence). */
   async getAttachment(id: string, attachmentId: string, user: User) {
-    await this.ownedOrFail(id, user.residenceId);
+    await this.ownedOrFail(id, user);
     const attachment = await this.prisma.announcementAttachment.findFirst({
       where: { id: attachmentId, announcementId: id },
     });
@@ -254,7 +311,7 @@ export class AnnouncementsService {
 
   /** Commentaires d'une annonce (chronologique). */
   async listComments(id: string, user: User) {
-    await this.ownedOrFail(id, user.residenceId);
+    await this.ownedOrFail(id, user);
     const comments = await this.prisma.comment.findMany({
       where: { announcementId: id },
       orderBy: { createdAt: 'asc' },
@@ -265,7 +322,7 @@ export class AnnouncementsService {
 
   /** Ajout d'un commentaire : ouvert à TOUS les habitants de la résidence. */
   async addComment(id: string, user: User, dto: CreateAnnouncementCommentDto) {
-    await this.ownedOrFail(id, user.residenceId);
+    await this.ownedOrFail(id, user);
     const content = dto.content?.trim();
     if (!content) throw new BadRequestException('Le commentaire ne peut pas être vide');
 

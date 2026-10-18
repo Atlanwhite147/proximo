@@ -2,8 +2,8 @@
  * Types partagés — miroir des réponses de l'API (Sprint 2 inclus).
  */
 
-export type UserRole = 'USER' | 'ADMIN' | 'SUPERADMIN';
-export type UserStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+export type UserRole = "USER" | "ADMIN" | "SUPERADMIN" | "AGENCE";
+export type UserStatus = "PENDING" | "ACTIVE" | "SUSPENDED";
 
 export interface User {
   id: string;
@@ -25,8 +25,9 @@ export interface User {
   createdAt: string;
 }
 
-export type ListingCategory = 'TOOL' | 'SERVICE' | 'DONATION' | 'NOTICE' | 'OTHER';
-export type ListingStatus = 'OPEN' | 'RESERVED' | 'CLOSED';
+export type ListingCategory =
+  "TOOL" | "SERVICE" | "DONATION" | "NOTICE" | "OTHER";
+export type ListingStatus = "OPEN" | "RESERVED" | "CLOSED";
 
 export interface ListingOwner {
   id: string;
@@ -78,8 +79,8 @@ export interface Conversation {
 
 // ─── Sprint 2 : signalements d'incidents ─────────────────────
 
-export type IncidentCategory = 'WATER_LEAK' | 'ELEVATOR' | 'DAMAGE' | 'OTHER';
-export type IncidentStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+export type IncidentCategory = "WATER_LEAK" | "ELEVATOR" | "DAMAGE" | "OTHER";
+export type IncidentStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED";
 
 export interface IncidentAttachment {
   id: string;
@@ -93,6 +94,9 @@ export interface IncidentUser {
   firstName: string;
   lastName: string;
   email: string;
+  /** Rôle et agence de l'auteur, pour la pastille « Agence ». */
+  role?: string;
+  agency?: { name: string } | null;
   building?: string | null;
   floor?: string | null;
   showDetails?: boolean;
@@ -101,6 +105,8 @@ export interface IncidentUser {
 export interface Incident {
   id: string;
   title: string;
+  /** Référence lisible du dossier, ex. PROX-GER-2026-00042. */
+  reference?: string | null;
   category: IncidentCategory;
   description: string;
   status: IncidentStatus;
@@ -109,6 +115,8 @@ export interface Incident {
   updatedAt: string;
   attachments: IncidentAttachment[];
   user?: IncidentUser;
+  /** Résidence du dossier (renseignée pour les vues multi-résidences). */
+  residence?: { id: string; name: string } | null;
   _count?: { comments: number };
 }
 
@@ -118,6 +126,10 @@ export interface CommentAuthor {
   id: string;
   firstName: string;
   lastName: string;
+  /** Rôle de l'auteur : sert à afficher la pastille « Agence ». */
+  role?: string;
+  /** Nom de l'agence quand l'auteur est un compte de rôle AGENCE. */
+  agency?: { name: string } | null;
   showDetails: boolean;
   building?: string | null;
   floor?: string | null;
@@ -176,7 +188,7 @@ export interface SyndicSettings {
 /** Réglages d'envoi d'emails (admin) — les secrets ne sont jamais renvoyés. */
 export interface EmailSettings {
   id: number;
-  mode: 'brevo' | 'smtp' | 'log';
+  mode: "brevo" | "smtp" | "log";
   fromName: string;
   fromEmail: string;
   brevoConfigured: boolean;
@@ -185,7 +197,7 @@ export interface EmailSettings {
   smtpPort: number | null;
   smtpSecure: boolean;
   smtpUser: string | null;
-  effectiveMode: 'brevo' | 'smtp' | 'log';
+  effectiveMode: "brevo" | "smtp" | "log";
 }
 
 /** Quota Brevo restant (GET /account, offre gratuite = 300 emails/jour). */
@@ -202,44 +214,44 @@ export interface EmailOutboxInfo {
 }
 
 export const CATEGORY_LABELS: Record<ListingCategory, string> = {
-  TOOL: 'Prêt de matériel',
-  SERVICE: 'Service entre voisins',
-  DONATION: 'Don',
-  NOTICE: 'Avis aux résidents',
-  OTHER: 'Autre',
+  TOOL: "Prêt de matériel",
+  SERVICE: "Service entre voisins",
+  DONATION: "Don",
+  NOTICE: "Avis aux résidents",
+  OTHER: "Autre",
 };
 
 export const CATEGORY_EMOJI: Record<ListingCategory, string> = {
-  TOOL: '🔧',
-  SERVICE: '🤝',
-  DONATION: '🎁',
-  NOTICE: '📢',
-  OTHER: '📦',
+  TOOL: "🔧",
+  SERVICE: "🤝",
+  DONATION: "🎁",
+  NOTICE: "📢",
+  OTHER: "📦",
 };
 
 export const STATUS_LABELS: Record<ListingStatus, string> = {
-  OPEN: 'Disponible',
-  RESERVED: 'Réservée',
-  CLOSED: 'Clôturée',
+  OPEN: "Disponible",
+  RESERVED: "Réservée",
+  CLOSED: "Clôturée",
 };
 
 export const INCIDENT_CATEGORY_LABELS: Record<IncidentCategory, string> = {
-  WATER_LEAK: '💧 Fuite d’eau',
-  ELEVATOR: '🛗 Panne d’ascenseur',
-  DAMAGE: '🏚️ Dégradation',
-  OTHER: '📋 Autre',
+  WATER_LEAK: "💧 Fuite d’eau",
+  ELEVATOR: "🛗 Panne d’ascenseur",
+  DAMAGE: "🏚️ Dégradation",
+  OTHER: "📋 Autre",
 };
 
 export const INCIDENT_STATUS_LABELS: Record<IncidentStatus, string> = {
-  OPEN: '🟡 Nouveau',
-  IN_PROGRESS: '🔵 En cours',
-  RESOLVED: '🟢 Résolu',
+  OPEN: "🟡 Nouveau",
+  IN_PROGRESS: "🔵 En cours",
+  RESOLVED: "🟢 Résolu",
 };
 
 export const USER_STATUS_LABELS: Record<UserStatus, string> = {
-  PENDING: '⏳ En attente',
-  ACTIVE: '✅ Actif',
-  SUSPENDED: '🚫 Suspendu',
+  PENDING: "⏳ En attente",
+  ACTIVE: "✅ Actif",
+  SUSPENDED: "🚫 Suspendu",
 };
 
 /** Message prioritaire : publié par un administrateur de la résidence. */
@@ -258,7 +270,13 @@ export interface Announcement {
   body: string;
   createdAt: string;
   updatedAt?: string;
-  author: { id: string; firstName: string; lastName: string; role: string };
+  author: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    agency?: { name: string } | null;
+  };
   attachments?: AnnouncementAttachment[];
   _count?: { comments: number };
 }
@@ -273,6 +291,7 @@ export interface AnnouncementComment {
     firstName: string;
     lastName: string;
     role: string;
+    agency?: { name: string } | null;
     showDetails?: boolean;
     building?: string | null;
     floor?: string | null;
