@@ -343,3 +343,31 @@ describe('Gestion des agences (superadministrateur)', () => {
     });
   });
 });
+
+describe('Export CSV du dossier', () => {
+  it('porte la référence du dossier, le statut et l’auteur de chaque traitement', async () => {
+    const { service, prisma } = makeIncidents(['r1']);
+    prisma.incident.findUnique.mockResolvedValue({
+      ...INCIDENT_R1,
+      status: 'RESOLVED',
+      comments: [],
+      residence: { name: 'Residence Proximo Test', agencyName: 'Agence Test Proximo' },
+      user: {
+        firstName: 'Hugo',
+        lastName: 'Test',
+        email: 'test.habitant@proximo.local',
+        building: null,
+        floor: null,
+        showDetails: true,
+      },
+    });
+    const csv = await service.exportCsv('i1', AGENT_OF_AGENCY);
+    expect(csv).toContain('reference;PROX-GER-2026-00001');
+    expect(csv).toContain('statut;RESOLVED');
+    expect(csv).toContain('Agence Test Proximo');
+    // L'export est lui-même journalisé : savoir qui a exporté fait partie de la preuve.
+    expect(prisma.incidentEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ type: 'EXPORTED', actorType: 'AGENCE' }),
+    });
+  });
+});

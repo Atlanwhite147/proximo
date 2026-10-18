@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 /** Publication d'un message prioritaire (réservée aux admins). */
 export class CreateAnnouncementDto {
@@ -12,9 +12,15 @@ export class CreateAnnouncementDto {
   @MaxLength(4000, { message: 'Message trop long (4000 caractères max.)' })
   body!: string;
 
-  /** SUPERADMIN uniquement : publier pour une autre résidence. */
+  /**
+   * Résidence destinataire : utilisée par le superadministrateur et par un
+   * compte agence (qui publie dans une de ses résidences). Le format n'est pas
+   * imposé (les résidences existantes ont des identifiants textuels) : la
+   * résidence est vérifiée en base, et le périmètre de l'agence avec elle.
+   */
   @IsOptional()
-  @IsUUID('4', { message: 'Identifiant de résidence invalide' })
+  @IsString({ message: 'Identifiant de résidence invalide' })
+  @MaxLength(120, { message: 'Identifiant de résidence trop long' })
   residenceId?: string;
 }
 

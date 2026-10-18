@@ -725,6 +725,7 @@ export class IncidentsService {
     const row = (label: string, value: unknown) =>
       lines.push(`${this.csvCell(label)};${this.csvCell(value)}`);
     row('identifiant', incident.id);
+    row('reference', incident.reference ?? 'non attribuee');
     row('titre', incident.title);
     row('categorie', incident.category);
     row('statut', incident.status);
